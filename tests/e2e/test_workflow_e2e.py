@@ -6,7 +6,7 @@ import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict
 
 import httpx
@@ -60,7 +60,7 @@ class TestWorkflowE2E:
             assert payload["status"] == "PENDING"
             assert payload["celery_task_id"]
 
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             metadata = {
                 "agent_results": {
                     "new_article": {"success": True, "changes_count": 1},
@@ -110,7 +110,7 @@ class TestWorkflowE2E:
             assert response.status_code == 201
             workflow_id = response.json()["id"]
 
-            failure_time = datetime.utcnow()
+            failure_time = datetime.now(timezone.utc)
             error_message = "Workflow execution failed: GitHub API authentication error"
             _update_workflow(
                 workflow_id,

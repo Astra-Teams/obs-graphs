@@ -1,5 +1,6 @@
 """Unit tests for workflow API endpoints."""
 
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -284,14 +285,13 @@ class TestListWorkflowsEndpoint:
 
     def test_list_workflows_orders_by_created_at_desc(self, client, test_db):
         """Test that workflows are ordered by created_at descending (newest first)."""
-        from datetime import datetime, timedelta
 
         # Create workflows with different timestamps
         old_workflow = create_pending_workflow(
-            test_db, created_at=datetime.utcnow() - timedelta(hours=2)
+            test_db, created_at=datetime.now(timezone.utc) - timedelta(hours=2)
         )
         new_workflow = create_pending_workflow(
-            test_db, created_at=datetime.utcnow() - timedelta(minutes=5)
+            test_db, created_at=datetime.now(timezone.utc) - timedelta(minutes=5)
         )
 
         response = client.get("/api/v1/workflows")

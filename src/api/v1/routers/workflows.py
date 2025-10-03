@@ -3,7 +3,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from src.db.database import get_db
@@ -27,6 +27,8 @@ class WorkflowRunRequest(BaseModel):
 class WorkflowResponse(BaseModel):
     """Response model for workflow information."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     status: str
     strategy: Optional[str]
@@ -36,9 +38,6 @@ class WorkflowResponse(BaseModel):
     error_message: Optional[str]
     celery_task_id: Optional[str]
     created_at: str
-
-    class Config:
-        from_attributes = True
 
 
 class WorkflowRunResponse(BaseModel):

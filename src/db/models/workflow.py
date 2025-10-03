@@ -1,6 +1,6 @@
 # src/db/models/workflow.py
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     JSON,
@@ -48,7 +48,9 @@ class Workflow(Base):
     error_message = Column(Text, nullable=True)
     celery_task_id = Column(String(255), nullable=True)
     workflow_metadata = Column(JSON, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
+    )
 
     def __repr__(self):
         return f"<Workflow(id={self.id}, status={self.status.value}, strategy={self.strategy})>"

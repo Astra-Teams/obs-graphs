@@ -2,7 +2,7 @@
 
 import shutil
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -52,7 +52,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
 
         # 2. Update status to RUNNING
         workflow.status = WorkflowStatus.RUNNING
-        workflow.started_at = datetime.utcnow()
+        workflow.started_at = datetime.now(timezone.utc)
         workflow.celery_task_id = self.request.id
         db.commit()
 
@@ -110,7 +110,7 @@ Changes made by Obsidian Agents workflow #{workflow_id}
         # If no changes were made, complete workflow successfully without creating PR
         if not pushed:
             workflow.status = WorkflowStatus.COMPLETED
-            workflow.completed_at = datetime.utcnow()
+            workflow.completed_at = datetime.now(timezone.utc)
             workflow.workflow_metadata = {
                 "agent_results": workflow_result.agent_results,
                 "total_changes": 0,
@@ -155,7 +155,7 @@ Changes made by Obsidian Agents workflow #{workflow_id}
 
         # 13. Update workflow to COMPLETED
         workflow.status = WorkflowStatus.COMPLETED
-        workflow.completed_at = datetime.utcnow()
+        workflow.completed_at = datetime.now(timezone.utc)
         workflow.pr_url = pr.html_url
         workflow.workflow_metadata = {
             "agent_results": workflow_result.agent_results,
@@ -168,7 +168,7 @@ Changes made by Obsidian Agents workflow #{workflow_id}
         # Update workflow to FAILED
         if workflow:
             workflow.status = WorkflowStatus.FAILED
-            workflow.completed_at = datetime.utcnow()
+            workflow.completed_at = datetime.now(timezone.utc)
             workflow.error_message = str(e)
             db.commit()
 

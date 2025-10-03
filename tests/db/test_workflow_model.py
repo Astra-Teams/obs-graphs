@@ -1,6 +1,6 @@
 """Database integration tests for the Workflow model."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -32,7 +32,7 @@ def test_workflow_transition_to_completed(db_session: Session) -> None:
     workflow = create_running_workflow(db_session, strategy="new_article")
     original_started_at = workflow.started_at
 
-    completed_at = datetime.utcnow()
+    completed_at = datetime.now(timezone.utc)
     workflow.status = WorkflowStatus.COMPLETED
     workflow.completed_at = completed_at
     workflow.pr_url = "https://github.com/test/repo/pull/99"
@@ -55,8 +55,8 @@ def test_failed_workflow_records_error_details(db_session: Session) -> None:
     """Failed workflows should persist error messages and timing metadata."""
     workflow = create_pending_workflow(db_session)
 
-    started_at = datetime.utcnow() - timedelta(minutes=2)
-    completed_at = datetime.utcnow()
+    started_at = datetime.now(timezone.utc) - timedelta(minutes=2)
+    completed_at = datetime.now(timezone.utc)
     workflow.status = WorkflowStatus.FAILED
     workflow.started_at = started_at
     workflow.completed_at = completed_at
@@ -83,7 +83,7 @@ def test_query_workflows_by_status(db_session: Session) -> None:
     running = create_running_workflow(db_session)
 
     completed = Workflow(
-        status=WorkflowStatus.COMPLETED, completed_at=datetime.utcnow()
+        status=WorkflowStatus.COMPLETED, completed_at=datetime.now(timezone.utc)
     )
     db_session.add(completed)
     db_session.commit()

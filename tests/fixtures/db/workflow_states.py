@@ -1,6 +1,6 @@
 """Factory functions for creating test workflow records."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from src.db.models.workflow import Workflow, WorkflowStatus
 
@@ -25,7 +25,7 @@ def create_pending_workflow(db_session, **kwargs) -> Workflow:
         error_message=None,
         celery_task_id=kwargs.get("celery_task_id", None),
         workflow_metadata=kwargs.get("workflow_metadata", None),
-        created_at=kwargs.get("created_at", datetime.utcnow()),
+        created_at=kwargs.get("created_at", datetime.now(timezone.utc)),
     )
 
     db_session.add(workflow)
@@ -49,13 +49,15 @@ def create_running_workflow(db_session, **kwargs) -> Workflow:
     workflow = Workflow(
         status=WorkflowStatus.RUNNING,
         strategy=kwargs.get("strategy", "new_article"),
-        started_at=kwargs.get("started_at", datetime.utcnow()),
+        started_at=kwargs.get("started_at", datetime.now(timezone.utc)),
         completed_at=None,
         pr_url=None,
         error_message=None,
         celery_task_id=kwargs.get("celery_task_id", "test-task-id-123"),
         workflow_metadata=kwargs.get("workflow_metadata", {"agents_executed": []}),
-        created_at=kwargs.get("created_at", datetime.utcnow() - timedelta(minutes=5)),
+        created_at=kwargs.get(
+            "created_at", datetime.now(timezone.utc) - timedelta(minutes=5)
+        ),
     )
 
     db_session.add(workflow)
@@ -83,7 +85,9 @@ def create_completed_workflow(
     if with_pr_url:
         pr_url = kwargs.get("pr_url", "https://github.com/test-user/test-vault/pull/42")
 
-    created_at = kwargs.get("created_at", datetime.utcnow() - timedelta(hours=1))
+    created_at = kwargs.get(
+        "created_at", datetime.now(timezone.utc) - timedelta(hours=1)
+    )
     started_at = kwargs.get("started_at", created_at + timedelta(seconds=30))
     completed_at = kwargs.get("completed_at", started_at + timedelta(minutes=10))
 
@@ -145,7 +149,9 @@ def create_failed_workflow(
             "Workflow execution failed: GitHub API authentication error",
         )
 
-    created_at = kwargs.get("created_at", datetime.utcnow() - timedelta(hours=2))
+    created_at = kwargs.get(
+        "created_at", datetime.now(timezone.utc) - timedelta(hours=2)
+    )
     started_at = kwargs.get("started_at", created_at + timedelta(seconds=30))
     completed_at = kwargs.get("completed_at", started_at + timedelta(minutes=2))
 
@@ -189,13 +195,13 @@ def create_workflow_with_custom_metadata(
     workflow = Workflow(
         status=status,
         strategy=kwargs.get("strategy", "custom"),
-        started_at=kwargs.get("started_at", datetime.utcnow()),
+        started_at=kwargs.get("started_at", datetime.now(timezone.utc)),
         completed_at=kwargs.get("completed_at", None),
         pr_url=kwargs.get("pr_url", None),
         error_message=kwargs.get("error_message", None),
         celery_task_id=kwargs.get("celery_task_id", "test-task-custom-999"),
         workflow_metadata=metadata,
-        created_at=kwargs.get("created_at", datetime.utcnow()),
+        created_at=kwargs.get("created_at", datetime.now(timezone.utc)),
     )
 
     db_session.add(workflow)
