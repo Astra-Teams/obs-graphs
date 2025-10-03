@@ -13,6 +13,19 @@ services:
       timeout: 10s
       retries: 10
     restart: unless-stopped
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
 
   api:
     build:
@@ -23,6 +36,8 @@ services:
       - "${HOST_BIND_IP}:${HOST_PORT}:8000"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     env_file:
       - .env
@@ -36,9 +51,33 @@ services:
       start_period: 60s
       retries: 10
     restart: unless-stopped
+    networks:
+      - backend
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    command: celery -A src.tasks.celery_app worker --loglevel=info
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - /tmp/obsidian-workflows:/tmp/obsidian-workflows
+    networks:
+      - backend
 
 volumes:
   postgres-db:
     driver: local
     name: ${PROJECT_NAME}-postgres-db-prod
     external: false
+
+networks:
+  backend:
+    driver: bridge

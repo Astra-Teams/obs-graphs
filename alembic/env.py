@@ -2,10 +2,14 @@ from sqlalchemy import create_engine, pool
 
 from alembic import context
 from src.config.settings import get_settings
+from src.db.database import Base
+
+# Import all models so they are registered with Base
+from src.db.models import Workflow, WorkflowStatus  # noqa: F401
 
 config = context.config
 
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_online() -> None:

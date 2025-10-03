@@ -1,5 +1,4 @@
 # src/db/models/__init__.py
-from .log import Log
-from .setting import Setting
+from .workflow import Workflow, WorkflowStatus
 
-__all__ = ["Log", "Setting"]
+__all__ = ["Workflow", "WorkflowStatus"]
