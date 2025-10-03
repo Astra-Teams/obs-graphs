@@ -1,16 +1,15 @@
 """Celery application configuration for background task processing."""
 
+import os
+
 from celery import Celery
 
-from src.config.settings import get_settings
-
-settings = get_settings()
-
-# Initialize Celery app with Redis broker
+# Initialize Celery app with environment variables directly
+# This avoids importing settings during module load, which allows tests to mock
 celery_app = Celery(
     "obsidian_agents",
-    broker=settings.CELERY_BROKER_URL,
-    backend=settings.CELERY_RESULT_BACKEND,
+    broker=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0"),
+    backend=os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
     include=["src.tasks.workflow_tasks"],
 )
 
