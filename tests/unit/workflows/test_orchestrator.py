@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.agents.base import AgentResult
-from src.services.vault_service import VaultSummary
 from src.workflows.orchestrator import (
     WorkflowOrchestrator,
     WorkflowPlan,
@@ -59,17 +58,13 @@ def orchestrator(mock_agents):
     return WorkflowOrchestrator()
 
 
-@patch("src.workflows.orchestrator.VaultService")
 def test_analyze_vault_new_article_strategy(
-    mock_vault_service,
     orchestrator: WorkflowOrchestrator,
     tmp_path: Path,
 ):
     """Test that analyze_vault determines the new_article strategy correctly."""
-    # Arrange
-    mock_vault_service.get_vault_summary.return_value = VaultSummary(
-        total_articles=0, categories=[], recent_updates=[]
-    )
+    # Arrange - create an empty vault (total_articles < 5)
+    tmp_path.mkdir(exist_ok=True)
 
     # Act
     plan = orchestrator.analyze_vault(tmp_path)
@@ -77,22 +72,18 @@ def test_analyze_vault_new_article_strategy(
     # Assert
     assert isinstance(plan, WorkflowPlan)
     assert plan.strategy == "new_article"
-    assert "NewArticleCreationAgent" in [
-        agent.__class__.__name__ for agent in plan.agents
-    ]
+    assert "new_article" in plan.agents
 
 
-@patch("src.workflows.orchestrator.VaultService")
 def test_analyze_vault_improvement_strategy(
-    mock_vault_service,
     orchestrator: WorkflowOrchestrator,
     tmp_path: Path,
 ):
     """Test that analyze_vault determines the improvement strategy correctly."""
-    # Arrange
-    mock_vault_service.get_vault_summary.return_value = VaultSummary(
-        total_articles=10, categories=["Test"], recent_updates=["test.md"]
-    )
+    # Arrange - create a vault with 10 articles (total_articles >= 5)
+    tmp_path.mkdir(exist_ok=True)
+    for i in range(10):
+        (tmp_path / f"article_{i}.md").write_text("# Test Article")
 
     # Act
     plan = orchestrator.analyze_vault(tmp_path)
@@ -100,20 +91,19 @@ def test_analyze_vault_improvement_strategy(
     # Assert
     assert isinstance(plan, WorkflowPlan)
     assert plan.strategy == "improvement"
-    assert "ArticleImprovementAgent" in [
-        agent.__class__.__name__ for agent in plan.agents
-    ]
+    assert "article_improvement" in plan.agents
 
 
 def test_execute_workflow(orchestrator: WorkflowOrchestrator, tmp_path: Path):
     """Test that execute_workflow runs agents and aggregates results."""
     # Arrange
+    tmp_path.mkdir(exist_ok=True)
+    # Create a simple markdown file
+    (tmp_path / "test.md").write_text("# Test Article")
+
     plan = WorkflowPlan(
         strategy="test_plan",
-        agents=[
-            MagicMock(spec=MockAgent)(),
-            MagicMock(spec=MockAgent)(),
-        ],
+        agents=["new_article", "file_organization"],
     )
 
     # Act
@@ -123,3 +113,5 @@ def test_execute_workflow(orchestrator: WorkflowOrchestrator, tmp_path: Path):
     assert isinstance(result, WorkflowResult)
     assert result.success
     assert len(result.agent_results) == 2
+    assert "new_article" in result.agent_results
+    assert "file_organization" in result.agent_results

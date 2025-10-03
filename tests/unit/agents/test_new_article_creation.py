@@ -139,10 +139,24 @@ class TestNewArticleCreationAgent:
         """Test execute can generate multiple articles."""
         vault_path = Path("/tmp/test_vault")
 
-        # Mock LLM to return multiple articles
-        response_mock = MagicMock()
-        response_mock.content = llm_responses["article_generation_multiple"]["content"]
-        agent.llm.invoke.return_value = response_mock
+        # Mock LLM to return multiple articles suggestions, then content for each
+        suggestions_response = MagicMock()
+        suggestions_response.content = llm_responses["article_generation_multiple"][
+            "content"
+        ]
+
+        content_response1 = MagicMock()
+        content_response1.content = llm_responses["article_content_detailed"]["content"]
+
+        content_response2 = MagicMock()
+        content_response2.content = llm_responses["article_content_detailed"]["content"]
+
+        # First call returns suggestions, subsequent calls return content
+        agent.llm.invoke.side_effect = [
+            suggestions_response,
+            content_response1,
+            content_response2,
+        ]
 
         result = agent.execute(vault_path, basic_vault_context)
 
@@ -151,6 +165,7 @@ class TestNewArticleCreationAgent:
         for change in result.changes:
             assert change.action == FileAction.CREATE
             assert change.content is not None
+            assert "---" in change.content  # Has frontmatter
 
     def test_execute_with_invalid_context_raises_error(self, agent):
         """Test that execute raises ValueError with invalid context."""
@@ -195,7 +210,7 @@ class TestNewArticleCreationAgent:
         # Mock empty response
         response_mock = MagicMock()
         response_mock.content = "[]"
-        agent.llm.invoke.return_value = response_mock
+        agent.llm.invoke = Mock(return_value=response_mock)
 
         result = agent.execute(vault_path, basic_vault_context)
 
@@ -213,7 +228,7 @@ class TestNewArticleCreationAgent:
         # Mock malformed response
         response_mock = MagicMock()
         response_mock.content = "This is not valid JSON"
-        agent.llm.invoke.return_value = response_mock
+        agent.llm.invoke = Mock(return_value=response_mock)
 
         result = agent.execute(vault_path, basic_vault_context)
 

@@ -80,14 +80,11 @@ class GitHubService:
         except GithubException as e:
             raise Exception(f"Failed to authenticate with GitHub: {e}")
 
-    def clone_repository(
-        self, repo_url: str, target_path: Path, branch: str = "main"
-    ) -> None:
+    def clone_repository(self, target_path: Path, branch: str = "main") -> None:
         """
-        Clone repository to local path using git commands.
+        Clone repository to local path using git commands with authentication.
 
         Args:
-            repo_url: URL of the repository to clone.
             target_path: Local directory path where repository will be cloned.
             branch: Branch name to checkout (default: "main").
 
@@ -101,6 +98,11 @@ class GitHubService:
 
             # Create parent directory if needed
             target_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Get authenticated clone URL
+            repo_url = self.get_authenticated_clone_url(
+                self.settings.GITHUB_REPO_FULL_NAME
+            )
 
             # Clone the repository
             repo = Repo.clone_from(
@@ -146,7 +148,7 @@ class GitHubService:
         except Exception as e:
             raise Exception(f"Failed to create branch '{branch_name}': {e}")
 
-    def commit_and_push(self, repo_path: Path, branch_name: str, message: str) -> None:
+    def commit_and_push(self, repo_path: Path, branch_name: str, message: str) -> bool:
         """
         Stage all changes, commit, and push to remote branch.
 
@@ -154,6 +156,9 @@ class GitHubService:
             repo_path: Path to the local git repository.
             branch_name: Name of the branch to push.
             message: Commit message.
+
+        Returns:
+            True if changes were committed and pushed, False if there were no changes.
 
         Raises:
             FileNotFoundError: If repository path doesn't exist.
@@ -170,7 +175,7 @@ class GitHubService:
 
             # Check if there are changes to commit
             if not repo.is_dirty() and not repo.untracked_files:
-                raise Exception("No changes to commit")
+                return False
 
             # Commit changes
             repo.index.commit(message)
@@ -178,6 +183,8 @@ class GitHubService:
             # Push to remote
             origin = repo.remote(name="origin")
             origin.push(refspec=f"{branch_name}:{branch_name}")
+
+            return True
 
         except Exception as e:
             raise Exception(f"Failed to commit and push to branch '{branch_name}': {e}")

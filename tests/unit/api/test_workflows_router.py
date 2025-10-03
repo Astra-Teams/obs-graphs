@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from src.db.database import Base, get_db
 from src.db.models.workflow import Workflow, WorkflowStatus
@@ -19,12 +20,25 @@ from tests.fixtures.db.workflow_states import (
 
 
 # Test database setup
-@pytest.fixture
-def test_db():
-    """Create a test database session."""
-    engine = create_engine("sqlite:///:memory:")
+@pytest.fixture(scope="function")
+def test_engine():
+    """Create a test database engine."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(engine)
-    TestingSessionLocal = sessionmaker(bind=engine)
+    yield engine
+    engine.dispose()
+
+
+@pytest.fixture
+def test_db(test_engine):
+    """Create a test database session."""
+    TestingSessionLocal = sessionmaker(
+        bind=test_engine, autoflush=False, autocommit=False
+    )
     db = TestingSessionLocal()
     try:
         yield db
@@ -33,14 +47,18 @@ def test_db():
 
 
 @pytest.fixture
-def client(test_db):
+def client(test_engine):
     """Create a test client with mocked database dependency."""
+    TestingSessionLocal = sessionmaker(
+        bind=test_engine, autoflush=False, autocommit=False
+    )
 
     def override_get_db():
+        db = TestingSessionLocal()
         try:
-            yield test_db
+            yield db
         finally:
-            pass
+            db.close()
 
     app.dependency_overrides[get_db] = override_get_db
     client = TestClient(app)
@@ -51,13 +69,15 @@ def client(test_db):
 class TestWorkflowRunEndpoint:
     """Tests for POST /api/v1/workflows/run endpoint."""
 
-    @patch("src.tasks.workflow_tasks.run_workflow_task.delay")
-    def test_run_workflow_creates_pending_workflow(self, mock_delay, client, test_db):
+    @patch("src.api.v1.routers.workflows.run_workflow_task")
+    def test_run_workflow_creates_pending_workflow(
+        self, mock_task_module, client, test_db
+    ):
         """Test that POST /workflows/run creates a workflow with PENDING status."""
         # Mock Celery task
         mock_task = MagicMock()
         mock_task.id = "test-celery-task-123"
-        mock_delay.return_value = mock_task
+        mock_task_module.delay.return_value = mock_task
 
         # Make request
         response = client.post("/api/v1/workflows/run")
@@ -66,7 +86,7 @@ class TestWorkflowRunEndpoint:
         assert response.status_code == 201
         data = response.json()
         assert "id" in data
-        assert data["status"] == "pending"
+        assert data["status"] == "PENDING"
         assert data["celery_task_id"] == "test-celery-task-123"
         assert "Workflow" in data["message"]
         assert "queued" in data["message"]
@@ -77,12 +97,14 @@ class TestWorkflowRunEndpoint:
         assert workflow.status == WorkflowStatus.PENDING
         assert workflow.celery_task_id == "test-celery-task-123"
 
-    @patch("src.tasks.workflow_tasks.run_workflow_task.delay")
-    def test_run_workflow_with_strategy_parameter(self, mock_delay, client, test_db):
+    @patch("src.api.v1.routers.workflows.run_workflow_task")
+    def test_run_workflow_with_strategy_parameter(
+        self, mock_task_module, client, test_db
+    ):
         """Test that POST /workflows/run accepts optional strategy parameter."""
         mock_task = MagicMock()
         mock_task.id = "test-task-456"
-        mock_delay.return_value = mock_task
+        mock_task_module.delay.return_value = mock_task
 
         # Make request with strategy
         response = client.post(
@@ -96,12 +118,14 @@ class TestWorkflowRunEndpoint:
         workflow = test_db.query(Workflow).filter(Workflow.id == data["id"]).first()
         assert workflow.strategy == "new_article"
 
-    @patch("src.tasks.workflow_tasks.run_workflow_task.delay")
-    def test_run_workflow_dispatches_celery_task(self, mock_delay, client, test_db):
+    @patch("src.api.v1.routers.workflows.run_workflow_task")
+    def test_run_workflow_dispatches_celery_task(
+        self, mock_task_module, client, test_db
+    ):
         """Test that workflow run dispatches Celery task with workflow ID."""
         mock_task = MagicMock()
         mock_task.id = "task-789"
-        mock_delay.return_value = mock_task
+        mock_task_module.delay.return_value = mock_task
 
         response = client.post("/api/v1/workflows/run")
         assert response.status_code == 201
@@ -109,14 +133,16 @@ class TestWorkflowRunEndpoint:
         workflow_id = response.json()["id"]
 
         # Verify Celery task was dispatched with correct workflow ID
-        mock_delay.assert_called_once_with(workflow_id)
+        mock_task_module.delay.assert_called_once_with(workflow_id)
 
-    @patch("src.tasks.workflow_tasks.run_workflow_task.delay")
-    def test_run_workflow_stores_celery_task_id(self, mock_delay, client, test_db):
+    @patch("src.api.v1.routers.workflows.run_workflow_task")
+    def test_run_workflow_stores_celery_task_id(
+        self, mock_task_module, client, test_db
+    ):
         """Test that Celery task ID is stored in workflow record."""
         mock_task = MagicMock()
         mock_task.id = "stored-task-id"
-        mock_delay.return_value = mock_task
+        mock_task_module.delay.return_value = mock_task
 
         response = client.post("/api/v1/workflows/run")
         workflow_id = response.json()["id"]
@@ -124,12 +150,12 @@ class TestWorkflowRunEndpoint:
         workflow = test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
         assert workflow.celery_task_id == "stored-task-id"
 
-    @patch("src.tasks.workflow_tasks.run_workflow_task.delay")
-    def test_run_workflow_returns_201_status(self, mock_delay, client):
+    @patch("src.api.v1.routers.workflows.run_workflow_task")
+    def test_run_workflow_returns_201_status(self, mock_task_module, client):
         """Test that successful workflow creation returns 201 Created."""
         mock_task = MagicMock()
         mock_task.id = "task-id"
-        mock_delay.return_value = mock_task
+        mock_task_module.delay.return_value = mock_task
 
         response = client.post("/api/v1/workflows/run")
         assert response.status_code == 201
@@ -148,7 +174,7 @@ class TestGetWorkflowEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == workflow.id
-        assert data["status"] == "pending"
+        assert data["status"] == "PENDING"
 
     def test_get_workflow_returns_404_for_nonexistent(self, client, test_db):
         """Test that GET /workflows/{id} returns 404 for non-existent workflow."""
@@ -165,7 +191,7 @@ class TestGetWorkflowEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "completed"
+        assert data["status"] == "COMPLETED"
         assert data["pr_url"] is not None
         assert "github.com" in data["pr_url"]
 
@@ -177,7 +203,7 @@ class TestGetWorkflowEndpoint:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "failed"
+        assert data["status"] == "FAILED"
         assert data["error_message"] is not None
         assert len(data["error_message"]) > 0
 
@@ -223,12 +249,12 @@ class TestListWorkflowsEndpoint:
         create_failed_workflow(test_db)
 
         # Filter by completed status
-        response = client.get("/api/v1/workflows?status=completed")
+        response = client.get("/api/v1/workflows?status=COMPLETED")
 
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
-        assert all(w["status"] == "completed" for w in data["workflows"])
+        assert all(w["status"] == "COMPLETED" for w in data["workflows"])
 
     def test_list_workflows_returns_400_for_invalid_status(self, client, test_db):
         """Test that invalid status parameter returns 400 error."""

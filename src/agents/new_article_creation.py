@@ -1,5 +1,8 @@
 """Agent for creating new articles from scratch in the Obsidian Vault."""
 
+import datetime
+import json
+import re
 from pathlib import Path
 
 from langchain_openai import ChatOpenAI
@@ -75,6 +78,28 @@ class NewArticleCreationAgent(BaseAgent):
             # Get LLM suggestions for new articles
             response = self.llm.invoke(analysis_prompt)
             article_suggestions = self._parse_article_suggestions(response.content)
+
+            # Check if parsing failed (malformed response)
+            if article_suggestions is None:
+                return AgentResult(
+                    success=False,
+                    changes=[],
+                    message="Failed to parse LLM response: malformed JSON",
+                    metadata={"error": "malformed_json"},
+                )
+
+            # Check if no articles were suggested
+            if len(article_suggestions) == 0:
+                return AgentResult(
+                    success=True,
+                    changes=[],
+                    message="No new articles needed based on vault analysis",
+                    metadata={
+                        "articles_created": 0,
+                        "vault_articles_count": total_articles,
+                        "categories_analyzed": len(categories),
+                    },
+                )
 
             # Generate content for each suggested article
             changes = []
@@ -155,7 +180,7 @@ Format your response as a JSON array:
 """
         return prompt
 
-    def _parse_article_suggestions(self, llm_response: str) -> list[dict]:
+    def _parse_article_suggestions(self, llm_response: str) -> list[dict] | None:
         """
         Parse LLM response to extract article suggestions.
 
@@ -163,11 +188,8 @@ Format your response as a JSON array:
             llm_response: Raw response from LLM
 
         Returns:
-            List of article suggestion dictionaries
+            List of article suggestion dictionaries, or None if parsing fails
         """
-        import json
-        import re
-
         # Try to extract JSON from the response
         json_match = re.search(r"\[.*\]", llm_response, re.DOTALL)
         if json_match:
@@ -187,10 +209,10 @@ Format your response as a JSON array:
                         )
                 return valid_suggestions[:3]  # Limit to 3 articles max
             except json.JSONDecodeError:
-                pass
+                return None
 
-        # Fallback: return empty list if parsing fails
-        return []
+        # Fallback: return None if parsing fails
+        return None
 
     def _generate_article_content(self, suggestion: dict, vault_summary: dict) -> str:
         """
@@ -228,8 +250,6 @@ Format as a complete markdown file ready to save.
             # Ensure frontmatter is present
             if not content.startswith("---"):
                 # Add minimal frontmatter
-                import datetime
-
                 frontmatter = f"""---
 title: {suggestion['title']}
 category: {suggestion['category']}
@@ -243,8 +263,6 @@ created: {datetime.datetime.now().strftime('%Y-%m-%d')}
 
         except Exception:
             # Fallback to minimal article structure
-            import datetime
-
             return f"""---
 title: {suggestion['title']}
 category: {suggestion['category']}

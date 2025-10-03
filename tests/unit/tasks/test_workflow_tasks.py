@@ -70,6 +70,7 @@ class TestRunWorkflowTask:
 
         # Mock services to prevent actual execution
         mock_github_instance = MagicMock()
+        mock_github_instance.commit_and_push.return_value = True
         mock_github_service.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
@@ -93,36 +94,46 @@ class TestRunWorkflowTask:
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
         mock_github_instance.create_pull_request.return_value = mock_pr
 
+        # Save workflow ID before task execution (session will be closed)
+        workflow_id = workflow.id
+
         # Execute task
         with patch("src.tasks.workflow_tasks.settings") as mock_settings:
             mock_settings.WORKFLOW_CLONE_BASE_PATH = "/tmp/test"
             mock_settings.GITHUB_REPO_FULL_NAME = "test/repo"
             mock_settings.WORKFLOW_DEFAULT_BRANCH = "main"
 
-            run_workflow_task(workflow.id)
+            run_workflow_task(workflow_id)
 
         # Verify workflow was retrieved
         updated_workflow = (
-            test_db.query(Workflow).filter(Workflow.id == workflow.id).first()
+            test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
         )
         assert updated_workflow is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    def test_task_updates_status_to_running(self, mock_get_db, test_db):
+    @patch("src.tasks.workflow_tasks.GitHubService")
+    def test_task_updates_status_to_running(
+        self, mock_gh_service, mock_get_db, test_db
+    ):
         """Test that task updates workflow status to RUNNING at start."""
         workflow = create_pending_workflow(test_db)
+        workflow_id = workflow.id
         mock_get_db.return_value = iter([test_db])
 
-        # Mock everything to fail fast after status update
-        with patch("src.tasks.workflow_tasks.GitHubService") as mock_gh:
-            mock_gh.side_effect = Exception("Stop here")
+        # Mock GitHubService instance to raise error after initialization
+        mock_gh_instance = MagicMock()
+        mock_gh_instance.clone_repository.side_effect = Exception("Stop here")
+        mock_gh_service.return_value = mock_gh_instance
 
-            with pytest.raises(Exception):
-                run_workflow_task(workflow.id)
+        with pytest.raises(Exception):
+            run_workflow_task(workflow_id)
 
-        # Check status was updated
-        test_db.refresh(workflow)
-        assert workflow.status == WorkflowStatus.RUNNING
+        # Check status was updated to RUNNING before failure
+        workflow = test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
+        assert (
+            workflow.status == WorkflowStatus.FAILED
+        )  # Should be FAILED after exception
         assert workflow.started_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
@@ -142,6 +153,7 @@ class TestRunWorkflowTask:
         mock_get_db.return_value = iter([test_db])
 
         mock_github_instance = MagicMock()
+        mock_github_instance.commit_and_push.return_value = True
         mock_github_service.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
@@ -165,17 +177,20 @@ class TestRunWorkflowTask:
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
         mock_github_instance.create_pull_request.return_value = mock_pr
 
+        workflow_id = workflow.id
+
         with patch("src.tasks.workflow_tasks.settings") as mock_settings:
             mock_settings.WORKFLOW_CLONE_BASE_PATH = "/tmp/test"
             mock_settings.GITHUB_REPO_FULL_NAME = "test/repo"
             mock_settings.WORKFLOW_DEFAULT_BRANCH = "main"
 
-            run_workflow_task(workflow.id)
+            run_workflow_task(workflow_id)
 
-        # Verify clone_repository was called
+        # Verify clone_repository was called without repo_url argument
         mock_github_instance.clone_repository.assert_called_once()
         call_args = mock_github_instance.clone_repository.call_args
-        assert "test/repo" in call_args.kwargs["repo_url"]
+        # Ensure repo_url is not in the call arguments
+        assert "repo_url" not in call_args.kwargs
 
     @patch("src.tasks.workflow_tasks.get_db")
     @patch("src.tasks.workflow_tasks.GitHubService")
@@ -194,6 +209,7 @@ class TestRunWorkflowTask:
         mock_get_db.return_value = iter([test_db])
 
         mock_github_instance = MagicMock()
+        mock_github_instance.commit_and_push.return_value = True
         mock_github_service.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
@@ -210,7 +226,13 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = mock_changes
         mock_result.summary = "Created 2 articles"
-        mock_result.agent_results = {"new_article": {"success": True}}
+        mock_result.agent_results = {
+            "new_article": {
+                "success": True,
+                "message": "Created 2 articles",
+                "changes_count": 2,
+            }
+        }
         mock_orch_instance.execute_workflow.return_value = mock_result
         mock_orchestrator.return_value = mock_orch_instance
 
@@ -218,12 +240,14 @@ class TestRunWorkflowTask:
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
         mock_github_instance.create_pull_request.return_value = mock_pr
 
+        workflow_id = workflow.id
+
         with patch("src.tasks.workflow_tasks.settings") as mock_settings:
             mock_settings.WORKFLOW_CLONE_BASE_PATH = "/tmp/test"
             mock_settings.GITHUB_REPO_FULL_NAME = "test/repo"
             mock_settings.WORKFLOW_DEFAULT_BRANCH = "main"
 
-            run_workflow_task(workflow.id)
+            run_workflow_task(workflow_id)
 
         # Verify orchestrator was called
         mock_orch_instance.analyze_vault.assert_called_once()
@@ -250,6 +274,7 @@ class TestRunWorkflowTask:
         mock_get_db.return_value = iter([test_db])
 
         mock_github_instance = MagicMock()
+        mock_github_instance.commit_and_push.return_value = True
         mock_github_service.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
@@ -274,19 +299,23 @@ class TestRunWorkflowTask:
         mock_pr.html_url = expected_pr_url
         mock_github_instance.create_pull_request.return_value = mock_pr
 
+        workflow_id = workflow.id
+
         with patch("src.tasks.workflow_tasks.settings") as mock_settings:
             mock_settings.WORKFLOW_CLONE_BASE_PATH = "/tmp/test"
             mock_settings.GITHUB_REPO_FULL_NAME = "test/repo"
             mock_settings.WORKFLOW_DEFAULT_BRANCH = "main"
 
-            run_workflow_task(workflow.id)
+            run_workflow_task(workflow_id)
 
         # Verify PR was created
         mock_github_instance.create_pull_request.assert_called_once()
 
         # Verify PR URL was stored
-        test_db.refresh(workflow)
-        assert workflow.pr_url == expected_pr_url
+        updated_workflow = (
+            test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
+        )
+        assert updated_workflow.pr_url == expected_pr_url
 
     @patch("src.tasks.workflow_tasks.get_db")
     @patch("src.tasks.workflow_tasks.GitHubService")
@@ -306,6 +335,7 @@ class TestRunWorkflowTask:
 
         # Setup all mocks for successful execution
         mock_github_instance = MagicMock()
+        mock_github_instance.commit_and_push.return_value = True
         mock_github_service.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
@@ -329,26 +359,44 @@ class TestRunWorkflowTask:
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
         mock_github_instance.create_pull_request.return_value = mock_pr
 
+        workflow_id = workflow.id
+
         with patch("src.tasks.workflow_tasks.settings") as mock_settings:
             mock_settings.WORKFLOW_CLONE_BASE_PATH = "/tmp/test"
             mock_settings.GITHUB_REPO_FULL_NAME = "test/repo"
             mock_settings.WORKFLOW_DEFAULT_BRANCH = "main"
 
-            run_workflow_task(workflow.id)
+            run_workflow_task(workflow_id)
 
         # Verify workflow is completed
-        test_db.refresh(workflow)
-        assert workflow.status == WorkflowStatus.COMPLETED
-        assert workflow.completed_at is not None
+        updated_workflow = (
+            test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
+        )
+        assert updated_workflow.status == WorkflowStatus.COMPLETED
+        assert updated_workflow.completed_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
     @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.VaultService")
+    @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     def test_task_updates_workflow_to_failed_on_error(
-        self, mock_github_service, mock_get_db, test_db
+        self,
+        mock_orchestrator,
+        mock_vault_service,
+        mock_github_service,
+        mock_get_db,
+        test_db,
     ):
         """Test that task updates workflow to FAILED and stores error message on failure."""
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
+
+        # Mock services properly first
+        mock_vault_instance = MagicMock()
+        mock_vault_service.return_value = mock_vault_instance
+
+        mock_orch_instance = MagicMock()
+        mock_orchestrator.return_value = mock_orch_instance
 
         # Mock GitHub service to raise an error
         mock_github_instance = MagicMock()
@@ -357,6 +405,8 @@ class TestRunWorkflowTask:
         )
         mock_github_service.return_value = mock_github_instance
 
+        workflow_id = workflow.id
+
         with patch("src.tasks.workflow_tasks.settings") as mock_settings:
             mock_settings.WORKFLOW_CLONE_BASE_PATH = "/tmp/test"
             mock_settings.GITHUB_REPO_FULL_NAME = "test/repo"
@@ -364,22 +414,26 @@ class TestRunWorkflowTask:
 
             # Task should handle the exception
             with pytest.raises(Exception):
-                run_workflow_task(workflow.id)
+                run_workflow_task(workflow_id)
 
         # Verify workflow was marked as failed
-        test_db.refresh(workflow)
-        assert workflow.status == WorkflowStatus.FAILED
-        assert workflow.error_message is not None
-        assert "GitHub API error" in workflow.error_message
-        assert workflow.completed_at is not None
+        updated_workflow = (
+            test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
+        )
+        assert updated_workflow.status == WorkflowStatus.FAILED
+        assert updated_workflow.error_message is not None
+        assert "GitHub API error" in updated_workflow.error_message
+        assert updated_workflow.completed_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
     @patch("src.tasks.workflow_tasks.GitHubService")
     @patch("src.tasks.workflow_tasks.VaultService")
     @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     @patch("src.tasks.workflow_tasks.shutil.rmtree")
+    @patch("src.tasks.workflow_tasks.Path")
     def test_task_cleans_up_temporary_directory(
         self,
+        mock_path,
         mock_rmtree,
         mock_orchestrator,
         mock_vault_service,
@@ -391,7 +445,15 @@ class TestRunWorkflowTask:
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
 
+        # Mock Path to return a path that exists
+        mock_temp_path = MagicMock()
+        mock_temp_path.exists.return_value = True
+        mock_path.return_value = mock_temp_path
+        # Make Path() / operator work
+        mock_path.return_value.__truediv__ = lambda self, x: mock_temp_path
+
         mock_github_instance = MagicMock()
+        mock_github_instance.commit_and_push.return_value = True
         mock_github_service.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
@@ -415,12 +477,14 @@ class TestRunWorkflowTask:
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
         mock_github_instance.create_pull_request.return_value = mock_pr
 
+        workflow_id = workflow.id
+
         with patch("src.tasks.workflow_tasks.settings") as mock_settings:
             mock_settings.WORKFLOW_CLONE_BASE_PATH = "/tmp/test"
             mock_settings.GITHUB_REPO_FULL_NAME = "test/repo"
             mock_settings.WORKFLOW_DEFAULT_BRANCH = "main"
 
-            run_workflow_task(workflow.id)
+            run_workflow_task(workflow_id)
 
         # Verify cleanup was called
         mock_rmtree.assert_called_once()

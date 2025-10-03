@@ -1,6 +1,7 @@
 """Celery tasks for executing Obsidian Vault workflows."""
 
 import shutil
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -66,9 +67,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
         temp_path = clone_base_path / f"workflow_{workflow_id}_{self.request.id}"
 
         # 5. Clone repository
-        repo_url = f"https://github.com/{settings.GITHUB_REPO_FULL_NAME}.git"
         github_service.clone_repository(
-            repo_url=repo_url,
             target_path=temp_path,
             branch=settings.WORKFLOW_DEFAULT_BRANCH,
         )
@@ -104,9 +103,22 @@ def run_workflow_task(self, workflow_id: int) -> None:
 
 Changes made by Obsidian Agents workflow #{workflow_id}
 """
-        github_service.commit_and_push(
+        pushed = github_service.commit_and_push(
             repo_path=temp_path, branch_name=branch_name, message=commit_message
         )
+
+        # If no changes were made, complete workflow successfully without creating PR
+        if not pushed:
+            workflow.status = WorkflowStatus.COMPLETED
+            workflow.completed_at = datetime.utcnow()
+            workflow.workflow_metadata = {
+                "agent_results": workflow_result.agent_results,
+                "total_changes": 0,
+                "branch_name": branch_name,
+                "message": "Workflow completed successfully with no changes to commit",
+            }
+            db.commit()
+            return
 
         # 12. Create pull request
         pr_title = f"Automated vault improvements ({workflow_plan.strategy})"
@@ -190,8 +202,6 @@ def cleanup_old_workflows() -> None:
         return
 
     # Clean up any workflow_* directories older than 1 day
-    import time
-
     current_time = time.time()
     for temp_dir in clone_base_path.glob("workflow_*"):
         if temp_dir.is_dir():
