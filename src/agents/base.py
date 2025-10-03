@@ -32,10 +32,11 @@ class FileChange:
 
     def __post_init__(self):
         """Validate that content is provided for CREATE and UPDATE actions."""
-        if self.action in (FileAction.CREATE, FileAction.UPDATE) and self.content is None:
-            raise ValueError(
-                f"Content must be provided for {self.action.value} action"
-            )
+        if (
+            self.action in (FileAction.CREATE, FileAction.UPDATE)
+            and self.content is None
+        ):
+            raise ValueError(f"Content must be provided for {self.action.value} action")
         if self.action == FileAction.DELETE and self.content is not None:
             raise ValueError("Content should not be provided for DELETE action")
 

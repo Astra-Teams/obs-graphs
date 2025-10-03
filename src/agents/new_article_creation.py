@@ -192,9 +192,7 @@ Format your response as a JSON array:
         # Fallback: return empty list if parsing fails
         return []
 
-    def _generate_article_content(
-        self, suggestion: dict, vault_summary: dict
-    ) -> str:
+    def _generate_article_content(self, suggestion: dict, vault_summary: dict) -> str:
         """
         Generate full article content based on suggestion.
 

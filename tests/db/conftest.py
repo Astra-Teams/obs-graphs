@@ -4,6 +4,7 @@ from typing import AsyncGenerator, Generator
 import pytest
 from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.config.settings import get_settings
@@ -25,6 +26,7 @@ def db_engine():
         - Drops all tables (drop_all) at session end.
     USE_SQLITE=false case (pstg-test):
         - Returns engine for PostgreSQL migrated by entrypoint.sh.
+        - Truncates all tables at session start to ensure clean state.
         - (Does not create/drop tables)
     """
     # Get engine initialized by application logic
@@ -33,6 +35,17 @@ def db_engine():
     if USE_SQLITE:
         # For SQLite mode, create all tables from models before tests
         Base.metadata.create_all(bind=engine)
+    else:
+        # For PostgreSQL mode, truncate all tables to ensure clean state
+        with engine.connect() as conn:
+            # Disable foreign key checks temporarily
+            conn.execute(text("SET session_replication_role = 'replica';"))
+            # Truncate all tables
+            for table in reversed(Base.metadata.sorted_tables):
+                conn.execute(text(f'TRUNCATE TABLE "{table.name}" CASCADE;'))
+            # Re-enable foreign key checks
+            conn.execute(text("SET session_replication_role = 'origin';"))
+            conn.commit()
 
     yield engine
 

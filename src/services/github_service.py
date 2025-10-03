@@ -1,10 +1,8 @@
 """Service for GitHub App authentication and repository operations."""
 
-import time
 from pathlib import Path
 from typing import Optional
 
-import jwt
 from git import Repo
 from github import Auth, Github, GithubException
 from github.PullRequest import PullRequest
@@ -41,11 +39,13 @@ class GitHubService:
             return self._github_client
 
         # Validate required settings
-        if not all([
-            self.settings.GITHUB_APP_ID,
-            self.settings.GITHUB_APP_PRIVATE_KEY_PATH,
-            self.settings.GITHUB_INSTALLATION_ID,
-        ]):
+        if not all(
+            [
+                self.settings.GITHUB_APP_ID,
+                self.settings.GITHUB_APP_PRIVATE_KEY_PATH,
+                self.settings.GITHUB_INSTALLATION_ID,
+            ]
+        ):
             raise ValueError(
                 "GitHub App credentials not configured. Set GITHUB_APP_ID, "
                 "GITHUB_APP_PRIVATE_KEY_PATH, and GITHUB_INSTALLATION_ID."
@@ -62,19 +62,8 @@ class GitHubService:
             private_key = key_file.read()
 
         # Generate JWT for GitHub App authentication
-        payload = {
-            "iat": int(time.time()),
-            "exp": int(time.time()) + 600,  # JWT expires in 10 minutes
-            "iss": self.settings.GITHUB_APP_ID,
-        }
-
-        jwt_token = jwt.encode(payload, private_key, algorithm="RS256")
-
         # Authenticate as GitHub App
-        auth = Auth.AppAuth(
-            app_id=self.settings.GITHUB_APP_ID,
-            private_key=private_key
-        )
+        auth = Auth.AppAuth(app_id=self.settings.GITHUB_APP_ID, private_key=private_key)
         github_app = Github(auth=auth)
 
         # Get installation access token
@@ -92,10 +81,7 @@ class GitHubService:
             raise Exception(f"Failed to authenticate with GitHub: {e}")
 
     def clone_repository(
-        self,
-        repo_url: str,
-        target_path: Path,
-        branch: str = "main"
+        self, repo_url: str, target_path: Path, branch: str = "main"
     ) -> None:
         """
         Clone repository to local path using git commands.
@@ -111,9 +97,7 @@ class GitHubService:
         try:
             # Ensure target directory doesn't exist
             if target_path.exists():
-                raise FileExistsError(
-                    f"Target path already exists: {target_path}"
-                )
+                raise FileExistsError(f"Target path already exists: {target_path}")
 
             # Create parent directory if needed
             target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -123,7 +107,7 @@ class GitHubService:
                 repo_url,
                 target_path,
                 branch=branch,
-                depth=1  # Shallow clone for efficiency
+                depth=1,  # Shallow clone for efficiency
             )
 
             # Ensure we're on the correct branch
@@ -162,12 +146,7 @@ class GitHubService:
         except Exception as e:
             raise Exception(f"Failed to create branch '{branch_name}': {e}")
 
-    def commit_and_push(
-        self,
-        repo_path: Path,
-        branch_name: str,
-        message: str
-    ) -> None:
+    def commit_and_push(self, repo_path: Path, branch_name: str, message: str) -> None:
         """
         Stage all changes, commit, and push to remote branch.
 
@@ -201,9 +180,7 @@ class GitHubService:
             origin.push(refspec=f"{branch_name}:{branch_name}")
 
         except Exception as e:
-            raise Exception(
-                f"Failed to commit and push to branch '{branch_name}': {e}"
-            )
+            raise Exception(f"Failed to commit and push to branch '{branch_name}': {e}")
 
     def create_pull_request(
         self,
@@ -211,7 +188,7 @@ class GitHubService:
         head_branch: str,
         title: str,
         body: str,
-        base_branch: Optional[str] = None
+        base_branch: Optional[str] = None,
     ) -> PullRequest:
         """
         Create pull request via GitHub API.
@@ -239,10 +216,7 @@ class GitHubService:
 
             # Create pull request
             pr = repo.create_pull(
-                title=title,
-                body=body,
-                head=head_branch,
-                base=base_branch
+                title=title, body=body, head=head_branch, base=base_branch
             )
 
             return pr
@@ -261,9 +235,9 @@ class GitHubService:
             HTTPS clone URL with authentication token embedded.
         """
         github_client = self.authenticate()
-        
+
         # Get the installation access token
         token = github_client._Github__requester.auth.token
-        
+
         # Construct authenticated URL
         return f"https://x-access-token:{token}@github.com/{repo_full_name}.git"

@@ -92,7 +92,6 @@ class WorkflowOrchestrator:
         vault_summary = self._get_vault_summary(vault_path)
 
         total_articles = vault_summary.get("total_articles", 0)
-        categories = vault_summary.get("categories", [])
 
         # Determine strategy based on vault state
         if total_articles < 5:
@@ -271,7 +270,9 @@ class WorkflowOrchestrator:
         # Get recent updates (last 5 modified files)
         recent_updates = []
         if md_files:
-            sorted_files = sorted(md_files, key=lambda f: f.stat().st_mtime, reverse=True)
+            sorted_files = sorted(
+                md_files, key=lambda f: f.stat().st_mtime, reverse=True
+            )
             recent_updates = [f.name for f in sorted_files[:5]]
 
         return {

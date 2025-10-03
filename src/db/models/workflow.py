@@ -18,10 +18,10 @@ from src.db.database import Base
 class WorkflowStatus(enum.Enum):
     """Enum for workflow execution status."""
 
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
 
 
 class Workflow(Base):

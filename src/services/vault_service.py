@@ -1,11 +1,10 @@
 """Service for managing Obsidian Vault file operations."""
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from src.agents.base import FileChange, FileAction
+from src.agents.base import FileAction, FileChange
 
 
 @dataclass
@@ -94,9 +93,7 @@ class VaultService:
         ]
 
         # Get 5 most recently modified markdown files
-        sorted_files = sorted(
-            all_files, key=lambda f: f.stat().st_mtime, reverse=True
-        )
+        sorted_files = sorted(all_files, key=lambda f: f.stat().st_mtime, reverse=True)
         recent_updates = [str(f.relative_to(vault_path)) for f in sorted_files[:5]]
 
         return VaultSummary(

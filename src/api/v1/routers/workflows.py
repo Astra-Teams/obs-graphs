@@ -148,9 +148,9 @@ async def get_workflow(
         status=workflow.status.value,
         strategy=workflow.strategy,
         started_at=workflow.started_at.isoformat() if workflow.started_at else None,
-        completed_at=workflow.completed_at.isoformat()
-        if workflow.completed_at
-        else None,
+        completed_at=(
+            workflow.completed_at.isoformat() if workflow.completed_at else None
+        ),
         pr_url=workflow.pr_url,
         error_message=workflow.error_message,
         celery_task_id=workflow.celery_task_id,
@@ -162,7 +162,7 @@ async def get_workflow(
 async def list_workflows(
     status: Optional[str] = Query(
         None,
-        description="Filter by workflow status (pending, running, completed, failed)",
+        description="Filter by workflow status (PENDING, RUNNING, COMPLETED, FAILED)",
     ),
     limit: int = Query(
         10,
@@ -200,12 +200,12 @@ async def list_workflows(
     # Apply status filter if provided
     if status:
         try:
-            status_enum = WorkflowStatus(status.lower())
+            status_enum = WorkflowStatus(status)
             query = query.filter(Workflow.status == status_enum)
         except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid status '{status}'. Must be one of: pending, running, completed, failed",
+                detail=f"Invalid status '{status}'. Must be one of: PENDING, RUNNING, COMPLETED, FAILED",
             )
 
     # Get total count
@@ -213,10 +213,7 @@ async def list_workflows(
 
     # Apply pagination and ordering
     workflows = (
-        query.order_by(Workflow.created_at.desc())
-        .offset(offset)
-        .limit(limit)
-        .all()
+        query.order_by(Workflow.created_at.desc()).offset(offset).limit(limit).all()
     )
 
     # Convert to response models

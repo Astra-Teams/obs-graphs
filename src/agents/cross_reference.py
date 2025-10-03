@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence, Set, Tuple
+from typing import Dict, List, Sequence, Set, Tuple
 
 from src.agents.base import AgentResult, BaseAgent, FileAction, FileChange
 
@@ -60,7 +60,9 @@ class CrossReferenceAgent(BaseAgent):
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
         if not self.validate_input(context):
-            raise ValueError("Invalid execution context provided to CrossReferenceAgent")
+            raise ValueError(
+                "Invalid execution context provided to CrossReferenceAgent"
+            )
 
         note_profiles = self._collect_note_profiles(vault_path)
         if not note_profiles:
@@ -95,7 +97,9 @@ class CrossReferenceAgent(BaseAgent):
             )
 
         message = (
-            "Added cross-references to notes." if changes else "No new cross-references needed."
+            "Added cross-references to notes."
+            if changes
+            else "No new cross-references needed."
         )
 
         metadata = {
@@ -104,7 +108,9 @@ class CrossReferenceAgent(BaseAgent):
             "links_added": total_links_added,
         }
 
-        return AgentResult(success=True, changes=changes, message=message, metadata=metadata)
+        return AgentResult(
+            success=True, changes=changes, message=message, metadata=metadata
+        )
 
     def validate_input(self, context: dict) -> bool:
         if not isinstance(context, dict):
@@ -223,7 +229,9 @@ class CrossReferenceAgent(BaseAgent):
         # Collect existing entries within the related section.
         existing_entries: Set[str] = set()
         insertion_index = related_header_index + 1
-        while insertion_index < len(lines) and not lines[insertion_index].startswith("## "):
+        while insertion_index < len(lines) and not lines[insertion_index].startswith(
+            "## "
+        ):
             line = lines[insertion_index].strip()
             link_match = re.search(r"\[\[([^\]]+)\]\]", line)
             if link_match:
@@ -261,7 +269,11 @@ class CrossReferenceAgent(BaseAgent):
                 keyword_source.append(stripped.lstrip("# "))
         keyword_source_text = " ".join(keyword_source).lower()
         tokens = re.findall(r"[a-z0-9']+", keyword_source_text)
-        keywords = {token for token in tokens if len(token) > 2 and token not in self._STOP_WORDS}
+        keywords = {
+            token
+            for token in tokens
+            if len(token) > 2 and token not in self._STOP_WORDS
+        }
         return keywords
 
     def _extract_existing_links(self, content: str) -> Set[str]:
@@ -284,7 +296,10 @@ class CrossReferenceAgent(BaseAgent):
         reference = reference.strip().replace("\\", "/")
         if reference in profiles_by_path:
             return reference
-        if reference.lower().endswith(".md") and reference[:-3] + ".md" in profiles_by_path:
+        if (
+            reference.lower().endswith(".md")
+            and reference[:-3] + ".md" in profiles_by_path
+        ):
             return reference[:-3] + ".md"
         for relative_path in profiles_by_path:
             if relative_path.endswith(reference):
