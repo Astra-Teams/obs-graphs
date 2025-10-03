@@ -1,0 +1,21 @@
+name: Run Docker Tests
+
+on:
+  workflow_call:
+
+jobs:
+  run-docker-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test_target: [build-test, pstg-test, e2e-test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Test Environment
+        uses: ./.github/actions/setup-test-env
+
+      - name: Run docker tests (USE_SQLITE=false)
+        run: just ${{ matrix.test_target }}

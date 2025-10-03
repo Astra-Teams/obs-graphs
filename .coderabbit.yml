@@ -1,0 +1,41 @@
+language: "en"
+
+reviews:
+  high_level_summary: true
+  auto_review:
+    enabled: true
+
+chat:
+  auto_reply: true
+
+# Specify file patterns to exclude from review
+path_filters:
+  # Virtual environment
+  - "!**/venv/**"
+  - "!**/.venv/**"
+
+  # Django / ORM migration files
+  - "!**/migrations/**"
+
+  # Cache / build related files
+  - "!**/__pycache__/**"
+  - "!**/.pytest_cache/**"
+  - "!**/.cache/**"
+
+  # Static files / media files
+  - "!**/static/**"
+  - "!**/media/**"
+  - "!**/*.png"
+  - "!**/*.jpg"
+  - "!**/*.svg"
+  - "!**/*.css"
+  - "!**/*.js"
+
+  # Environment variables / secret files
+  - "!**/.env"
+
+  # Frontend build output directory
+  - "!**/.next/**"
+  - "!**/dist/**"
+  - "!**/.nuxt/**"
+  - "!**/.webpack/**"

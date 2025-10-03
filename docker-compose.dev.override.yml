@@ -1,0 +1,15 @@
+services:
+  db:
+    environment:
+      - POSTGRES_DB=${POSTGRES_DEV_DB}
+
+  api:
+    build:
+      target: development
+    ports: !override
+      - "${HOST_BIND_IP}:${DEV_PORT}:8000"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DEV_DB}
+    volumes:
+      - .:/app
+      - /app/.venv

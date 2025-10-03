@@ -1,0 +1,23 @@
+name: Run Local Tests
+
+on:
+  workflow_call:
+
+jobs:
+  run-local-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test_target: [unit-test, sqlt-test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Test Environment
+        uses: ./.github/actions/setup-test-env
+
+      - name: Run local tests
+        env:
+          USE_SQLITE: "true"
+        run: just ${{ matrix.test_target }}

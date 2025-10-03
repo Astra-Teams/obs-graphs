@@ -1,0 +1,18 @@
+name: CI Workflows
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  format-and-lint:
+    uses: ./.github/workflows/format-and-lint.yml
+
+  run-local-tests:
+    uses: ./.github/workflows/run-local-tests.yml
+
+  run-docker-tests:
+    uses: ./.github/workflows/run-docker-tests.yml

@@ -1,0 +1,44 @@
+services:
+  db:
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_HOST_DB}
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_HOST_DB}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "${HOST_BIND_IP}:${HOST_PORT}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - USE_SQLITE=false
+      - POSTGRES_DB=${POSTGRES_HOST_DB}
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import sys, urllib.request; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/health').getcode() == 200 else sys.exit(1)" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres-db:
+    driver: local
+    name: ${PROJECT_NAME}-postgres-db-prod
+    external: false

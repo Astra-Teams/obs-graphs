@@ -1,0 +1,14 @@
+services:
+  db:
+    ports:
+      - "${HOST_BIND_IP}:5432:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_TEST_DB}
+
+  api:
+    build:
+      target: development
+    ports: !override
+      - "${HOST_BIND_IP}:${TEST_PORT}:8000"
+    environment:
+      - POSTGRES_DB=${POSTGRES_TEST_DB}
