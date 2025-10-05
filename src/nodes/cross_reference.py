@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Dict, List, Sequence, Set, Tuple
 
 from src.nodes.base import BaseAgent
-from src.prompts import render_prompt
 from src.state import AgentResult, FileAction, FileChange
 
 

@@ -62,7 +62,7 @@ class DependencyContainer:
         if name not in self._nodes:
             if name not in self._node_classes:
                 raise ValueError(f"Unknown node: {name}")
-            
+
             # Instantiate with dependencies
             if name == "new_article_creation":
                 self._nodes[name] = self._node_classes[name](self.get_llm())

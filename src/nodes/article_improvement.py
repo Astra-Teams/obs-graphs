@@ -28,7 +28,9 @@ class ArticleImprovementAgent(BaseAgent):
         """
         # TODO: Implement the actual logic based on obsidian-agents/3-existing-article-improvement.md
         # This is a placeholder implementation that demonstrates prompt loading
-        prompt = render_prompt("article_improvement", article_content="", vault_summary={}, categories=[])
+        prompt = render_prompt(
+            "article_improvement", article_content="", vault_summary={}, categories=[]
+        )
         return AgentResult(
             success=True,
             changes=[],

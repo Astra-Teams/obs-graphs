@@ -5,12 +5,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.state import AgentResult
 from src.graph.builder import (
     GraphBuilder,
     WorkflowPlan,
     WorkflowResult,
 )
+from src.state import AgentResult
 
 
 class MockAgent(MagicMock):

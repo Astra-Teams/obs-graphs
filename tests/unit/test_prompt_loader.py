@@ -12,7 +12,7 @@ def test_render_prompt_with_context():
         "article_improvement",
         article_content="# Test Article\nThis is a test.",
         vault_summary="Test vault with 10 articles",
-        categories=["category1", "category2"]
+        categories=["category1", "category2"],
     )
 
     # Assert

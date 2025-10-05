@@ -14,7 +14,9 @@ def container():
 
 
 @patch("src.container.GithubClient")
-def test_get_github_client_lazy_instantiation(mock_github_client, container: DependencyContainer):
+def test_get_github_client_lazy_instantiation(
+    mock_github_client, container: DependencyContainer
+):
     """Test that github client is lazily instantiated."""
     # Arrange
     mock_instance = MagicMock()
@@ -31,7 +33,9 @@ def test_get_github_client_lazy_instantiation(mock_github_client, container: Dep
 
 
 @patch("src.container.VaultService")
-def test_get_vault_service_lazy_instantiation(mock_vault_service, container: DependencyContainer):
+def test_get_vault_service_lazy_instantiation(
+    mock_vault_service, container: DependencyContainer
+):
     """Test that vault service is lazily instantiated."""
     # Arrange
     mock_instance = MagicMock()
@@ -49,7 +53,9 @@ def test_get_vault_service_lazy_instantiation(mock_vault_service, container: Dep
 
 @patch("src.container.get_settings")
 @patch("src.container.Ollama")
-def test_get_llm_lazy_instantiation(mock_ollama, mock_get_settings, container: DependencyContainer):
+def test_get_llm_lazy_instantiation(
+    mock_ollama, mock_get_settings, container: DependencyContainer
+):
     """Test that LLM is lazily instantiated."""
     # Arrange
     mock_settings = MagicMock()
@@ -89,7 +95,9 @@ def test_get_node_invalid_name(container: DependencyContainer):
 
 @patch("src.container.get_settings")
 @patch("src.container.Ollama")
-def test_get_node_new_article_creation_with_llm(mock_ollama, mock_get_settings, container: DependencyContainer):
+def test_get_node_new_article_creation_with_llm(
+    mock_ollama, mock_get_settings, container: DependencyContainer
+):
     """Test that new_article_creation node is instantiated with LLM."""
     # Arrange
     mock_settings = MagicMock()
