@@ -60,6 +60,7 @@ def test_get_llm_lazy_instantiation(
     # Arrange
     mock_settings = MagicMock()
     mock_settings.OLLAMA_MODEL = "test-model"
+    mock_settings.OLLAMA_BASE_URL = "http://test-url"
     mock_get_settings.return_value = mock_settings
     mock_instance = MagicMock()
     mock_ollama.return_value = mock_instance
@@ -71,7 +72,9 @@ def test_get_llm_lazy_instantiation(
     # Assert
     assert llm1 is llm2
     assert llm1 is mock_instance
-    mock_ollama.assert_called_once_with(model="test-model")
+    mock_ollama.assert_called_once_with(
+        model="test-model", base_url="http://test-url"
+    )
 
 
 def test_get_node_valid_name(container: DependencyContainer):
@@ -102,6 +105,7 @@ def test_get_node_new_article_creation_with_llm(
     # Arrange
     mock_settings = MagicMock()
     mock_settings.OLLAMA_MODEL = "test-model"
+    mock_settings.OLLAMA_BASE_URL = "http://test-url"
     mock_get_settings.return_value = mock_settings
     mock_llm = MagicMock()
     mock_ollama.return_value = mock_llm
@@ -112,7 +116,9 @@ def test_get_node_new_article_creation_with_llm(
     # Assert
     assert node is not None
     # Verify that get_llm was called (since it's lazy, it should be called during get_node)
-    mock_ollama.assert_called_once_with(model="test-model")
+    mock_ollama.assert_called_once_with(
+        model="test-model", base_url="http://test-url"
+    )
 
 
 @patch("src.container.GraphBuilder")

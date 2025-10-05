@@ -24,19 +24,3 @@ app = FastAPI(
 
 # Include routers
 app.include_router(workflows_router, prefix="/api/v1", tags=["workflows"])
-
-
-@app.get("/")
-async def hello_world():
-    """
-    Hello World endpoint.
-    """
-    return {"message": "Hello World"}
-
-
-@app.get("/health")
-async def health_check():
-    """
-    Simple health check endpoint to confirm the API is running.
-    """
-    return {"status": "ok"}
