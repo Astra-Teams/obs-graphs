@@ -3,10 +3,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Dict, List, Optional, TypedDict
-
-from langgraph.graph.message import add_messages
-from pydantic import BaseModel, ConfigDict
+from typing import Dict, List, Optional, TypedDict
 
 
 class FileAction(str, Enum):
@@ -19,21 +16,13 @@ class FileAction(str, Enum):
 
 @dataclass
 class FileChange:
-    """
-    Represents a file change to be applied to the vault.
-
-    Attributes:
-        path: Relative path to the file within the vault
-        action: Type of operation (CREATE, UPDATE, DELETE)
-        content: New content for the file (required for CREATE/UPDATE, None for DELETE)
-    """
+    """Represents a file change to be applied to the vault."""
 
     path: str
     action: FileAction
     content: Optional[str] = None
 
-    def __post_init__(self):
-        """Validate that content is provided for CREATE and UPDATE actions."""
+    def __post_init__(self) -> None:
         if (
             self.action in (FileAction.CREATE, FileAction.UPDATE)
             and self.content is None
@@ -45,15 +34,7 @@ class FileChange:
 
 @dataclass
 class AgentResult:
-    """
-    Result returned by agent execution.
-
-    Attributes:
-        success: Whether the agent execution completed successfully
-        changes: List of file changes to apply to the vault
-        message: Human-readable description of what the agent did
-        metadata: Additional information about the execution (e.g., metrics, warnings)
-    """
+    """Result returned by node execution."""
 
     success: bool
     changes: List[FileChange]
@@ -61,67 +42,28 @@ class AgentResult:
     metadata: Dict = field(default_factory=dict)
 
 
-class WorkflowStrategy(str, Enum):
-    """Enumeration of available workflow strategies."""
-
-    NEW_ARTICLE = "new_article"
-    IMPROVEMENT = "improvement"
-
-
 @dataclass
 class VaultSummary:
-    """
-    Dataclass representing a summary of the vault's state.
-
-    Attributes:
-        total_articles: Total number of markdown files in the vault.
-        categories: List of top-level directories representing categories.
-        recent_updates: List of recently modified files.
-    """
+    """Dataclass representing a summary of the vault's state."""
 
     total_articles: int
     categories: List[str]
     recent_updates: List[str]
 
 
-class GraphState(TypedDict):
+class GraphState(TypedDict, total=False):
     """State passed between nodes in the workflow graph."""
 
     vault_path: Path
-    vault_summary: Dict
-    strategy: str
-    accumulated_changes: List[FileChange]
-    agent_results: Dict
-    messages: Annotated[List, add_messages]
-
-
-class VaultSummaryModel(BaseModel):
-    """Pydantic model for vault summary data."""
-
-    total_articles: int
-    categories: List[str]
-    recent_updates: List[str]
-
-
-class AgentResultModel(BaseModel):
-    """Pydantic model for agent execution results."""
-
-    success: bool
-    changes: List[FileChange]
-    message: str
-    metadata: Dict = {}
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-class GraphStateModel(BaseModel):
-    """Pydantic model for validating and serializing graph state."""
-
-    vault_path: str  # Path as string for serialization
-    vault_summary: VaultSummaryModel
-    strategy: WorkflowStrategy
-    accumulated_changes: List[FileChange]
-    agent_results: Dict[str, AgentResultModel]
+    requested_category: Optional[str]
+    available_categories: List[str]
+    selected_category: Optional[str]
+    category_content: str
+    keywords: List[str]
+    existing_titles: List[str]
+    themes: List[str]
+    selected_theme: Optional[str]
+    report_markdown: str
+    pull_request: Dict[str, str]
+    agent_results: Dict[str, Dict]
     messages: List[str]
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)

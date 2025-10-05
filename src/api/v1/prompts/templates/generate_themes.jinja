@@ -1,0 +1,20 @@
+You are designing new article ideas for an Obsidian knowledge base.
+Using the extracted keywords and existing article titles, propose fresh article themes
+that provide new perspectives and avoid duplicating current coverage.
+
+Guidelines:
+- Use the keywords as inspiration for the themes.
+- Avoid titles that already exist in the vault.
+- Each theme should be specific and actionable for a long-form article.
+- Return **only** valid JSON in the form:
+  {
+    "themes": ["theme 1", "theme 2", ...]
+  }
+
+Keywords:
+{% for keyword in keywords %}- {{ keyword }}
+{% endfor %}
+
+Existing article titles:
+{% if existing_titles %}{% for title in existing_titles %}- {{ title }}
+{% endfor %}{% else %}- (none){% endif %}

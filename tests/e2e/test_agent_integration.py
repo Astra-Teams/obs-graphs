@@ -44,7 +44,13 @@ def mock_llm(monkeypatch: pytest.MonkeyPatch, llm_responses: dict):
             )
 
     fake_llm = FakeLLM()
-    monkeypatch.setattr("src.api.v1.nodes.new_article_creation.Ollama", FakeLLM)
+    try:
+        monkeypatch.setattr(
+            "src.api.v1.nodes.new_article_creation.Ollama", FakeLLM
+        )
+    except ModuleNotFoundError:
+        # The legacy module has been removed in the simplified workflow.
+        pass
     return fake_llm
 
 

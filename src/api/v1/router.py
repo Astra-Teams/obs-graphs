@@ -1,242 +1,82 @@
-"""API endpoints for workflow management."""
-
 from datetime import datetime, timezone
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from src.api.v1.graph import GraphBuilder
 from src.api.v1.models.workflow import Workflow, WorkflowStatus
-from src.api.v1.schemas import (
-    WorkflowListResponse,
-    WorkflowResponse,
-    WorkflowRunRequest,
-    WorkflowRunResponse,
-)
+from src.api.v1.schemas import CreateNewArticleRequest, CreateNewArticleResponse
+from src.api.v1.tasks.workflow_tasks import run_workflow_task
 from src.db.database import get_db
-from src.settings import get_settings
 
 router = APIRouter()
 
 
-# Endpoints
-@router.post("/workflows/run", response_model=WorkflowRunResponse, status_code=201)
-async def run_workflow(
-    request: WorkflowRunRequest = WorkflowRunRequest(),
-    db: Session = Depends(get_db),
-) -> WorkflowRunResponse:
-    """
-    Run a new workflow execution synchronously or asynchronously.
-
-    Creates a new Workflow record in the database and executes the workflow.
-    If async_execution is True, queues the workflow for background execution.
-    If async_execution is False, executes synchronously.
-
-    Args:
-        request: Workflow run request with strategy and execution mode
-        db: Database session dependency
-
-    Returns:
-        WorkflowRunResponse with workflow ID, status, and message
-
-    Raises:
-        HTTPException: If workflow creation fails
-    """
+@router.post(
+    "/workflows/create-new-article",
+    response_model=CreateNewArticleResponse,
+    status_code=200,
+)
+async def create_new_article_workflow(
+    request: CreateNewArticleRequest, db: Session = Depends(get_db)
+) -> CreateNewArticleResponse:
     try:
-        # Create new workflow record with PENDING status
-        workflow = Workflow(
-            status=WorkflowStatus.PENDING,
-            strategy=request.strategy,
-        )
+        workflow = Workflow(status=WorkflowStatus.PENDING)
+        workflow.workflow_metadata = {
+            "request": request.model_dump(exclude_none=True)
+        }
         db.add(workflow)
         db.commit()
         db.refresh(workflow)
 
         if request.async_execution:
-            # Asynchronous execution using Celery
-            from src.api.v1.tasks.workflow_tasks import run_workflow_task
-
-            # Update status to RUNNING and queue task
             workflow.status = WorkflowStatus.RUNNING
             workflow.started_at = datetime.now(timezone.utc)
-            task = run_workflow_task.delay(workflow.id)
+            db.commit()
+
+            task = run_workflow_task.delay(workflow.id, request.model_dump())
             workflow.celery_task_id = task.id
             db.commit()
 
-            return WorkflowRunResponse(
+            return CreateNewArticleResponse(
                 id=workflow.id,
                 status=workflow.status,
-                celery_task_id=task.id,
                 message="Workflow queued for asynchronous execution",
+                celery_task_id=task.id,
             )
+
+        workflow.status = WorkflowStatus.RUNNING
+        workflow.started_at = datetime.now(timezone.utc)
+        db.commit()
+
+        graph_builder = GraphBuilder()
+        result = graph_builder.run_new_article_workflow(request)
+
+        if result.success:
+            workflow.status = WorkflowStatus.COMPLETED
+            workflow.pr_url = result.pr_url
+            workflow.workflow_metadata = {
+                "request": request.model_dump(exclude_none=True),
+                "result": result.metadata,
+            }
+            message = "Workflow completed successfully."
         else:
-            # Synchronous execution
-            # Update to RUNNING
-            workflow.status = WorkflowStatus.RUNNING
-            workflow.started_at = datetime.now(timezone.utc)
-            db.commit()
+            workflow.status = WorkflowStatus.FAILED
+            workflow.error_message = result.error or "Workflow execution failed."
+            message = workflow.error_message
 
-            # Create GraphBuilder and run workflow
-            graph_builder = GraphBuilder()
-            result = graph_builder.run_workflow(request)
+        workflow.completed_at = datetime.now(timezone.utc)
+        db.commit()
 
-            # Update workflow based on result
-            if result.success:
-                workflow.status = WorkflowStatus.COMPLETED
-                workflow.pr_url = result.pr_url
-                workflow.workflow_metadata = {
-                    "agent_results": result.agent_results,
-                    "total_changes": len(result.changes),
-                    "branch_name": result.branch_name,
-                }
-            else:
-                workflow.status = WorkflowStatus.FAILED
-                workflow.error_message = result.summary
-
-            workflow.completed_at = datetime.now(timezone.utc)
-            db.commit()
-
-            return WorkflowRunResponse(
-                id=workflow.id,
-                status=workflow.status,
-                celery_task_id=None,  # No Celery task for synchronous execution
-                message=(
-                    result.summary
-                    if result.success
-                    else f"Workflow failed: {result.summary}"
-                ),
-            )
-
-    except Exception as e:
+        return CreateNewArticleResponse(
+            id=workflow.id,
+            status=workflow.status,
+            message=message,
+            pull_request_title=result.pull_request_title,
+            pull_request_body=result.pull_request_body,
+            pr_url=result.pr_url,
+            details=result.metadata if result.success else None,
+        )
+    except Exception as exc:  # pragma: no cover - defensive guard
         db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to run workflow: {str(e)}",
-        )
-
-
-@router.get("/workflows/{workflow_id}", response_model=WorkflowResponse)
-async def get_workflow(
-    workflow_id: int,
-    db: Session = Depends(get_db),
-) -> WorkflowResponse:
-    """
-    Get details of a specific workflow.
-
-    Returns the workflow status, PR URL if completed, error message if failed,
-    and other workflow metadata.
-
-    Args:
-        workflow_id: ID of the workflow to retrieve
-        db: Database session dependency
-
-    Returns:
-        WorkflowResponse with workflow details
-
-    Raises:
-        HTTPException: 404 if workflow not found
-    """
-    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
-
-    if not workflow:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Workflow {workflow_id} not found",
-        )
-
-    return WorkflowResponse(
-        id=workflow.id,
-        status=workflow.status,
-        strategy=workflow.strategy,
-        started_at=workflow.started_at.isoformat() if workflow.started_at else None,
-        completed_at=(
-            workflow.completed_at.isoformat() if workflow.completed_at else None
-        ),
-        pr_url=workflow.pr_url,
-        error_message=workflow.error_message,
-        celery_task_id=workflow.celery_task_id,
-        created_at=workflow.created_at.isoformat(),
-    )
-
-
-@router.get("/workflows", response_model=WorkflowListResponse)
-async def list_workflows(
-    status: Optional[str] = Query(
-        None,
-        description="Filter by workflow status (PENDING, RUNNING, COMPLETED, FAILED)",
-    ),
-    limit: int = Query(
-        10,
-        ge=1,
-        le=get_settings().API_MAX_PAGE_SIZE,
-        description="Maximum number of workflows to return",
-    ),
-    offset: int = Query(
-        0,
-        ge=0,
-        description="Number of workflows to skip",
-    ),
-    db: Session = Depends(get_db),
-) -> WorkflowListResponse:
-    """
-    List workflows with pagination and filtering.
-
-    Returns a paginated list of workflows, optionally filtered by status.
-
-    Args:
-        status: Optional status filter (pending, running, completed, failed)
-        limit: Maximum number of results (1-100, default 10)
-        offset: Number of results to skip (default 0)
-        db: Database session dependency
-
-    Returns:
-        WorkflowListResponse with list of workflows and pagination info
-
-    Raises:
-        HTTPException: 400 if invalid status value provided
-    """
-    # Build query
-    query = db.query(Workflow)
-
-    # Apply status filter if provided
-    if status:
-        try:
-            status_enum = WorkflowStatus(status)
-            query = query.filter(Workflow.status == status_enum)
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid status '{status}'. Must be one of: PENDING, RUNNING, COMPLETED, FAILED",
-            )
-
-    # Get total count
-    total = query.count()
-
-    # Apply pagination and ordering
-    workflows = (
-        query.order_by(Workflow.created_at.desc()).offset(offset).limit(limit).all()
-    )
-
-    # Convert to response models
-    workflow_responses = [
-        WorkflowResponse(
-            id=w.id,
-            status=w.status,
-            strategy=w.strategy,
-            started_at=w.started_at.isoformat() if w.started_at else None,
-            completed_at=w.completed_at.isoformat() if w.completed_at else None,
-            pr_url=w.pr_url,
-            error_message=w.error_message,
-            celery_task_id=w.celery_task_id,
-            created_at=w.created_at.isoformat(),
-        )
-        for w in workflows
-    ]
-
-    return WorkflowListResponse(
-        workflows=workflow_responses,
-        total=total,
-        limit=limit,
-        offset=offset,
-    )
+        raise HTTPException(500, detail=f"Failed to trigger workflow: {exc}") from exc

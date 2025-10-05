@@ -1,4 +1,3 @@
-# src/api/v1/models/workflow.py
 import enum
 from datetime import datetime, timezone
 
@@ -25,12 +24,7 @@ class WorkflowStatus(enum.Enum):
 
 
 class Workflow(Base):
-    """
-    Database model for workflow tracking.
-
-    Tracks the lifecycle of automated Obsidian Vault improvement workflows,
-    from initial trigger to PR creation or failure.
-    """
+    """Database model for workflow tracking."""
 
     __tablename__ = "workflows"
 
@@ -41,7 +35,6 @@ class Workflow(Base):
         default=WorkflowStatus.PENDING,
         index=True,
     )
-    strategy = Column(String(100), nullable=True)
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     pr_url = Column(String(500), nullable=True)
@@ -52,5 +45,5 @@ class Workflow(Base):
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
     )
 
-    def __repr__(self):
-        return f"<Workflow(id={self.id}, status={self.status.value}, strategy={self.strategy})>"
+    def __repr__(self) -> str:  # pragma: no cover - debugging helper
+        return f"<Workflow(id={self.id}, status={self.status.value})>"

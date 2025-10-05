@@ -78,9 +78,7 @@ After these fixes, the workflow successfully ran, created a new branch, and open
 
 - `GET /` - Hello World
 - `GET /health` - Health check
-- `POST /api/v1/workflows/` - Create and execute workflows
-- `GET /api/v1/workflows/` - List workflow runs
-- `GET /api/v1/workflows/{id}` - Get workflow details
+- `POST /api/v1/workflows/create-new-article` - Trigger the new article workflow
 
 
 
@@ -94,12 +92,11 @@ src/
 │   ├── schemas.py             # Pydantic request/response models
 │   ├── models/                # Database models
 │   ├── nodes/                 # Processing nodes/agents
-│   │   ├── article_improvement.py
-│   │   ├── category_organization.py
-│   │   ├── cross_reference.py
-│   │   ├── file_organization.py
-│   │   ├── new_article_creation.py
-│   │   └── quality_audit.py
+│   │   ├── create_pull_request.py
+│   │   ├── deep_search_placeholder.py
+│   │   ├── extract_keywords.py
+│   │   ├── generate_themes.py
+│   │   └── select_category.py
 │   ├── prompts/               # LLM prompt templates
 │   └── tasks/                 # Celery background tasks
 │       └── workflow_tasks.py
