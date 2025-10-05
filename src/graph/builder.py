@@ -84,7 +84,7 @@ class GraphBuilder:
             # Empty or sparse vault - focus on new content
             strategy = "new_article"
             agents = [
-                "new_article",
+                "new_article_creation",
                 "file_organization",
                 "category_organization",
                 "quality_audit",

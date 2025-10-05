@@ -2,7 +2,10 @@
 
 from typing import Dict, Optional
 
+from langchain_community.llms import Ollama
+
 from src.clients.github_client import GithubClient
+from src.config.settings import get_settings
 from src.graph.builder import GraphBuilder
 from src.nodes.article_improvement import ArticleImprovementAgent
 from src.nodes.category_organization import CategoryOrganizationAgent
@@ -23,6 +26,7 @@ class DependencyContainer:
         self._vault_service: Optional[VaultServiceProtocol] = None
         self._nodes: Dict[str, NodeProtocol] = {}
         self._graph_builder = None  # Will be implemented in Phase 3
+        self._llm: Optional[Ollama] = None
 
         # Registry of node classes
         self._node_classes = {
@@ -46,12 +50,24 @@ class DependencyContainer:
             self._vault_service = VaultService()
         return self._vault_service
 
+    def get_llm(self) -> Ollama:
+        """Get the LLM instance."""
+        if self._llm is None:
+            settings = get_settings()
+            self._llm = Ollama(model=settings.OLLAMA_MODEL)
+        return self._llm
+
     def get_node(self, name: str) -> NodeProtocol:
         """Get a node instance by name."""
         if name not in self._nodes:
             if name not in self._node_classes:
                 raise ValueError(f"Unknown node: {name}")
-            self._nodes[name] = self._node_classes[name]()
+            
+            # Instantiate with dependencies
+            if name == "new_article_creation":
+                self._nodes[name] = self._node_classes[name](self.get_llm())
+            else:
+                self._nodes[name] = self._node_classes[name]()
         return self._nodes[name]
 
     def get_graph_builder(self):

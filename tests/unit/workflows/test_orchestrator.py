@@ -1,4 +1,4 @@
-"""Unit tests for the WorkflowOrchestrator."""
+"""Unit tests for the GraphBuilder."""
 
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.state import AgentResult
-from src.workflows import (
-    WorkflowOrchestrator,
+from src.graph.builder import (
+    GraphBuilder,
     WorkflowPlan,
     WorkflowResult,
 )
@@ -54,7 +54,7 @@ def mock_agents():
 
 @pytest.fixture
 def orchestrator(mock_agents):
-    """Return a WorkflowOrchestrator instance with mocked agents."""
+    """Return a GraphBuilder instance with mocked agents."""
     from src.container import get_container
 
     container = get_container()
@@ -62,7 +62,7 @@ def orchestrator(mock_agents):
 
 
 def test_analyze_vault_new_article_strategy(
-    orchestrator: WorkflowOrchestrator,
+    orchestrator: GraphBuilder,
     tmp_path: Path,
 ):
     """Test that analyze_vault determines the new_article strategy correctly."""
@@ -75,11 +75,11 @@ def test_analyze_vault_new_article_strategy(
     # Assert
     assert isinstance(plan, WorkflowPlan)
     assert plan.strategy == "new_article"
-    assert "new_article" in plan.agents
+    assert "new_article_creation" in plan.agents
 
 
 def test_analyze_vault_improvement_strategy(
-    orchestrator: WorkflowOrchestrator,
+    orchestrator: GraphBuilder,
     tmp_path: Path,
 ):
     """Test that analyze_vault determines the improvement strategy correctly."""
@@ -97,7 +97,7 @@ def test_analyze_vault_improvement_strategy(
     assert "article_improvement" in plan.agents
 
 
-def test_execute_workflow(orchestrator: WorkflowOrchestrator, tmp_path: Path):
+def test_execute_workflow(orchestrator: GraphBuilder, tmp_path: Path):
     """Test that execute_workflow runs agents and aggregates results."""
     # Arrange
     tmp_path.mkdir(exist_ok=True)
@@ -106,7 +106,7 @@ def test_execute_workflow(orchestrator: WorkflowOrchestrator, tmp_path: Path):
 
     plan = WorkflowPlan(
         strategy="test_plan",
-        agents=["new_article", "file_organization"],
+        agents=["new_article_creation", "file_organization"],
     )
 
     # Act
@@ -116,5 +116,5 @@ def test_execute_workflow(orchestrator: WorkflowOrchestrator, tmp_path: Path):
     assert isinstance(result, WorkflowResult)
     assert result.success
     assert len(result.agent_results) == 2
-    assert "new_article" in result.agent_results
+    assert "new_article_creation" in result.agent_results
     assert "file_organization" in result.agent_results

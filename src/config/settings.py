@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     WORKFLOW_DEFAULT_BRANCH: str = "main"
 
     # LLM Configuration
-    OPENAI_API_KEY: str = ""
+    OLLAMA_MODEL: str = "llama3.2:3b"
 
     @field_validator("GITHUB_APP_PRIVATE_KEY_PATH")
     @classmethod

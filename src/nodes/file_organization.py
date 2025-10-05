@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from src.nodes.base import BaseAgent
+from src.prompts import render_prompt
 from src.state import AgentResult
 
 
@@ -26,12 +27,13 @@ class FileOrganizationAgent(BaseAgent):
             AgentResult containing success status, file changes, and metadata.
         """
         # TODO: Implement the actual logic based on obsidian-agents/2-file-organization-and-markdown-formatting.md
-        # This is a placeholder implementation.
+        # This is a placeholder implementation that demonstrates prompt loading
+        prompt = render_prompt("file_organization", files=[], categories=[])
         return AgentResult(
             success=True,
             changes=[],
             message="File organization is not yet implemented.",
-            metadata={},
+            metadata={"prompt_loaded": bool(prompt)},
         )
 
     def validate_input(self, context: dict) -> bool:

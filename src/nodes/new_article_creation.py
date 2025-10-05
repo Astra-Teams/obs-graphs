@@ -5,10 +5,10 @@ import json
 import re
 from pathlib import Path
 
-from langchain_openai import ChatOpenAI
+from langchain_community.llms import Ollama
 
-from src.config.settings import get_settings
 from src.nodes.base import BaseAgent
+from src.prompts import render_prompt
 from src.state import AgentResult, FileAction, FileChange
 
 
@@ -21,14 +21,9 @@ class NewArticleCreationAgent(BaseAgent):
     article content based on vault analysis.
     """
 
-    def __init__(self):
+    def __init__(self, llm: Ollama):
         """Initialize the new article creation agent."""
-        settings = get_settings()
-        self.llm = ChatOpenAI(
-            model="gpt-4",
-            temperature=0.7,
-            api_key=settings.OPENAI_API_KEY,
-        )
+        self.llm = llm
 
     def get_name(self) -> str:
         """Get the name of this agent."""
@@ -146,40 +141,12 @@ class NewArticleCreationAgent(BaseAgent):
         Returns:
             Prompt string for LLM
         """
-        categories = vault_summary.get("categories", [])
-        total_articles = vault_summary.get("total_articles", 0)
-        recent_updates = vault_summary.get("recent_updates", [])
-
-        prompt = f"""Analyze this Obsidian Vault and suggest new articles to create.
-
-Vault Summary:
-- Total articles: {total_articles}
-- Categories: {', '.join(categories) if categories else 'None'}
-- Recent updates: {', '.join(recent_updates[:5]) if recent_updates else 'None'}
-
-Based on this analysis, suggest 1-3 new articles that would add value to this vault.
-Consider:
-1. Gaps in coverage across categories
-2. Topics that would connect well with existing content
-3. Foundational concepts that may be missing
-
-For each suggested article, provide:
-1. Title (clear and concise)
-2. Category (existing or new)
-3. Brief description of content focus
-4. Filename (in format: category/article-title.md)
-
-Format your response as a JSON array:
-[
-  {{
-    "title": "Article Title",
-    "category": "Category Name",
-    "description": "What this article should cover",
-    "filename": "category/article-title.md"
-  }}
-]
-"""
-        return prompt
+        return render_prompt(
+            "new_article_creation",
+            total_articles=vault_summary.get("total_articles", 0),
+            categories=vault_summary.get("categories", []),
+            recent_updates=vault_summary.get("recent_updates", []),
+        )
 
     def _parse_article_suggestions(self, llm_response: str) -> list[dict] | None:
         """
@@ -226,23 +193,12 @@ Format your response as a JSON array:
         Returns:
             Complete markdown content for the article
         """
-        content_prompt = f"""Create a comprehensive Obsidian markdown article with the following specifications:
-
-Title: {suggestion['title']}
-Category: {suggestion['category']}
-Description: {suggestion['description']}
-
-The article should:
-1. Start with a frontmatter section (YAML) including title, category, and creation date
-2. Have a clear introduction explaining the topic
-3. Include well-structured sections with headers
-4. Be informative and well-researched
-5. Use markdown formatting appropriately (headers, lists, code blocks, etc.)
-6. Leave placeholders for links to related articles (we'll add these later)
-7. Be between 300-800 words
-
-Format as a complete markdown file ready to save.
-"""
+        content_prompt = render_prompt(
+            "new_article_content",
+            title=suggestion["title"],
+            category=suggestion["category"],
+            description=suggestion["description"],
+        )
 
         try:
             response = self.llm.invoke(content_prompt)

@@ -42,11 +42,8 @@ def mock_llm(llm_responses):
 @pytest.fixture
 def agent(mock_llm):
     """Create NewArticleCreationAgent with mocked LLM."""
-    with patch("src.nodes.new_article_creation.ChatOpenAI") as mock_openai:
-        mock_openai.return_value = mock_llm
-        agent = NewArticleCreationAgent()
-        agent.llm = mock_llm
-        return agent
+    agent = NewArticleCreationAgent(mock_llm)
+    return agent
 
 
 @pytest.fixture
@@ -64,12 +61,12 @@ def basic_vault_context():
 class TestNewArticleCreationAgent:
     """Test suite for NewArticleCreationAgent."""
 
-    def test_agent_initialization(self):
+    def test_agent_initialization(self, mock_llm):
         """Test that agent can be initialized."""
-        with patch("src.nodes.new_article_creation.ChatOpenAI"):
-            agent = NewArticleCreationAgent()
-            assert agent is not None
-            assert hasattr(agent, "llm")
+        agent = NewArticleCreationAgent(mock_llm)
+        assert agent is not None
+        assert hasattr(agent, "llm")
+        assert agent.llm is mock_llm
 
     def test_get_name(self, agent):
         """Test that agent returns correct name."""

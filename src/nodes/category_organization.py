@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from src.nodes.base import BaseAgent
+from src.prompts import render_prompt
 from src.state import AgentResult
 
 
@@ -26,12 +27,13 @@ class CategoryOrganizationAgent(BaseAgent):
             AgentResult containing success status, file changes, and metadata.
         """
         # TODO: Implement the actual logic based on obsidian-agents/4-category-structure-organization.md
-        # This is a placeholder implementation.
+        # This is a placeholder implementation that demonstrates prompt loading
+        prompt = render_prompt("category_organization", vault_summary={})
         return AgentResult(
             success=True,
             changes=[],
             message="Category organization is not yet implemented.",
-            metadata={},
+            metadata={"prompt_loaded": bool(prompt)},
         )
 
     def validate_input(self, context: dict) -> bool:
