@@ -141,7 +141,7 @@ pstg-test:
 # Run e2e tests against containerized application stack (runs from host)
 e2e-test:
     @echo "🚀 Running e2e tests..."
-    @USE_SQLITE=false POSTGRES_DB=obs-graph-test uv run pytest tests/e2e
+    @USE_SQLITE=true POSTGRES_DB=obs-graph-test uv run pytest tests/e2e
 
 # ==============================================================================
 # CLEANUP

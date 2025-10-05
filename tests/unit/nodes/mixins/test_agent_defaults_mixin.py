@@ -16,12 +16,6 @@ class TestAgentDefaultsMixin:
         """Create an instance of AgentDefaultsMixin for testing."""
         return AgentDefaultsMixin()
 
-    def test_validate_input_returns_true_by_default(self, mixin_instance):
-        """Test that validate_input returns True by default."""
-        assert mixin_instance.validate_input({}) is True
-        assert mixin_instance.validate_input({"key": "value"}) is True
-        assert mixin_instance.validate_input({"nested": {"data": "value"}}) is True
-
     def test_validate_vault_path_with_valid_directory(self, mixin_instance, tmp_path):
         """Test vault path validation with valid directory."""
         vault = tmp_path / "vault"

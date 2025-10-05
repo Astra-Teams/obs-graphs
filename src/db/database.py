@@ -17,15 +17,18 @@ def _initialize_factory():
     Lazy initializer for the database engine and session factory.
     This prevents settings from being loaded at import time and is thread-safe.
 
-    It dynamically switches between PostgreSQL and SQLite based on USE_SQLITE env var.
+    Database switching is controlled by USE_SQLITE flag in settings.
     """
     global _engine, _SessionLocal
     with _lock:
         if _engine is None:
             settings = get_settings()
 
+            # Use USE_SQLITE flag to determine database type
+            # USE_SQLITE=True -> SQLite (offline development/testing)
+            # USE_SQLITE=False -> PostgreSQL (production)
             if settings.USE_SQLITE:
-                # Use SQLite (for sqlt-test or local execution)
+                # Use SQLite (for DEBUG mode or local testing)
                 # test_db.sqlite3 file will be created in project root
                 sqlite_file_path = "test_db.sqlite3"
                 db_url = f"sqlite:///{sqlite_file_path}"
@@ -36,11 +39,9 @@ def _initialize_factory():
                 )
 
             else:
-                # Use PostgreSQL (for pstg-test or production/dev containers)
+                # Use PostgreSQL (for production/dev containers)
                 if not settings.DATABASE_URL:
-                    raise ValueError(
-                        "USE_SQLITE=false requires DATABASE_URL to be set."
-                    )
+                    raise ValueError("DATABASE_URL must be set when USE_SQLITE=False.")
                 db_url = settings.DATABASE_URL
                 _engine = create_engine(db_url, pool_pre_ping=True)
 

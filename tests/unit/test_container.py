@@ -13,12 +13,16 @@ def container():
     return DependencyContainer()
 
 
+@patch("src.container.get_settings")
 @patch("src.container.GithubClient")
 def test_get_github_client_lazy_instantiation(
-    mock_github_client, container: DependencyContainer
+    mock_github_client, mock_get_settings, container: DependencyContainer
 ):
     """Test that github client is lazily instantiated."""
     # Arrange
+    mock_settings = MagicMock()
+    mock_settings.USE_MOCK_GITHUB = False  # Use real client
+    mock_get_settings.return_value = mock_settings
     mock_instance = MagicMock()
     mock_github_client.return_value = mock_instance
 
@@ -30,6 +34,27 @@ def test_get_github_client_lazy_instantiation(
     assert client1 is client2
     assert client1 is mock_instance
     mock_github_client.assert_called_once()
+
+
+@patch("src.container.get_settings")
+def test_get_github_client_returns_mock_when_flag_enabled(
+    mock_get_settings, container: DependencyContainer
+):
+    """Test that MockGithubClient is returned when USE_MOCK_GITHUB=True."""
+    # Arrange
+    mock_settings = MagicMock()
+    mock_settings.USE_MOCK_GITHUB = True  # Use mock client
+    mock_get_settings.return_value = mock_settings
+
+    # Act
+    client1 = container.get_github_client()
+    client2 = container.get_github_client()
+
+    # Assert
+    from dev.mocks_clients import MockGithubClient
+
+    assert isinstance(client1, MockGithubClient)
+    assert client1 is client2  # Should be cached
 
 
 @patch("src.container.VaultService")
@@ -59,6 +84,7 @@ def test_get_llm_lazy_instantiation(
     """Test that LLM is lazily instantiated."""
     # Arrange
     mock_settings = MagicMock()
+    mock_settings.USE_MOCK_LLM = False  # Use real client
     mock_settings.OLLAMA_MODEL = "test-model"
     mock_settings.OLLAMA_BASE_URL = "http://test-url"
     mock_get_settings.return_value = mock_settings
@@ -73,6 +99,27 @@ def test_get_llm_lazy_instantiation(
     assert llm1 is llm2
     assert llm1 is mock_instance
     mock_ollama.assert_called_once_with(model="test-model", base_url="http://test-url")
+
+
+@patch("src.container.get_settings")
+def test_get_llm_returns_mock_when_flag_enabled(
+    mock_get_settings, container: DependencyContainer
+):
+    """Test that MockOllamaClient is returned when USE_MOCK_LLM=True."""
+    # Arrange
+    mock_settings = MagicMock()
+    mock_settings.USE_MOCK_LLM = True  # Use mock client
+    mock_get_settings.return_value = mock_settings
+
+    # Act
+    llm1 = container.get_llm()
+    llm2 = container.get_llm()
+
+    # Assert
+    from dev.mocks_clients import MockOllamaClient
+
+    assert isinstance(llm1, MockOllamaClient)
+    assert llm1 is llm2  # Should be cached
 
 
 def test_get_node_valid_name(container: DependencyContainer):
@@ -102,6 +149,7 @@ def test_get_node_new_article_creation_with_llm(
     """Test that new_article_creation node is instantiated with LLM."""
     # Arrange
     mock_settings = MagicMock()
+    mock_settings.USE_MOCK_LLM = False  # Use real client
     mock_settings.OLLAMA_MODEL = "test-model"
     mock_settings.OLLAMA_BASE_URL = "http://test-url"
     mock_get_settings.return_value = mock_settings
@@ -126,3 +174,50 @@ def test_get_container_singleton():
     # Assert
     assert container1 is container2
     assert isinstance(container1, DependencyContainer)
+
+
+@patch("src.container.get_settings")
+@patch("src.container.redis.Redis")
+def test_get_redis_client_production_mode(
+    mock_redis, mock_get_settings, container: DependencyContainer
+):
+    """Test that redis.Redis is returned when USE_MOCK_REDIS=False."""
+    # Arrange
+    mock_settings = MagicMock()
+    mock_settings.USE_MOCK_REDIS = False  # Use real client
+    mock_settings.CELERY_BROKER_URL = "redis://localhost:6379/0"
+    mock_get_settings.return_value = mock_settings
+    mock_instance = MagicMock()
+    mock_redis.from_url.return_value = mock_instance
+
+    # Act
+    client1 = container.get_redis_client()
+    client2 = container.get_redis_client()
+
+    # Assert
+    assert client1 is client2  # Should be cached
+    assert client1 is mock_instance
+    mock_redis.from_url.assert_called_once_with(
+        "redis://localhost:6379/0", decode_responses=True
+    )
+
+
+@patch("src.container.get_settings")
+def test_get_redis_client_returns_mock_when_flag_enabled(
+    mock_get_settings, container: DependencyContainer
+):
+    """Test that FakeRedis is returned when USE_MOCK_REDIS=True."""
+    # Arrange
+    mock_settings = MagicMock()
+    mock_settings.USE_MOCK_REDIS = True  # Use mock client
+    mock_get_settings.return_value = mock_settings
+
+    # Act
+    client1 = container.get_redis_client()
+    client2 = container.get_redis_client()
+
+    # Assert
+    import fakeredis
+
+    assert isinstance(client1, fakeredis.FakeRedis)
+    assert client1 is client2  # Should be cached

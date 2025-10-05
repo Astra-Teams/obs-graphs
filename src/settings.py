@@ -13,7 +13,11 @@ class ObsGraphsSettings(BaseSettings):
     from the project root, there's no need to explicitly specify the file path.
     """
 
+    # Mock/Real service switching flags
     USE_SQLITE: bool = True
+    USE_MOCK_GITHUB: bool = False
+    USE_MOCK_LLM: bool = False
+    USE_MOCK_REDIS: bool = False
 
     # PostgreSQL settings
     POSTGRES_HOST: str = "db"
@@ -48,6 +52,7 @@ class ObsGraphsSettings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_postgres_db(self) -> "ObsGraphsSettings":
+        """Validate that POSTGRES_DB is set when using PostgreSQL."""
         if not self.USE_SQLITE and not self.POSTGRES_DB:
             raise ValueError("POSTGRES_DB must be set when USE_SQLITE is False.")
         return self
@@ -55,10 +60,8 @@ class ObsGraphsSettings(BaseSettings):
     @computed_field
     @property
     def DATABASE_URL(self) -> str:
-        if self.USE_SQLITE:
-            return "sqlite:///./test_db.sqlite3"
-        else:
-            return f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        """Return PostgreSQL database URL. Switching logic is in database.py."""
+        return f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
 
 @lru_cache

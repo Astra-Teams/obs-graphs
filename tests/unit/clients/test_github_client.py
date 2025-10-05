@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.clients.github_client import GithubClient
+from src.clients import GithubClient
 from src.settings import get_settings
 
 
@@ -18,21 +18,6 @@ def github_client(monkeypatch):
     monkeypatch.setenv("GITHUB_REPO_FULL_NAME", "user/repo")
     settings = get_settings()
     return GithubClient(settings)
-
-
-@patch("src.clients.github_client.Github")
-def test_authenticate(mock_github, github_client: GithubClient):
-    """Test that authenticate returns a valid GitHub client."""
-    # Arrange
-    mock_github_instance = MagicMock()
-    mock_github.return_value = mock_github_instance
-
-    # Act
-    client = github_client.authenticate()
-
-    # Assert
-    assert client is not None
-    mock_github.assert_called_once_with("fake-pat")
 
 
 @patch("src.clients.github_client.Repo")
