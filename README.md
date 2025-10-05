@@ -46,62 +46,84 @@ Runs unit, database, and end-to-end tests using testcontainers for full isolatio
 - `GET /api/v1/workflows/` - List workflow runs
 - `GET /api/v1/workflows/{id}` - Get workflow details
 
-## Development Commands
 
-| Command | Description |
-|---------|-------------|
-| `just setup` | Initialize environment files |
-| `just up` | Start development containers |
-| `just down` | Stop development containers |
-| `just test` | Run all tests |
-| `just unit-test` | Run unit tests only |
-| `just sqlt-test` | Run database tests with SQLite |
-| `just pstg-test` | Run database tests with PostgreSQL |
-| `just e2e-test` | Run end-to-end tests only |
-| `just format` | Format code with Black and fix with Ruff |
-| `just lint` | Check code format and lint |
-| `just rebuild` | Rebuild and restart API container |
-| `just clean` | Remove cache files and .venv |
 
 ## Project Structure
 
 ```
 src/
-├── api/v1/              # API version 1
-│   ├── routers/         # FastAPI route handlers
-│   └── schemas.py       # Pydantic request/response models
-├── clients/             # External service integrations
-│   └── github_client.py # GitHub API client
-├── config/              # Application configuration
-├── container.py         # Dependency injection container
-├── db/                  # Database models and connections
-├── graph/               # LangGraph workflow definitions
-│   └── graph.py         # GraphBuilder for workflow orchestration
-├── nodes/               # Processing nodes/agents
-│   ├── article_improvement.py
-│   ├── category_organization.py
-│   ├── cross_reference.py
-│   ├── file_organization.py
-│   ├── new_article_creation.py
-│   ├── quality_audit.py
-│   └── base.py          # Base node implementation
-├── prompts/             # LLM prompt templates
-│   ├── loader.py        # Template rendering utilities
-│   └── templates/       # Jinja2 prompt templates
-├── protocols/           # Abstract interfaces for DI
-├── services/            # Internal business logic
-│   └── vault.py         # Vault file management service
-├── state.py             # Shared state definitions
-├── tasks/               # Celery background tasks
-└── main.py              # FastAPI application entry point
+├── api/v1/                    # API version 1
+│   ├── graph.py               # LangGraph workflow orchestration
+│   ├── router.py              # FastAPI route handlers
+│   ├── schemas.py             # Pydantic request/response models
+│   ├── models/                # Database models
+│   ├── nodes/                 # Processing nodes/agents
+│   │   ├── article_improvement.py
+│   │   ├── category_organization.py
+│   │   ├── cross_reference.py
+│   │   ├── file_organization.py
+│   │   ├── new_article_creation.py
+│   │   └── quality_audit.py
+│   ├── prompts/               # LLM prompt templates
+│   └── tasks/                 # Celery background tasks
+│       └── workflow_tasks.py
+├── clients/                   # External service integrations
+│   └── github_client.py       # GitHub API client
+├── container.py               # Dependency injection container
+├── db/                        # Database connections and models
+│   └── database.py
+├── main.py                    # FastAPI application entry point
+├── protocols/                 # Abstract interfaces for DI
+│   ├── github_client_protocol.py
+│   ├── nodes_protocol.py
+│   └── vault_protocol.py
+├── services/                  # Internal business logic
+│   └── vault.py               # Vault file management service
+├── settings.py                # Application configuration
+├── state.py                   # Shared state definitions
+└── tasks/                     # Celery configuration
+    └── celery_app.py
 
 tests/
-├── unit/               # Unit tests
-├── db/                 # Database integration tests
-└── e2e/                # End-to-end API tests
+├── unit/                     # Unit tests
+│   ├── clients/
+│   ├── nodes/
+│   ├── services/
+│   ├── tasks/
+│   └── workflows/
+├── db/                       # Database integration tests
+└── e2e/                      # End-to-end API tests
 
-alembic/                # Database migrations
+dev/
+└── mocks/                    # Development mock data
+    ├── github_responses.json
+    ├── llm_responses.json
+    └── vault/
+
+ollama/
+└── Dockerfile                # Ollama service container
+
+alembic/                      # Database migrations
 ```
+
+## Setting Your GitHub Personal Access Token
+
+To enable GitHub repository operations, you need to configure a Personal Access Token (PAT):
+
+1. **Generate a PAT:**
+   - Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+   - Click "Generate new token (classic)"
+   - Set an expiration period and select the required scopes
+
+2. **Required Permissions:**
+   - `repo` - Full control of private repositories (required for cloning, creating branches, and pull requests)
+
+3. **Configure the Token:**
+   - Copy the generated token
+   - Open your `.env` file
+   - Set `GITHUB_PAT=your_token_here`
+
+**Warning:** Keep your PAT secret and never commit it to version control.
 
 ## Environment Variables
 
@@ -121,12 +143,8 @@ Configure in `.env`:
 - `POSTGRES_TEST_DB` - Test database name
 - `OLLAMA_BASE_URL` - Ollama server base URL (default: http://localhost:11434)
 - `OLLAMA_MODEL` - Ollama model to use (default: llama3.2:3b)
-- `GITHUB_APP_ID` - GitHub App ID for repository operations
-- `GITHUB_APP_PRIVATE_KEY_PATH` - Path to GitHub App private key
-- `GITHUB_INSTALLATION_ID` - GitHub App installation ID
+- `GITHUB_PAT` - GitHub Personal Access Token for repository operations
 - `GITHUB_REPO_FULL_NAME` - Target repository (owner/repo format)
-- `GITHUB_OWNER` - Repository owner
-- `GITHUB_REPO` - Repository name
 
 ## Testing
 

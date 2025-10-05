@@ -1,7 +1,6 @@
 from functools import lru_cache
-from pathlib import Path
 
-from pydantic import computed_field, field_validator, model_validator
+from pydantic import computed_field, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -23,10 +22,8 @@ class ObsGraphsSettings(BaseSettings):
     POSTGRES_PASSWORD: str = "password"
     POSTGRES_DB: str = ""
 
-    # GitHub App Authentication
-    GITHUB_APP_ID: str = ""
-    GITHUB_APP_PRIVATE_KEY_PATH: str = ""
-    GITHUB_INSTALLATION_ID: str = ""
+    # GitHub Authentication
+    GITHUB_PAT: str = ""
     GITHUB_REPO_FULL_NAME: str = ""
 
     # Celery Configuration
@@ -36,39 +33,23 @@ class ObsGraphsSettings(BaseSettings):
     # Workflow Configuration
     WORKFLOW_CLONE_BASE_PATH: str = "/tmp/obsidian-workflows"
     WORKFLOW_DEFAULT_BRANCH: str = "main"
+    WORKFLOW_TEMP_DIR_CLEANUP_SECONDS: int = 86400
+
+    # Agent Configuration
+    CROSS_REFERENCE_MIN_SHARED_KEYWORDS: int = 2
+    MAX_NEW_ARTICLES_PER_RUN: int = 3
+
+    # API Configuration
+    API_MAX_PAGE_SIZE: int = 100
 
     # LLM Configuration
     OLLAMA_MODEL: str = "llama3.2:3b"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
 
-    @field_validator("GITHUB_APP_PRIVATE_KEY_PATH")
-    @classmethod
-    def _validate_private_key_path(cls, v: str) -> str:
-        # Skip validation for empty string or placeholder paths
-        if v and not v.startswith("/path/to/") and not Path(v).exists():
-            raise ValueError(f"GitHub App private key file not found: {v}")
-        return v
-
     @model_validator(mode="after")
     def _check_postgres_db(self) -> "ObsGraphsSettings":
         if not self.USE_SQLITE and not self.POSTGRES_DB:
             raise ValueError("POSTGRES_DB must be set when USE_SQLITE is False.")
-        return self
-
-    @model_validator(mode="after")
-    def _validate_github_app_credentials(self) -> "ObsGraphsSettings":
-        github_fields = [
-            self.GITHUB_APP_ID,
-            self.GITHUB_APP_PRIVATE_KEY_PATH,
-            self.GITHUB_INSTALLATION_ID,
-            self.GITHUB_REPO_FULL_NAME,
-        ]
-        # If any GitHub App field is set, all must be set
-        if any(github_fields) and not all(github_fields):
-            raise ValueError(
-                "All GitHub App credentials must be set: GITHUB_APP_ID, "
-                "GITHUB_APP_PRIVATE_KEY_PATH, GITHUB_INSTALLATION_ID, GITHUB_REPO_FULL_NAME"
-            )
         return self
 
     @computed_field

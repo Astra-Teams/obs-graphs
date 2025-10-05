@@ -15,6 +15,7 @@ from src.api.v1.schemas import (
     WorkflowRunResponse,
 )
 from src.db.database import get_db
+from src.settings import get_settings
 
 router = APIRouter()
 
@@ -26,20 +27,21 @@ async def run_workflow(
     db: Session = Depends(get_db),
 ) -> WorkflowRunResponse:
     """
-    Run a new workflow execution synchronously.
+    Run a new workflow execution synchronously or asynchronously.
 
-    Creates a new Workflow record in the database, executes the workflow,
-    and returns the result.
+    Creates a new Workflow record in the database and executes the workflow.
+    If async_execution is True, queues the workflow for background execution.
+    If async_execution is False, executes synchronously.
 
     Args:
-        request: Optional workflow run request with strategy parameter
+        request: Workflow run request with strategy and execution mode
         db: Database session dependency
 
     Returns:
         WorkflowRunResponse with workflow ID, status, and message
 
     Raises:
-        HTTPException: If workflow creation or execution fails
+        HTTPException: If workflow creation fails
     """
     try:
         # Create new workflow record with PENDING status
@@ -51,41 +53,60 @@ async def run_workflow(
         db.commit()
         db.refresh(workflow)
 
-        # Update to RUNNING
-        workflow.status = WorkflowStatus.RUNNING
-        workflow.started_at = datetime.now(timezone.utc)
-        db.commit()
+        if request.async_execution:
+            # Asynchronous execution using Celery
+            from src.api.v1.tasks.workflow_tasks import run_workflow_task
 
-        # Create GraphBuilder and run workflow
-        graph_builder = GraphBuilder()
-        result = graph_builder.run_workflow(request)
+            # Update status to RUNNING and queue task
+            workflow.status = WorkflowStatus.RUNNING
+            workflow.started_at = datetime.now(timezone.utc)
+            task = run_workflow_task.delay(workflow.id)
+            workflow.celery_task_id = task.id
+            db.commit()
 
-        # Update workflow based on result
-        if result.success:
-            workflow.status = WorkflowStatus.COMPLETED
-            workflow.pr_url = result.pr_url
-            workflow.workflow_metadata = {
-                "agent_results": result.agent_results,
-                "total_changes": len(result.changes),
-                "branch_name": result.branch_name,
-            }
+            return WorkflowRunResponse(
+                id=workflow.id,
+                status=workflow.status,
+                celery_task_id=task.id,
+                message="Workflow queued for asynchronous execution",
+            )
         else:
-            workflow.status = WorkflowStatus.FAILED
-            workflow.error_message = result.summary
+            # Synchronous execution
+            # Update to RUNNING
+            workflow.status = WorkflowStatus.RUNNING
+            workflow.started_at = datetime.now(timezone.utc)
+            db.commit()
 
-        workflow.completed_at = datetime.now(timezone.utc)
-        db.commit()
+            # Create GraphBuilder and run workflow
+            graph_builder = GraphBuilder()
+            result = graph_builder.run_workflow(request)
 
-        return WorkflowRunResponse(
-            id=workflow.id,
-            status=workflow.status,
-            celery_task_id=None,  # No Celery task for synchronous execution
-            message=(
-                result.summary
-                if result.success
-                else f"Workflow failed: {result.summary}"
-            ),
-        )
+            # Update workflow based on result
+            if result.success:
+                workflow.status = WorkflowStatus.COMPLETED
+                workflow.pr_url = result.pr_url
+                workflow.workflow_metadata = {
+                    "agent_results": result.agent_results,
+                    "total_changes": len(result.changes),
+                    "branch_name": result.branch_name,
+                }
+            else:
+                workflow.status = WorkflowStatus.FAILED
+                workflow.error_message = result.summary
+
+            workflow.completed_at = datetime.now(timezone.utc)
+            db.commit()
+
+            return WorkflowRunResponse(
+                id=workflow.id,
+                status=workflow.status,
+                celery_task_id=None,  # No Celery task for synchronous execution
+                message=(
+                    result.summary
+                    if result.success
+                    else f"Workflow failed: {result.summary}"
+                ),
+            )
 
     except Exception as e:
         db.rollback()
@@ -148,7 +169,7 @@ async def list_workflows(
     limit: int = Query(
         10,
         ge=1,
-        le=100,
+        le=get_settings().API_MAX_PAGE_SIZE,
         description="Maximum number of workflows to return",
     ),
     offset: int = Query(

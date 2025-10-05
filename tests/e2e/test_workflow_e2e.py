@@ -149,8 +149,11 @@ class TestWorkflowE2E:
         """Queue multiple workflows rapidly and ensure they are independent."""
 
         def _submit_workflow() -> Dict[str, Any]:
-            with httpx.Client(base_url=api_base_url, timeout=30.0) as client:
-                response = client.post("/api/v1/workflows/run", json={})
+            # Use async execution to avoid waiting for workflow completion
+            with httpx.Client(base_url=api_base_url, timeout=10.0) as client:
+                response = client.post(
+                    "/api/v1/workflows/run", json={"async_execution": True}
+                )
                 assert response.status_code == 201
                 return response.json()
 
@@ -161,15 +164,26 @@ class TestWorkflowE2E:
 
         assert len(workflow_ids) == 3
 
+        # Verify all workflows exist in database and have Celery task IDs
         engine = _get_test_db_engine()
         try:
             statement = text(
-                "SELECT COUNT(*) FROM workflows WHERE id IN :ids"
+                "SELECT COUNT(*) FROM workflows WHERE id IN :ids AND celery_task_id IS NOT NULL"
             ).bindparams(bindparam("ids", expanding=True))
             with engine.connect() as connection:
                 count = connection.execute(
                     statement, {"ids": tuple(workflow_ids)}
                 ).scalar_one()
             assert count == 3
+
+            # Verify all workflows are in RUNNING state
+            status_statement = text(
+                "SELECT COUNT(*) FROM workflows WHERE id IN :ids AND status = 'RUNNING'"
+            ).bindparams(bindparam("ids", expanding=True))
+            with engine.connect() as connection:
+                running_count = connection.execute(
+                    status_statement, {"ids": tuple(workflow_ids)}
+                ).scalar_one()
+            assert running_count == 3
         finally:
             engine.dispose()

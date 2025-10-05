@@ -9,30 +9,21 @@ from src.settings import get_settings
 
 
 @pytest.fixture
-def github_client(monkeypatch, tmp_path):
+def github_client(monkeypatch):
     """Return a GithubClient instance with mocked credentials."""
-    # Create a temporary private key file
-    key_file = tmp_path / "test_key.pem"
-    key_file.write_text("fake-private-key")
-
     # Clear settings cache before setting env vars
     get_settings.cache_clear()
 
-    monkeypatch.setenv("GITHUB_APP_ID", "12345")
-    monkeypatch.setenv("GITHUB_APP_PRIVATE_KEY_PATH", str(key_file))
-    monkeypatch.setenv("GITHUB_INSTALLATION_ID", "67890")
+    monkeypatch.setenv("GITHUB_PAT", "fake-pat")
     monkeypatch.setenv("GITHUB_REPO_FULL_NAME", "user/repo")
-    monkeypatch.setenv("GITHUB_OWNER", "user")
-    monkeypatch.setenv("GITHUB_REPO", "repo")
-    return GithubClient()
+    settings = get_settings()
+    return GithubClient(settings)
 
 
 @patch("src.clients.github_client.Github")
-@patch("src.clients.github_client.Auth")
-def test_authenticate(mock_auth, mock_github, github_client: GithubClient):
+def test_authenticate(mock_github, github_client: GithubClient):
     """Test that authenticate returns a valid GitHub client."""
     # Arrange
-    mock_auth.AppAuth.return_value = MagicMock()
     mock_github_instance = MagicMock()
     mock_github.return_value = mock_github_instance
 
@@ -41,10 +32,7 @@ def test_authenticate(mock_auth, mock_github, github_client: GithubClient):
 
     # Assert
     assert client is not None
-    # Check that AppAuth was called (don't assert exact path as it's from tmp_path)
-    mock_auth.AppAuth.assert_called_once()
-    # Github is called twice: once for app auth, once for installation token
-    assert mock_github.call_count == 2
+    mock_github.assert_called_once_with("fake-pat")
 
 
 @patch("src.clients.github_client.Repo")

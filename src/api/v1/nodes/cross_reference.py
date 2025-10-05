@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Sequence, Set, Tuple
 
 from src.protocols import NodeProtocol
+from src.settings import get_settings
 from src.state import AgentResult, FileAction, FileChange
 
 
@@ -57,7 +58,9 @@ class CrossReferenceAgent(NodeProtocol):
         "topic",
         "note",
     }
-    _MIN_SHARED_KEYWORDS = 2
+
+    def __init__(self):
+        self._settings = get_settings()
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
         if not self.validate_input(context):
@@ -189,7 +192,10 @@ class CrossReferenceAgent(NodeProtocol):
         for i, source_profile in enumerate(note_profiles):
             for candidate_profile in note_profiles[i + 1 :]:
                 shared_keywords = source_profile.keywords & candidate_profile.keywords
-                if len(shared_keywords) < self._MIN_SHARED_KEYWORDS:
+                if (
+                    len(shared_keywords)
+                    < self._settings.CROSS_REFERENCE_MIN_SHARED_KEYWORDS
+                ):
                     continue
 
                 if candidate_profile.link_target not in source_profile.existing_links:
