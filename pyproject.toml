@@ -1,7 +1,7 @@
 [project]
 name = "obs-graph"
 version = "1.0.0"
-description = "Orchestration graphs for obs-vault."
+description = "Orchestration graphs for Obsidian Vault."
 authors = [{ name = "akitorahayashi"}]
 requires-python = ">=3.12,<4.0"
 dependencies = [
