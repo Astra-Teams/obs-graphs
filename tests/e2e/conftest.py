@@ -135,7 +135,9 @@ def mock_github_client_for_e2e():
     mock_pr.html_url = "https://github.com/test/repo/pull/1"
     mock_client.create_pull_request.return_value = mock_pr
 
-    with patch.object(DependencyContainer, 'get_github_client', return_value=mock_client):
+    with patch.object(
+        DependencyContainer, "get_github_client", return_value=mock_client
+    ):
         yield
 
 
@@ -150,7 +152,7 @@ def mock_graph_builder_run_workflow():
         summary="Mock workflow completed successfully",
         agent_results={},
         pr_url="https://github.com/test/repo/pull/1",
-        branch_name="mock-branch"
+        branch_name="mock-branch",
     )
-    with patch.object(GraphBuilder, 'run_workflow', return_value=mock_result):
+    with patch.object(GraphBuilder, "run_workflow", return_value=mock_result):
         yield

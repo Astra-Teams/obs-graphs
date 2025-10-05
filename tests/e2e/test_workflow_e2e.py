@@ -158,7 +158,6 @@ class TestWorkflowE2E:
             results = list(executor.map(lambda _: _submit_workflow(), range(3)))
 
         workflow_ids = {result["id"] for result in results}
-        celery_ids = {result["celery_task_id"] for result in results}
 
         assert len(workflow_ids) == 3
 
