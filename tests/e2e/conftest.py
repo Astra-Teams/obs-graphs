@@ -8,10 +8,13 @@ import os
 import subprocess
 import time
 from typing import Generator
+from unittest.mock import Mock, patch
 
 import httpx
 import pytest
 from dotenv import load_dotenv
+
+from src.container import DependencyContainer
 
 # Load environment variables from .env file
 load_dotenv()
@@ -118,3 +121,36 @@ def e2e_setup() -> Generator[None, None, None]:
         # Stop services
         print("\n🛑 Stopping E2E services...")
         subprocess.run(compose_down_command, check=False)
+
+
+@pytest.fixture(autouse=True)
+def mock_github_client_for_e2e():
+    """Mock GitHub client for e2e tests to avoid real API calls."""
+    mock_client = Mock()
+    mock_client.clone_repository.return_value = None
+    mock_client.create_branch.return_value = None
+    mock_client.commit_and_push.return_value = True
+
+    mock_pr = Mock()
+    mock_pr.html_url = "https://github.com/test/repo/pull/1"
+    mock_client.create_pull_request.return_value = mock_pr
+
+    with patch.object(DependencyContainer, 'get_github_client', return_value=mock_client):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_graph_builder_run_workflow():
+    """Mock GraphBuilder.run_workflow for e2e tests to avoid real workflow execution."""
+    from src.api.v1.graph import GraphBuilder, WorkflowResult
+
+    mock_result = WorkflowResult(
+        success=True,
+        changes=[],
+        summary="Mock workflow completed successfully",
+        agent_results={},
+        pr_url="https://github.com/test/repo/pull/1",
+        branch_name="mock-branch"
+    )
+    with patch.object(GraphBuilder, 'run_workflow', return_value=mock_result):
+        yield

@@ -20,7 +20,7 @@ load_dotenv()
 settings = get_settings()
 
 # Fixture paths
-VAULTS_ROOT = Path("tests/fixtures/vaults")
+VAULTS_ROOT = Path("dev/mocks/vault")
 MOCKS_ROOT = Path("dev/mocks")
 
 

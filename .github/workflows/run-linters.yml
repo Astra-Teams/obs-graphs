@@ -1,4 +1,4 @@
-name: Format and Lint
+name: Run Linters
 
 on:
   workflow_call:
@@ -9,7 +9,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  format-and-lint:
+  run-linters:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
