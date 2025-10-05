@@ -1,21 +1,19 @@
-"""Node modules for Obsidian Vault workflow automation."""
+"""Node modules for the simplified new article workflow."""
 
 from src.state import AgentResult, FileChange
 
-from .article_improvement import ArticleImprovementAgent
-from .category_organization import CategoryOrganizationAgent
-from .cross_reference import CrossReferenceAgent
-from .file_organization import FileOrganizationAgent
-from .new_article_creation import NewArticleCreationAgent
-from .quality_audit import QualityAuditAgent
+from .create_pull_request import CreatePullRequestNode
+from .deep_search_placeholder import DeepSearchPlaceholderNode
+from .extract_keywords import ExtractKeywordsNode
+from .generate_themes import GenerateThemesNode
+from .select_category import SelectCategoryNode
 
 __all__ = [
-    "ArticleImprovementAgent",
-    "CategoryOrganizationAgent",
-    "CrossReferenceAgent",
-    "FileOrganizationAgent",
-    "NewArticleCreationAgent",
-    "QualityAuditAgent",
     "AgentResult",
     "FileChange",
+    "CreatePullRequestNode",
+    "DeepSearchPlaceholderNode",
+    "ExtractKeywordsNode",
+    "GenerateThemesNode",
+    "SelectCategoryNode",
 ]

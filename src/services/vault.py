@@ -11,17 +11,6 @@ class VaultService(VaultServiceProtocol):
     """Service for handling file operations within the Obsidian Vault."""
 
     def apply_changes(self, vault_path: Path, changes: List[FileChange]) -> None:
-        """
-        Apply a list of file changes to the local vault clone.
-
-        Args:
-            vault_path: The absolute path to the local vault.
-            changes: A list of FileChange objects representing the modifications.
-
-        Raises:
-            FileNotFoundError: If a file to be updated or deleted does not exist.
-            FileExistsError: If a file to be created already exists.
-        """
         for change in changes:
             file_path = vault_path / change.path
 
@@ -42,31 +31,9 @@ class VaultService(VaultServiceProtocol):
                 file_path.unlink()
 
     def validate_vault_structure(self, vault_path: Path) -> bool:
-        """
-        Ensure the vault is in a valid state before and after changes.
-
-        This can be extended to check for broken links, empty files, or other
-        inconsistencies.
-
-        Args:
-            vault_path: The absolute path to the local vault.
-
-        Returns:
-            True if the vault structure is valid, False otherwise.
-        """
-        # Placeholder validation: Check if .obsidian directory exists
         return (vault_path / ".obsidian").is_dir()
 
     def get_vault_summary(self, vault_path: Path) -> VaultSummary:
-        """
-        Return a summary of the vault including article count, categories, and metadata.
-
-        Args:
-            vault_path: The absolute path to the local vault.
-
-        Returns:
-            A VaultSummary object with statistics about the vault.
-        """
         all_files = list(vault_path.glob("**/*.md"))
         total_articles = len(all_files)
 
@@ -76,7 +43,6 @@ class VaultService(VaultServiceProtocol):
             if d.is_dir() and not d.name.startswith(".")
         ]
 
-        # Get 5 most recently modified markdown files
         sorted_files = sorted(all_files, key=lambda f: f.stat().st_mtime, reverse=True)
         recent_updates = [str(f.relative_to(vault_path)) for f in sorted_files[:5]]
 
@@ -85,3 +51,29 @@ class VaultService(VaultServiceProtocol):
             categories=categories,
             recent_updates=recent_updates,
         )
+
+    def get_all_categories(self, vault_path: Path | None = None) -> List[str]:
+        base_path = self._resolve_vault_path(vault_path)
+        return [
+            entry.name
+            for entry in base_path.iterdir()
+            if entry.is_dir() and not entry.name.startswith(".")
+        ]
+
+    def get_concatenated_content_from_category(
+        self, category_name: str, vault_path: Path | None = None
+    ) -> str:
+        base_path = self._resolve_vault_path(vault_path)
+        category_path = base_path / category_name
+        if not category_path.exists() or not category_path.is_dir():
+            return ""
+
+        contents: List[str] = []
+        for markdown_file in category_path.rglob("*.md"):
+            contents.append(markdown_file.read_text(encoding="utf-8"))
+        return "\n\n".join(contents)
+
+    def _resolve_vault_path(self, vault_path: Path | None) -> Path:
+        if vault_path is None:
+            raise ValueError("Vault path must be provided for this operation")
+        return vault_path

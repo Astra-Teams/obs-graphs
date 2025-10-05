@@ -1,164 +1,69 @@
-"""Unit tests for the GraphBuilder."""
-
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from src.api.v1.graph import (
-    GraphBuilder,
-    WorkflowPlan,
-    WorkflowResult,
-)
-from src.state import AgentResult
+from src.api.v1.graph import GraphBuilder
+from src.api.v1.schemas import CreateNewArticleRequest
+from src.container import DependencyContainer
 
 
-class MockAgent(MagicMock):
-    def execute(self, vault_path: Path, context: dict) -> AgentResult:
-        return AgentResult(
-            success=True, changes=[], message=f"{self.__class__.__name__} executed"
-        )
+def _build_container(mock_vault, mock_ollama, mock_github) -> DependencyContainer:
+    container = DependencyContainer()
+    container._vault_service = mock_vault
+    container._ollama_client = mock_ollama
+    container._github_client = mock_github
+    return container
 
 
-@pytest.fixture
-def mock_agents():
-    """Fixture to mock all agent classes."""
-    with (
-        patch(
-            "src.container.NewArticleCreationAgent",
-            return_value=MockAgent(),
-        ),
-        patch(
-            "src.container.FileOrganizationAgent",
-            return_value=MockAgent(),
-        ),
-        patch(
-            "src.container.ArticleImprovementAgent",
-            return_value=MockAgent(),
-        ),
-        patch(
-            "src.container.CategoryOrganizationAgent",
-            return_value=MockAgent(),
-        ),
-        patch("src.container.QualityAuditAgent", return_value=MockAgent()),
-        patch(
-            "src.container.CrossReferenceAgent",
-            return_value=MockAgent(),
-        ),
-    ):
-        yield
-
-
-class MockVaultSummary:
-    def __init__(self, total_articles=0):
-        self.total_articles = total_articles
-        self.categories = []
-        self.recent_updates = []
-
-
-@pytest.fixture
-def orchestrator():
-    """Return a GraphBuilder instance with mocked agents."""
-    from unittest.mock import MagicMock
-
-    from src.container import DependencyContainer
-
-    # Create a mock container
-    mock_container = MagicMock(spec=DependencyContainer)
-    mock_vault_service = MagicMock()
-
-    # Create a mock summary that can be modified
-    mock_summary = MockVaultSummary()
-    mock_vault_service.get_vault_summary.return_value = mock_summary
-
-    mock_container.get_vault_service.return_value = mock_vault_service
-
-    # Mock get_node to return MockAgent instances
-    def mock_get_node(name):
-        return MockAgent()
-
-    mock_container.get_node.side_effect = mock_get_node
-
-    return mock_container
-
-
-def test_analyze_vault_new_article_strategy(
-    orchestrator,
-    tmp_path: Path,
-):
-    """Test that analyze_vault determines the new_article strategy correctly."""
-
-    # Arrange - create an empty vault (total_articles < 5)
-    tmp_path.mkdir(exist_ok=True)
-    orchestrator.get_vault_service.return_value.get_vault_summary.return_value.total_articles = (
-        0
+def test_run_new_article_workflow_success(tmp_path: Path):
+    mock_vault = MagicMock()
+    mock_vault.get_all_categories.return_value = ["Programming"]
+    mock_vault.get_concatenated_content_from_category.return_value = (
+        "# Title\nContent about async patterns"
     )
 
-    graph_builder = GraphBuilder()
+    mock_ollama = MagicMock()
+    mock_ollama.generate.side_effect = [
+        '{"keywords": ["async", "concurrency"]}',
+        '{"themes": ["Async Deep Dive"]}',
+    ]
 
-    # Act
-    plan = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
+    mock_pr = MagicMock(html_url="http://example.com/pr/1")
+    mock_github = MagicMock()
+    mock_github.create_pull_request.return_value = mock_pr
 
-    # Assert
-    assert isinstance(plan, WorkflowPlan)
-    assert plan.strategy == "new_article"
-    assert "new_article_creation" in plan.agents
+    container = _build_container(mock_vault, mock_ollama, mock_github)
+    builder = GraphBuilder(container)
 
+    request = CreateNewArticleRequest(category=None, vault_path=str(tmp_path))
+    result = builder.run_new_article_workflow(request)
 
-def test_analyze_vault_improvement_strategy(
-    orchestrator,
-    tmp_path: Path,
-):
-    """Test that analyze_vault determines the improvement strategy correctly."""
+    assert result.success is True
+    assert result.pull_request_title == "Async Deep Dive"
+    assert "Async Deep Dive" in result.pull_request_body
+    assert result.pr_url == "http://example.com/pr/1"
+    assert result.metadata["selected_category"] == "Programming"
 
-    # Arrange - create a vault with 10 articles (total_articles >= 5)
-    tmp_path.mkdir(exist_ok=True)
-    for i in range(10):
-        (tmp_path / f"article_{i}.md").write_text("# Test Article")
-    orchestrator.get_vault_service.return_value.get_vault_summary.return_value.total_articles = (
-        10
-    )
-
-    graph_builder = GraphBuilder()
-
-    # Act
-    plan = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
-
-    # Assert
-    assert isinstance(plan, WorkflowPlan)
-    assert plan.strategy == "improvement"
-    assert "article_improvement" in plan.agents
+    mock_vault.get_all_categories.assert_called_once()
+    mock_vault.get_concatenated_content_from_category.assert_called_once()
+    assert mock_ollama.generate.call_count == 2
+    mock_github.create_pull_request.assert_called_once()
 
 
-def test_execute_workflow(orchestrator, tmp_path: Path):
-    """Test that execute_workflow runs agents and aggregates results."""
+def test_run_new_article_workflow_failure(tmp_path: Path):
+    mock_vault = MagicMock()
+    mock_vault.get_all_categories.side_effect = RuntimeError("vault error")
 
-    # Arrange
-    tmp_path.mkdir(exist_ok=True)
-    # Create a simple markdown file
-    (tmp_path / "test.md").write_text("# Test Article")
+    mock_ollama = MagicMock()
+    mock_github = MagicMock()
 
-    # Modify the mock summary for this test
-    mock_summary = (
-        orchestrator.get_vault_service.return_value.get_vault_summary.return_value
-    )
-    mock_summary.total_articles = 5
-    mock_summary.categories = ["Test"]
-    mock_summary.recent_updates = ["test.md"]
+    container = _build_container(mock_vault, mock_ollama, mock_github)
+    builder = GraphBuilder(container)
 
-    plan = WorkflowPlan(
-        strategy="test_plan",
-        agents=["new_article_creation", "file_organization"],
-    )
+    request = CreateNewArticleRequest(category=None, vault_path=str(tmp_path))
+    result = builder.run_new_article_workflow(request)
 
-    graph_builder = GraphBuilder()
-
-    # Act
-    result = graph_builder.execute_workflow(tmp_path, plan, orchestrator)
-
-    # Assert
-    assert isinstance(result, WorkflowResult)
-    assert result.success
-    assert len(result.agent_results) == 2
-    assert "new_article_creation" in result.agent_results
-    assert "file_organization" in result.agent_results
+    assert result.success is False
+    assert "vault error" in result.error
+    mock_vault.get_all_categories.assert_called_once()

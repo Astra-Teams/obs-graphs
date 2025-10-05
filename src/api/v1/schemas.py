@@ -1,55 +1,37 @@
-"""Pydantic models for API request and response schemas."""
+"""Pydantic schemas for the simplified workflow API."""
 
-from typing import List, Optional
+from typing import Dict, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from src.api.v1.models.workflow import WorkflowStatus
-from src.state import WorkflowStrategy
 
 
-class WorkflowRunRequest(BaseModel):
-    """Request body for running a new workflow."""
+class CreateNewArticleRequest(BaseModel):
+    """Request body for triggering the new-article workflow."""
 
-    strategy: Optional[WorkflowStrategy] = Field(
+    category: Optional[str] = Field(
         None,
-        description="Optional strategy to force specific workflow type",
+        description="Optional category to prioritise. If omitted the first category is used.",
     )
     async_execution: bool = Field(
         False,
-        description="Whether to execute workflow asynchronously using Celery",
+        description="Whether to execute the workflow asynchronously via Celery.",
+    )
+    vault_path: Optional[str] = Field(
+        None,
+        description="Optional path to the vault clone. Defaults to the configured workspace.",
     )
 
 
-class WorkflowResponse(BaseModel):
-    """Response model for workflow information."""
-
-    model_config = ConfigDict(from_attributes=True)
+class CreateNewArticleResponse(BaseModel):
+    """Response returned after triggering the workflow."""
 
     id: int
     status: WorkflowStatus
-    strategy: Optional[WorkflowStrategy]
-    started_at: Optional[str]
-    completed_at: Optional[str]
-    pr_url: Optional[str]
-    error_message: Optional[str]
-    celery_task_id: Optional[str]
-    created_at: str
-
-
-class WorkflowRunResponse(BaseModel):
-    """Response for workflow run endpoint."""
-
-    id: int
-    status: WorkflowStatus
-    celery_task_id: Optional[str]
     message: str
-
-
-class WorkflowListResponse(BaseModel):
-    """Response for workflow list endpoint."""
-
-    workflows: List[WorkflowResponse]
-    total: int
-    limit: int
-    offset: int
+    celery_task_id: Optional[str] = None
+    pull_request_title: Optional[str] = None
+    pull_request_body: Optional[str] = None
+    pr_url: Optional[str] = None
+    details: Optional[Dict] = None

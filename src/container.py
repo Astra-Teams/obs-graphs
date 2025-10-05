@@ -3,12 +3,8 @@
 from typing import Dict, Optional, Union
 
 import redis
-from langchain_community.llms import Ollama
-from langchain_core.language_models.llms import BaseLLM
 
-from src.clients import (
-    GithubClient,
-)
+from src.clients import GithubClient, OllamaClient
 from src.protocols import GithubClientProtocol, NodeProtocol, VaultServiceProtocol
 from src.services import VaultService
 from src.settings import get_settings
@@ -22,40 +18,35 @@ class DependencyContainer:
         self._github_client: Optional[GithubClientProtocol] = None
         self._vault_service: Optional[VaultServiceProtocol] = None
         self._nodes: Dict[str, NodeProtocol] = {}
-        self._llm: Optional[BaseLLM] = None
+        self._ollama_client: Optional[OllamaClient] = None
         self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
 
         # Registry of node classes (module, class_name)
         self._node_classes = {
-            "article_improvement": (
-                "src.api.v1.nodes.article_improvement",
-                "ArticleImprovementAgent",
+            "select_category": (
+                "src.api.v1.nodes.select_category",
+                "SelectCategoryNode",
             ),
-            "category_organization": (
-                "src.api.v1.nodes.category_organization",
-                "CategoryOrganizationAgent",
+            "extract_keywords": (
+                "src.api.v1.nodes.extract_keywords",
+                "ExtractKeywordsNode",
             ),
-            "cross_reference": (
-                "src.api.v1.nodes.cross_reference",
-                "CrossReferenceAgent",
+            "generate_themes": (
+                "src.api.v1.nodes.generate_themes",
+                "GenerateThemesNode",
             ),
-            "file_organization": (
-                "src.api.v1.nodes.file_organization",
-                "FileOrganizationAgent",
+            "deep_search_placeholder": (
+                "src.api.v1.nodes.deep_search_placeholder",
+                "DeepSearchPlaceholderNode",
             ),
-            "new_article_creation": (
-                "src.api.v1.nodes.new_article_creation",
-                "NewArticleCreationAgent",
+            "create_pull_request": (
+                "src.api.v1.nodes.create_pull_request",
+                "CreatePullRequestNode",
             ),
-            "quality_audit": ("src.api.v1.nodes.quality_audit", "QualityAuditAgent"),
         }
 
     def get_github_client(self) -> GithubClientProtocol:
-        """
-        Get the GitHub client instance.
-
-        Returns MockGithubClient if USE_MOCK_GITHUB=True, otherwise GithubClient.
-        """
+        """Get the GitHub client instance."""
         if self._github_client is None:
             settings = get_settings()
             if settings.USE_MOCK_GITHUB:
@@ -72,30 +63,23 @@ class DependencyContainer:
             self._vault_service = VaultService()
         return self._vault_service
 
-    def get_llm(self) -> BaseLLM:
-        """
-        Get the LLM instance.
-
-        Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise Ollama.
-        """
-        if self._llm is None:
+    def get_ollama_client(self) -> OllamaClient:
+        """Return an Ollama client instance."""
+        if self._ollama_client is None:
             settings = get_settings()
             if settings.USE_MOCK_LLM:
                 from dev.mocks_clients import MockOllamaClient
 
-                self._llm = MockOllamaClient()
+                self._ollama_client = OllamaClient.from_llm(MockOllamaClient())
             else:
-                self._llm = Ollama(
-                    model=settings.OLLAMA_MODEL, base_url=settings.OLLAMA_BASE_URL
+                self._ollama_client = OllamaClient(
+                    model=settings.OLLAMA_MODEL,
+                    base_url=settings.OLLAMA_BASE_URL,
                 )
-        return self._llm
+        return self._ollama_client
 
     def get_redis_client(self) -> Union[redis.Redis, "redis.FakeRedis"]:
-        """
-        Get the Redis client instance.
-
-        Returns FakeRedis if USE_MOCK_REDIS=True, otherwise redis.Redis.
-        """
+        """Get the Redis client instance."""
         if self._redis_client is None:
             settings = get_settings()
             if settings.USE_MOCK_REDIS:
@@ -114,25 +98,19 @@ class DependencyContainer:
             if name not in self._node_classes:
                 raise ValueError(f"Unknown node: {name}")
 
-            # Import the class dynamically
             module_name, class_name = self._node_classes[name]
             import importlib
 
             module = importlib.import_module(module_name)
             node_class = getattr(module, class_name)
-
-            # Instantiate with dependencies
-            if name == "new_article_creation":
-                self._nodes[name] = node_class(self.get_llm())
-            else:
-                self._nodes[name] = node_class()
+            self._nodes[name] = node_class(self)
         return self._nodes[name]
 
     def get_graph_builder(self):
         """Get the graph builder instance."""
         from src.api.v1.graph import GraphBuilder
 
-        return GraphBuilder()
+        return GraphBuilder(self)
 
 
 # Global container instance
