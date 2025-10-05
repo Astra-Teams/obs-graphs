@@ -51,7 +51,9 @@ class GraphBuilder:
     then executes them in the appropriate order using a state graph.
     """
 
-    def __init__(self, vault_service: VaultServiceProtocol, nodes: Dict[str, NodeProtocol]):
+    def __init__(
+        self, vault_service: VaultServiceProtocol, nodes: Dict[str, NodeProtocol]
+    ):
         """
         Initialize the graph builder with dependencies.
 

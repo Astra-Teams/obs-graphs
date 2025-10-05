@@ -61,6 +61,12 @@ class DependencyContainer:
             self._graph_builder = GraphBuilder(self.get_vault_service(), nodes)
         return self._graph_builder
 
+    def run_workflow(self, workflow_id: int):
+        """Dispatch a workflow execution task."""
+        from src.tasks.workflow_tasks import run_workflow_task
+
+        return run_workflow_task.delay(workflow_id)
+
 
 # Global container instance
 _container: Optional[DependencyContainer] = None

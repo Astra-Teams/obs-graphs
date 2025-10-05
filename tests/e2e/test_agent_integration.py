@@ -9,8 +9,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.state import FileAction
 from src.services.vault import VaultService
+from src.state import FileAction
 from src.workflows import WorkflowOrchestrator
 
 FIXTURES_ROOT = Path("tests/fixtures/vaults")

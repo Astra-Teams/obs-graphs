@@ -1,61 +1,28 @@
 """API endpoints for workflow management."""
 
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from src.api.v1.schemas import (
+    WorkflowListResponse,
+    WorkflowResponse,
+    WorkflowRunRequest,
+    WorkflowRunResponse,
+)
+from src.container import DependencyContainer
 from src.db.database import get_db
 from src.db.models.workflow import Workflow, WorkflowStatus
-from src.tasks.workflow_tasks import run_workflow_task
 
 router = APIRouter()
 
 
-# Request/Response Models
-class WorkflowRunRequest(BaseModel):
-    """Request body for running a new workflow."""
+def get_container_dependency() -> DependencyContainer:
+    """Get the dependency container from app state."""
+    from src.main import app
 
-    strategy: Optional[str] = Field(
-        None,
-        description="Optional strategy to force specific workflow type (e.g., 'new_article', 'improvement')",
-        max_length=100,
-    )
-
-
-class WorkflowResponse(BaseModel):
-    """Response model for workflow information."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    status: str
-    strategy: Optional[str]
-    started_at: Optional[str]
-    completed_at: Optional[str]
-    pr_url: Optional[str]
-    error_message: Optional[str]
-    celery_task_id: Optional[str]
-    created_at: str
-
-
-class WorkflowRunResponse(BaseModel):
-    """Response for workflow run endpoint."""
-
-    id: int
-    status: str
-    celery_task_id: str
-    message: str
-
-
-class WorkflowListResponse(BaseModel):
-    """Response for workflow list endpoint."""
-
-    workflows: List[WorkflowResponse]
-    total: int
-    limit: int
-    offset: int
+    return app.state.container
 
 
 # Endpoints
@@ -63,6 +30,7 @@ class WorkflowListResponse(BaseModel):
 async def run_workflow(
     request: WorkflowRunRequest = WorkflowRunRequest(),
     db: Session = Depends(get_db),
+    container: DependencyContainer = Depends(get_container_dependency),
 ) -> WorkflowRunResponse:
     """
     Trigger a new workflow execution.
@@ -92,7 +60,7 @@ async def run_workflow(
         db.refresh(workflow)
 
         # Dispatch Celery task
-        task = run_workflow_task.delay(workflow.id)
+        task = container.run_workflow(workflow.id)
 
         # Store Celery task ID in workflow record
         workflow.celery_task_id = task.id
@@ -100,7 +68,7 @@ async def run_workflow(
 
         return WorkflowRunResponse(
             id=workflow.id,
-            status=workflow.status.value,
+            status=workflow.status,
             celery_task_id=task.id,
             message=f"Workflow {workflow.id} has been queued for execution",
         )
@@ -144,7 +112,7 @@ async def get_workflow(
 
     return WorkflowResponse(
         id=workflow.id,
-        status=workflow.status.value,
+        status=workflow.status,
         strategy=workflow.strategy,
         started_at=workflow.started_at.isoformat() if workflow.started_at else None,
         completed_at=(
@@ -219,7 +187,7 @@ async def list_workflows(
     workflow_responses = [
         WorkflowResponse(
             id=w.id,
-            status=w.status.value,
+            status=w.status,
             strategy=w.strategy,
             started_at=w.started_at.isoformat() if w.started_at else None,
             completed_at=w.completed_at.isoformat() if w.completed_at else None,

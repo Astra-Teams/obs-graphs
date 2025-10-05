@@ -56,6 +56,7 @@ def mock_agents():
 def orchestrator(mock_agents):
     """Return a WorkflowOrchestrator instance with mocked agents."""
     from src.container import get_container
+
     container = get_container()
     return container.get_graph_builder()
 

@@ -52,14 +52,14 @@ class TestRunWorkflowTask:
     """Tests for run_workflow_task Celery task."""
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GithubClient")
-    @patch("src.tasks.workflow_tasks.VaultService")
-    @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
+    @patch("src.tasks.workflow_tasks.container.get_github_client")
+    @patch("src.tasks.workflow_tasks.container.get_vault_service")
+    @patch("src.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_retrieves_workflow_from_database(
         self,
-        mock_orchestrator,
+        mock_graph_builder,
         mock_vault_service,
-        mock_github_service,
+        mock_github_client,
         mock_get_db,
         test_db,
     ):
@@ -71,24 +71,24 @@ class TestRunWorkflowTask:
         # Mock services to prevent actual execution
         mock_github_instance = MagicMock()
         mock_github_instance.commit_and_push.return_value = True
-        mock_github_service.return_value = mock_github_instance
+        mock_github_client.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
         mock_vault_instance.validate_vault_structure.return_value = True
         mock_vault_service.return_value = mock_vault_instance
 
-        mock_orch_instance = MagicMock()
+        mock_builder_instance = MagicMock()
         mock_plan = MagicMock()
         mock_plan.strategy = "new_article"
-        mock_orch_instance.analyze_vault.return_value = mock_plan
+        mock_builder_instance.analyze_vault.return_value = mock_plan
 
         mock_result = MagicMock()
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Test summary"
         mock_result.agent_results = {}
-        mock_orch_instance.execute_workflow.return_value = mock_result
-        mock_orchestrator.return_value = mock_orch_instance
+        mock_builder_instance.execute_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
 
         mock_pr = MagicMock()
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
@@ -112,9 +112,9 @@ class TestRunWorkflowTask:
         assert updated_workflow is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GithubClient")
+    @patch("src.tasks.workflow_tasks.container.get_github_client")
     def test_task_updates_status_to_running(
-        self, mock_gh_service, mock_get_db, test_db
+        self, mock_github_client, mock_get_db, test_db
     ):
         """Test that task updates workflow status to RUNNING at start."""
         workflow = create_pending_workflow(test_db)
@@ -124,7 +124,7 @@ class TestRunWorkflowTask:
         # Mock GitHubService instance to raise error after initialization
         mock_gh_instance = MagicMock()
         mock_gh_instance.clone_repository.side_effect = Exception("Stop here")
-        mock_gh_service.return_value = mock_gh_instance
+        mock_github_client.return_value = mock_gh_instance
 
         with pytest.raises(Exception):
             run_workflow_task(workflow_id)
@@ -137,14 +137,14 @@ class TestRunWorkflowTask:
         assert workflow.started_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GithubClient")
-    @patch("src.tasks.workflow_tasks.VaultService")
-    @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
+    @patch("src.tasks.workflow_tasks.container.get_github_client")
+    @patch("src.tasks.workflow_tasks.container.get_vault_service")
+    @patch("src.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_clones_repository(
         self,
-        mock_orchestrator,
+        mock_graph_builder,
         mock_vault_service,
-        mock_github_service,
+        mock_github_client,
         mock_get_db,
         test_db,
     ):
@@ -154,24 +154,24 @@ class TestRunWorkflowTask:
 
         mock_github_instance = MagicMock()
         mock_github_instance.commit_and_push.return_value = True
-        mock_github_service.return_value = mock_github_instance
+        mock_github_client.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
         mock_vault_instance.validate_vault_structure.return_value = True
         mock_vault_service.return_value = mock_vault_instance
 
-        mock_orch_instance = MagicMock()
+        mock_builder_instance = MagicMock()
         mock_plan = MagicMock()
         mock_plan.strategy = "improvement"
-        mock_orch_instance.analyze_vault.return_value = mock_plan
+        mock_builder_instance.analyze_vault.return_value = mock_plan
 
         mock_result = MagicMock()
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Test"
         mock_result.agent_results = {}
-        mock_orch_instance.execute_workflow.return_value = mock_result
-        mock_orchestrator.return_value = mock_orch_instance
+        mock_builder_instance.execute_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
 
         mock_pr = MagicMock()
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
@@ -193,14 +193,14 @@ class TestRunWorkflowTask:
         assert "repo_url" not in call_args.kwargs
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GithubClient")
-    @patch("src.tasks.workflow_tasks.VaultService")
-    @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
+    @patch("src.tasks.workflow_tasks.container.get_github_client")
+    @patch("src.tasks.workflow_tasks.container.get_vault_service")
+    @patch("src.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_calls_orchestrator_and_applies_changes(
         self,
-        mock_orchestrator,
+        mock_graph_builder,
         mock_vault_service,
-        mock_github_service,
+        mock_github_client,
         mock_get_db,
         test_db,
     ):
@@ -210,16 +210,16 @@ class TestRunWorkflowTask:
 
         mock_github_instance = MagicMock()
         mock_github_instance.commit_and_push.return_value = True
-        mock_github_service.return_value = mock_github_instance
+        mock_github_client.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
         mock_vault_instance.validate_vault_structure.return_value = True
         mock_vault_service.return_value = mock_vault_instance
 
-        mock_orch_instance = MagicMock()
+        mock_builder_instance = MagicMock()
         mock_plan = MagicMock()
         mock_plan.strategy = "new_article"
-        mock_orch_instance.analyze_vault.return_value = mock_plan
+        mock_builder_instance.analyze_vault.return_value = mock_plan
 
         mock_changes = [MagicMock(), MagicMock()]
         mock_result = MagicMock()
@@ -233,8 +233,8 @@ class TestRunWorkflowTask:
                 "changes_count": 2,
             }
         }
-        mock_orch_instance.execute_workflow.return_value = mock_result
-        mock_orchestrator.return_value = mock_orch_instance
+        mock_builder_instance.execute_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
 
         mock_pr = MagicMock()
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
@@ -250,22 +250,22 @@ class TestRunWorkflowTask:
             run_workflow_task(workflow_id)
 
         # Verify orchestrator was called
-        mock_orch_instance.analyze_vault.assert_called_once()
-        mock_orch_instance.execute_workflow.assert_called_once()
+        mock_builder_instance.analyze_vault.assert_called_once()
+        mock_builder_instance.execute_workflow.assert_called_once()
 
         # Verify changes were applied
         mock_vault_instance.apply_changes.assert_called_once()
         assert mock_vault_instance.apply_changes.call_args[0][1] == mock_changes
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GithubClient")
-    @patch("src.tasks.workflow_tasks.VaultService")
-    @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
+    @patch("src.tasks.workflow_tasks.container.get_github_client")
+    @patch("src.tasks.workflow_tasks.container.get_vault_service")
+    @patch("src.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_creates_pull_request(
         self,
-        mock_orchestrator,
+        mock_graph_builder,
         mock_vault_service,
-        mock_github_service,
+        mock_github_client,
         mock_get_db,
         test_db,
     ):
@@ -275,24 +275,24 @@ class TestRunWorkflowTask:
 
         mock_github_instance = MagicMock()
         mock_github_instance.commit_and_push.return_value = True
-        mock_github_service.return_value = mock_github_instance
+        mock_github_client.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
         mock_vault_instance.validate_vault_structure.return_value = True
         mock_vault_service.return_value = mock_vault_instance
 
-        mock_orch_instance = MagicMock()
+        mock_builder_instance = MagicMock()
         mock_plan = MagicMock()
         mock_plan.strategy = "improvement"
-        mock_orch_instance.analyze_vault.return_value = mock_plan
+        mock_builder_instance.analyze_vault.return_value = mock_plan
 
         mock_result = MagicMock()
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Improved articles"
         mock_result.agent_results = {}
-        mock_orch_instance.execute_workflow.return_value = mock_result
-        mock_orchestrator.return_value = mock_orch_instance
+        mock_builder_instance.execute_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
 
         expected_pr_url = "https://github.com/test/repo/pull/42"
         mock_pr = MagicMock()
@@ -318,14 +318,14 @@ class TestRunWorkflowTask:
         assert updated_workflow.pr_url == expected_pr_url
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GithubClient")
-    @patch("src.tasks.workflow_tasks.VaultService")
-    @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
+    @patch("src.tasks.workflow_tasks.container.get_github_client")
+    @patch("src.tasks.workflow_tasks.container.get_vault_service")
+    @patch("src.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_updates_workflow_to_completed(
         self,
-        mock_orchestrator,
+        mock_graph_builder,
         mock_vault_service,
-        mock_github_service,
+        mock_github_client,
         mock_get_db,
         test_db,
     ):
@@ -336,24 +336,24 @@ class TestRunWorkflowTask:
         # Setup all mocks for successful execution
         mock_github_instance = MagicMock()
         mock_github_instance.commit_and_push.return_value = True
-        mock_github_service.return_value = mock_github_instance
+        mock_github_client.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
         mock_vault_instance.validate_vault_structure.return_value = True
         mock_vault_service.return_value = mock_vault_instance
 
-        mock_orch_instance = MagicMock()
+        mock_builder_instance = MagicMock()
         mock_plan = MagicMock()
         mock_plan.strategy = "new_article"
-        mock_orch_instance.analyze_vault.return_value = mock_plan
+        mock_builder_instance.analyze_vault.return_value = mock_plan
 
         mock_result = MagicMock()
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
         mock_result.agent_results = {}
-        mock_orch_instance.execute_workflow.return_value = mock_result
-        mock_orchestrator.return_value = mock_orch_instance
+        mock_builder_instance.execute_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
 
         mock_pr = MagicMock()
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
@@ -376,14 +376,14 @@ class TestRunWorkflowTask:
         assert updated_workflow.completed_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GithubClient")
-    @patch("src.tasks.workflow_tasks.VaultService")
-    @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
+    @patch("src.tasks.workflow_tasks.container.get_github_client")
+    @patch("src.tasks.workflow_tasks.container.get_vault_service")
+    @patch("src.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_updates_workflow_to_failed_on_error(
         self,
-        mock_orchestrator,
+        mock_graph_builder,
         mock_vault_service,
-        mock_github_service,
+        mock_github_client,
         mock_get_db,
         test_db,
     ):
@@ -395,15 +395,15 @@ class TestRunWorkflowTask:
         mock_vault_instance = MagicMock()
         mock_vault_service.return_value = mock_vault_instance
 
-        mock_orch_instance = MagicMock()
-        mock_orchestrator.return_value = mock_orch_instance
+        mock_builder_instance = MagicMock()
+        mock_graph_builder.return_value = mock_builder_instance
 
         # Mock GitHub service to raise an error
         mock_github_instance = MagicMock()
         mock_github_instance.clone_repository.side_effect = Exception(
             "GitHub API error"
         )
-        mock_github_service.return_value = mock_github_instance
+        mock_github_client.return_value = mock_github_instance
 
         workflow_id = workflow.id
 
@@ -426,18 +426,18 @@ class TestRunWorkflowTask:
         assert updated_workflow.completed_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GithubClient")
-    @patch("src.tasks.workflow_tasks.VaultService")
-    @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
+    @patch("src.tasks.workflow_tasks.container.get_github_client")
+    @patch("src.tasks.workflow_tasks.container.get_vault_service")
+    @patch("src.tasks.workflow_tasks.container.get_graph_builder")
     @patch("src.tasks.workflow_tasks.shutil.rmtree")
     @patch("src.tasks.workflow_tasks.Path")
     def test_task_cleans_up_temporary_directory(
         self,
         mock_path,
         mock_rmtree,
-        mock_orchestrator,
+        mock_graph_builder,
         mock_vault_service,
-        mock_github_service,
+        mock_github_client,
         mock_get_db,
         test_db,
     ):
@@ -454,24 +454,24 @@ class TestRunWorkflowTask:
 
         mock_github_instance = MagicMock()
         mock_github_instance.commit_and_push.return_value = True
-        mock_github_service.return_value = mock_github_instance
+        mock_github_client.return_value = mock_github_instance
 
         mock_vault_instance = MagicMock()
         mock_vault_instance.validate_vault_structure.return_value = True
         mock_vault_service.return_value = mock_vault_instance
 
-        mock_orch_instance = MagicMock()
+        mock_builder_instance = MagicMock()
         mock_plan = MagicMock()
         mock_plan.strategy = "new_article"
-        mock_orch_instance.analyze_vault.return_value = mock_plan
+        mock_builder_instance.analyze_vault.return_value = mock_plan
 
         mock_result = MagicMock()
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Test"
         mock_result.agent_results = {}
-        mock_orch_instance.execute_workflow.return_value = mock_result
-        mock_orchestrator.return_value = mock_orch_instance
+        mock_builder_instance.execute_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
 
         mock_pr = MagicMock()
         mock_pr.html_url = "https://github.com/test/repo/pull/1"
