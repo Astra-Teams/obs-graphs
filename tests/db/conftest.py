@@ -1,82 +1,211 @@
-import os
-from typing import AsyncGenerator, Generator
+"""Database test specific fixtures and factory functions."""
 
-import pytest
-from dotenv import load_dotenv
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.orm import Session, sessionmaker
+from datetime import datetime, timedelta, timezone
 
-from src.config.settings import get_settings
-from src.db.database import Base, create_db_session, get_engine
-from src.main import app
-
-# Load .env and determine USE_SQLITE flag
-load_dotenv()
-settings = get_settings()
-USE_SQLITE = settings.USE_SQLITE
+from src.api.v1.models.workflow import Workflow, WorkflowStatus
 
 
-@pytest.fixture(scope="session")
-def db_engine():
+def create_pending_workflow(db_session, **kwargs) -> Workflow:
     """
-    Fixture that provides DB engine for the entire test session.
-    USE_SQLITE=true case (sqlt-test):
-        - Creates all tables (create_all) for SQLite DB and returns engine.
-        - Drops all tables (drop_all) at session end.
-    USE_SQLITE=false case (pstg-test):
-        - Returns engine for PostgreSQL migrated by entrypoint.sh.
-        - (Does not create/drop tables)
+    Create a workflow in PENDING state.
+
+    Args:
+        db_session: SQLAlchemy database session
+        **kwargs: Optional fields to override defaults
+
+    Returns:
+        Workflow instance in PENDING state
     """
-    # Get engine initialized by application logic
-    engine = get_engine()
+    workflow = Workflow(
+        status=WorkflowStatus.PENDING,
+        strategy=kwargs.get("strategy", None),
+        started_at=None,
+        completed_at=None,
+        pr_url=None,
+        error_message=None,
+        celery_task_id=kwargs.get("celery_task_id", None),
+        workflow_metadata=kwargs.get("workflow_metadata", None),
+        created_at=kwargs.get("created_at", datetime.now(timezone.utc)),
+    )
 
-    if USE_SQLITE:
-        # For SQLite mode, create all tables from models before tests
-        Base.metadata.create_all(bind=engine)
+    db_session.add(workflow)
+    db_session.commit()
+    db_session.refresh(workflow)
 
-    yield engine
-
-    if USE_SQLITE:
-        # For SQLite mode, drop all tables after tests
-        Base.metadata.drop_all(bind=engine)
-        # Remove the SQLite file
-        sqlite_file_path = "test_db.sqlite3"
-        if os.path.exists(sqlite_file_path):
-            os.remove(sqlite_file_path)
-
-    # For PostgreSQL mode, DB is managed by container so do nothing
-    engine.dispose()
+    return workflow
 
 
-@pytest.fixture
-def db_session(db_engine) -> Generator[Session, None, None]:
+def create_running_workflow(db_session, **kwargs) -> Workflow:
     """
-    Provides a transaction-scoped session for each test function.
-    Tests run within transactions and are rolled back on completion,
-    ensuring DB state independence between tests.
+    Create a workflow in RUNNING state.
+
+    Args:
+        db_session: SQLAlchemy database session
+        **kwargs: Optional fields to override defaults
+
+    Returns:
+        Workflow instance in RUNNING state
     """
-    # Depend on db_engine fixture and share the initialized engine
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=db_engine)
-    db = SessionLocal()
+    workflow = Workflow(
+        status=WorkflowStatus.RUNNING,
+        strategy=kwargs.get("strategy", "new_article"),
+        started_at=kwargs.get("started_at", datetime.now(timezone.utc)),
+        completed_at=None,
+        pr_url=None,
+        error_message=None,
+        celery_task_id=kwargs.get("celery_task_id", "test-task-id-123"),
+        workflow_metadata=kwargs.get("workflow_metadata", {"agents_executed": []}),
+        created_at=kwargs.get(
+            "created_at", datetime.now(timezone.utc) - timedelta(minutes=5)
+        ),
+    )
 
-    # Override FastAPI app's DI (get_db) with this test session
-    app.dependency_overrides[create_db_session] = lambda: db
+    db_session.add(workflow)
+    db_session.commit()
+    db_session.refresh(workflow)
 
-    try:
-        yield db
-    finally:
-        db.rollback()  # Rollback all changes
-        db.close()
-        app.dependency_overrides.pop(create_db_session, None)
+    return workflow
 
 
-@pytest.fixture
-async def client(db_session: Session) -> AsyncGenerator[AsyncClient, None]:
+def create_completed_workflow(
+    db_session, with_pr_url: bool = True, **kwargs
+) -> Workflow:
     """
-    Creates httpx.AsyncClient configured for database-dependent tests.
-    (Depends on db_session fixture to ensure DI override is applied)
+    Create a workflow in COMPLETED state.
+
+    Args:
+        db_session: SQLAlchemy database session
+        with_pr_url: Whether to include a PR URL
+        **kwargs: Optional fields to override defaults
+
+    Returns:
+        Workflow instance in COMPLETED state
     """
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as c:
-        yield c
+    pr_url = None
+    if with_pr_url:
+        pr_url = kwargs.get("pr_url", "https://github.com/test-user/test-vault/pull/42")
+
+    created_at = kwargs.get(
+        "created_at", datetime.now(timezone.utc) - timedelta(hours=1)
+    )
+    started_at = kwargs.get("started_at", created_at + timedelta(seconds=30))
+    completed_at = kwargs.get("completed_at", started_at + timedelta(minutes=10))
+
+    workflow = Workflow(
+        status=WorkflowStatus.COMPLETED,
+        strategy=kwargs.get("strategy", "new_article"),
+        started_at=started_at,
+        completed_at=completed_at,
+        pr_url=pr_url,
+        error_message=None,
+        celery_task_id=kwargs.get("celery_task_id", "test-task-completed-456"),
+        workflow_metadata=kwargs.get(
+            "workflow_metadata",
+            {
+                "agent_results": {
+                    "new_article": {
+                        "success": True,
+                        "message": "Created 2 new articles",
+                        "changes_count": 2,
+                    },
+                    "quality_audit": {
+                        "success": True,
+                        "message": "All checks passed",
+                        "changes_count": 0,
+                    },
+                },
+                "total_changes": 2,
+                "branch_name": "obsidian-agents/1-new_article",
+            },
+        ),
+        created_at=created_at,
+    )
+
+    db_session.add(workflow)
+    db_session.commit()
+    db_session.refresh(workflow)
+
+    return workflow
+
+
+def create_failed_workflow(
+    db_session, with_error_message: bool = True, **kwargs
+) -> Workflow:
+    """
+    Create a workflow in FAILED state.
+
+    Args:
+        db_session: SQLAlchemy database session
+        with_error_message: Whether to include an error message
+        **kwargs: Optional fields to override defaults
+
+    Returns:
+        Workflow instance in FAILED state
+    """
+    error_message = None
+    if with_error_message:
+        error_message = kwargs.get(
+            "error_message",
+            "Workflow execution failed: GitHub API authentication error",
+        )
+
+    created_at = kwargs.get(
+        "created_at", datetime.now(timezone.utc) - timedelta(hours=2)
+    )
+    started_at = kwargs.get("started_at", created_at + timedelta(seconds=30))
+    completed_at = kwargs.get("completed_at", started_at + timedelta(minutes=2))
+
+    workflow = Workflow(
+        status=WorkflowStatus.FAILED,
+        strategy=kwargs.get("strategy", "improvement"),
+        started_at=started_at,
+        completed_at=completed_at,
+        pr_url=None,
+        error_message=error_message,
+        celery_task_id=kwargs.get("celery_task_id", "test-task-failed-789"),
+        workflow_metadata=kwargs.get(
+            "workflow_metadata",
+            {"error_details": "API rate limit exceeded", "retry_count": 0},
+        ),
+        created_at=created_at,
+    )
+
+    db_session.add(workflow)
+    db_session.commit()
+    db_session.refresh(workflow)
+
+    return workflow
+
+
+def create_workflow_with_custom_metadata(
+    db_session, status: WorkflowStatus, metadata: dict, **kwargs
+) -> Workflow:
+    """
+    Create a workflow with custom metadata.
+
+    Args:
+        db_session: SQLAlchemy database session
+        status: Workflow status
+        metadata: Custom metadata dictionary
+        **kwargs: Optional fields to override defaults
+
+    Returns:
+        Workflow instance with custom metadata
+    """
+    workflow = Workflow(
+        status=status,
+        strategy=kwargs.get("strategy", "custom"),
+        started_at=kwargs.get("started_at", datetime.now(timezone.utc)),
+        completed_at=kwargs.get("completed_at", None),
+        pr_url=kwargs.get("pr_url", None),
+        error_message=kwargs.get("error_message", None),
+        celery_task_id=kwargs.get("celery_task_id", "test-task-custom-999"),
+        workflow_metadata=metadata,
+        created_at=kwargs.get("created_at", datetime.now(timezone.utc)),
+    )
+
+    db_session.add(workflow)
+    db_session.commit()
+    db_session.refresh(workflow)
+
+    return workflow

@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "description": "Retrieves up-to-date documentation and code examples for any library"
+    },
+    "voicevox": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@t09tanaka/mcp-simple-voicevox"
+      ],
+      "description": "Japanese text-to-speech synthesis using VOICEVOX engine"
+    },
+    "sequentialthinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Enables sequential thinking capabilities."
+    },
+    "serena": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant",
+        "--enable-web-dashboard",
+        "false",
+        "--enable-gui-log-window",
+        "false",
+        "--log-level",
+        "CRITICAL"
+      ],
+      "description": "Professional coding agent with semantic tools for intelligent codebase analysis"
+    }
+  }
+}

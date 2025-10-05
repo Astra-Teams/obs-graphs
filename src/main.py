@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from src.api.v1.router import router as workflows_router
+
 app = FastAPI(
     title="FastAPI Template",
     version="0.1.0",
@@ -7,17 +9,11 @@ app = FastAPI(
 )
 
 
-@app.get("/")
-async def hello_world():
-    """
-    Hello World endpoint.
-    """
-    return {"message": "Hello World"}
-
-
 @app.get("/health")
 async def health_check():
-    """
-    Simple health check endpoint to confirm the API is running.
-    """
-    return {"status": "ok"}
+    """Health check endpoint."""
+    return {"status": "healthy"}
+
+
+# Include routers
+app.include_router(workflows_router, prefix="/api/v1", tags=["workflows"])

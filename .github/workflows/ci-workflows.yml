@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  format-and-lint:
-    uses: ./.github/workflows/format-and-lint.yml
+  run-linters:
+    uses: ./.github/workflows/run-linters.yml
 
   run-local-tests:
     uses: ./.github/workflows/run-local-tests.yml

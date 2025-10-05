@@ -1,16 +1,16 @@
-# FastAPI Template
+# Obsidian Graphs
 
-A production-ready FastAPI template with modern development tooling, comprehensive testing, and Docker containerization.
+AI-powered workflow automation for Obsidian vaults using LangGraph and modular nodes. This project provides intelligent agents that can analyze, organize, and enhance your Obsidian knowledge base through automated workflows.
 
 ## Features
 
-- **FastAPI** - Modern, fast web framework for building APIs
-- **Docker** - Containerized development and deployment
-- **uv** - Ultra-fast Python package installer and resolver
-- **Pytest** - Comprehensive testing with testcontainers
-- **Code Quality** - Black (formatter) + Ruff (linter)
-- **Database** - PostgreSQL with Alembic migrations
-- **justfile** - Unified development commands
+- **LangGraph Integration** - State-based workflow orchestration for complex document processing
+- **Modular Node Architecture** - Extensible agents for different vault operations (article improvement, categorization, cross-referencing, etc.)
+- **Dependency Injection** - Clean architecture with protocol-based dependency management
+- **FastAPI API** - RESTful endpoints for workflow management and execution
+- **Docker Containerization** - Complete development and production environments
+- **Comprehensive Testing** - Unit, database, and end-to-end tests with testcontainers
+- **Code Quality** - Black formatting, Ruff linting, and automated quality gates
 
 ## Quick Start
 
@@ -42,6 +42,9 @@ Runs unit, database, and end-to-end tests using testcontainers for full isolatio
 
 - `GET /` - Hello World
 - `GET /health` - Health check
+- `POST /api/v1/workflows/` - Create and execute workflows
+- `GET /api/v1/workflows/` - List workflow runs
+- `GET /api/v1/workflows/{id}` - Get workflow details
 
 ## Development Commands
 
@@ -64,25 +67,47 @@ Runs unit, database, and end-to-end tests using testcontainers for full isolatio
 
 ```
 src/
-├── api/v1/           # API version 1
-├── config/           # Configuration
-├── db/               # Database models
-├── middlewares/      # Custom middleware
-└── main.py          # FastAPI application
+├── api/v1/              # API version 1
+│   ├── routers/         # FastAPI route handlers
+│   └── schemas.py       # Pydantic request/response models
+├── clients/             # External service integrations
+│   └── github_client.py # GitHub API client
+├── config/              # Application configuration
+├── container.py         # Dependency injection container
+├── db/                  # Database models and connections
+├── graph/               # LangGraph workflow definitions
+│   └── graph.py         # GraphBuilder for workflow orchestration
+├── nodes/               # Processing nodes/agents
+│   ├── article_improvement.py
+│   ├── category_organization.py
+│   ├── cross_reference.py
+│   ├── file_organization.py
+│   ├── new_article_creation.py
+│   ├── quality_audit.py
+│   └── base.py          # Base node implementation
+├── prompts/             # LLM prompt templates
+│   ├── loader.py        # Template rendering utilities
+│   └── templates/       # Jinja2 prompt templates
+├── protocols/           # Abstract interfaces for DI
+├── services/            # Internal business logic
+│   └── vault.py         # Vault file management service
+├── state.py             # Shared state definitions
+├── tasks/               # Celery background tasks
+└── main.py              # FastAPI application entry point
 
 tests/
-├── unit/            # Unit tests (TestClient)
-├── db/              # Database tests (testcontainers)
-└── e2e/             # End-to-end tests (testcontainers + HTTP)
+├── unit/               # Unit tests
+├── db/                 # Database integration tests
+└── e2e/                # End-to-end API tests
 
-alembic/             # Database migrations
+alembic/                # Database migrations
 ```
 
 ## Environment Variables
 
 Configure in `.env`:
 
-- `PROJECT_NAME` - Project name for Docker volumes (default: fastapi-tmpl)
+- `PROJECT_NAME` - Project name for Docker volumes (default: obs-graphs)
 - `HOST_BIND_IP` - IP to bind (default: 127.0.0.1)
 - `HOST_PORT` - Port to bind (default: 8000)
 - `DEV_PORT` - Development port (default: 8001)
@@ -94,6 +119,14 @@ Configure in `.env`:
 - `POSTGRES_HOST_DB` - Production database name
 - `POSTGRES_DEV_DB` - Development database name
 - `POSTGRES_TEST_DB` - Test database name
+- `OLLAMA_BASE_URL` - Ollama server base URL (default: http://localhost:11434)
+- `OLLAMA_MODEL` - Ollama model to use (default: llama3.2:3b)
+- `GITHUB_APP_ID` - GitHub App ID for repository operations
+- `GITHUB_APP_PRIVATE_KEY_PATH` - Path to GitHub App private key
+- `GITHUB_INSTALLATION_ID` - GitHub App installation ID
+- `GITHUB_REPO_FULL_NAME` - Target repository (owner/repo format)
+- `GITHUB_OWNER` - Repository owner
+- `GITHUB_REPO` - Repository name
 
 ## Testing
 

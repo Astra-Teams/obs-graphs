@@ -18,6 +18,7 @@ dist/
 *.egg
 wheels/
 .Python/
+.tmp/*
 
 # インストーラーログ
 pip-log.txt

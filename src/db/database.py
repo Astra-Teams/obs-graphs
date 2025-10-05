@@ -3,7 +3,7 @@ import threading
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from src.config.settings import get_settings
+from src.settings import get_settings
 
 # --- Lazy Initialization for Database Engine and Session Factory ---
 

@@ -40,7 +40,7 @@ setup:
         echo ".env already exists. Skipping creation."; \
     fi
     @echo "💡 You can customize .env for your specific needs:"
-    @echo "   📝 Change OLLAMA_HOST to switch between container/host Ollama"
+    @echo "   📝 Change OLLAMA_BASE_URL to switch between container/host Ollama"
     @echo "   📝 Adjust other settings as needed"
     @echo ""
     @echo "Pulling PostgreSQL image for tests..."
@@ -99,7 +99,9 @@ lint:
 # ==============================================================================
 
 # Run complete test suite (local SQLite then docker PostgreSQL)
-test: local-test docker-test
+test: 
+  @just local-test 
+  @just docker-test
 
 # Run lightweight local test suite (unit + SQLite DB tests)
 local-test: unit-test sqlt-test
@@ -107,12 +109,12 @@ local-test: unit-test sqlt-test
 # Run unit tests locally
 unit-test:
     @echo "🚀 Running unit tests (local)..."
-    @uv run pytest tests/unit -v -s
+    @uv run pytest tests/unit
 
 # Run database tests with SQLite (fast, lightweight, no docker)
 sqlt-test:
     @echo "🚀 Running database tests with SQLite..."
-    @USE_SQLITE=true uv run pytest tests/db -v -s
+    @USE_SQLITE=true uv run pytest tests/db
 
 # Run all Docker-based tests
 docker-test: build-test pstg-test e2e-test
@@ -121,16 +123,16 @@ docker-test: build-test pstg-test e2e-test
 build-test:
     @echo "Building Docker image for testing..."
     @TEMP_IMAGE_TAG=$(date +%s)-build-test; \
-    docker build --target production --tag temp-build-test:$TEMP_IMAGE_TAG -f api/Dockerfile . && \
+    docker build --target production --tag temp-build-test:$TEMP_IMAGE_TAG -f Dockerfile . && \
     echo "Build successful. Cleaning up temporary image..." && \
     docker rmi temp-build-test:$TEMP_IMAGE_TAG || true
 
 # Run database tests with PostgreSQL (robust, production-like)
 pstg-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
+    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build api db
     @echo "Running database tests inside api container (against PostgreSQL)..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} exec api pytest tests/db -v -s; \
+    @USE_SQLITE=false {{TEST_COMPOSE}} exec api pytest tests/db; \
     EXIT_CODE=$?; \
     echo "🔴 Stopping TEST containers..."; \
     {{TEST_COMPOSE}} down --remove-orphans; \
@@ -139,7 +141,7 @@ pstg-test:
 # Run e2e tests against containerized application stack (runs from host)
 e2e-test:
     @echo "🚀 Running e2e tests..."
-    @USE_SQLITE=false uv run pytest tests/e2e -v -s
+    @USE_SQLITE=false POSTGRES_DB=obs-graph-test uv run pytest tests/e2e
 
 # ==============================================================================
 # CLEANUP
