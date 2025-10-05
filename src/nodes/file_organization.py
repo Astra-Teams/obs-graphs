@@ -1,21 +1,21 @@
-"""Agent for optimizing category structure in the Obsidian Vault."""
+"""Agent for formatting and organizing articles in the Obsidian Vault."""
 
 from pathlib import Path
 
-from src.agents.base import AgentResult, BaseAgent
+from src.nodes.base import AgentResult, BaseAgent
 
 
-class CategoryOrganizationAgent(BaseAgent):
+class FileOrganizationAgent(BaseAgent):
     """
-    Agent for optimizing category structure.
+    Agent for formatting and organizing articles.
 
-    This agent reorganizes the vault structure, creates, and merges categories
-    to ensure a clean and logical organization.
+    This agent formats markdown, assigns categories, ensures proper file placement,
+    and returns file moves/renames and content updates.
     """
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
         """
-        Execute the category organization task.
+        Execute the file organization task.
 
         Args:
             vault_path: Path to the local clone of the Obsidian Vault.
@@ -24,12 +24,12 @@ class CategoryOrganizationAgent(BaseAgent):
         Returns:
             AgentResult containing success status, file changes, and metadata.
         """
-        # TODO: Implement the actual logic based on obsidian-agents/4-category-structure-organization.md
+        # TODO: Implement the actual logic based on obsidian-agents/2-file-organization-and-markdown-formatting.md
         # This is a placeholder implementation.
         return AgentResult(
             success=True,
             changes=[],
-            message="Category organization is not yet implemented.",
+            message="File organization is not yet implemented.",
             metadata={},
         )
 
@@ -53,4 +53,4 @@ class CategoryOrganizationAgent(BaseAgent):
         Returns:
             Human-readable agent name.
         """
-        return "Category Organization Agent"
+        return "File Organization Agent"

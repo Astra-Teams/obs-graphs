@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.agents.base import AgentResult, BaseAgent, FileAction, FileChange
+from src.nodes.base import AgentResult, BaseAgent, FileAction, FileChange
 
 
 class TestFileAction:

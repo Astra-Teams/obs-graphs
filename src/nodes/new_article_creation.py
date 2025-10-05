@@ -7,8 +7,8 @@ from pathlib import Path
 
 from langchain_openai import ChatOpenAI
 
-from src.agents.base import AgentResult, BaseAgent, FileAction, FileChange
 from src.config.settings import get_settings
+from src.nodes.base import AgentResult, BaseAgent, FileAction, FileChange
 
 
 class NewArticleCreationAgent(BaseAgent):

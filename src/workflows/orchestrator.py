@@ -7,13 +7,13 @@ from typing import Annotated, TypedDict
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
-from src.agents.article_improvement import ArticleImprovementAgent
-from src.agents.base import AgentResult, FileChange
-from src.agents.category_organization import CategoryOrganizationAgent
-from src.agents.cross_reference import CrossReferenceAgent
-from src.agents.file_organization import FileOrganizationAgent
-from src.agents.new_article_creation import NewArticleCreationAgent
-from src.agents.quality_audit import QualityAuditAgent
+from src.nodes.article_improvement import ArticleImprovementAgent
+from src.nodes.base import AgentResult, FileChange
+from src.nodes.category_organization import CategoryOrganizationAgent
+from src.nodes.cross_reference import CrossReferenceAgent
+from src.nodes.file_organization import FileOrganizationAgent
+from src.nodes.new_article_creation import NewArticleCreationAgent
+from src.nodes.quality_audit import QualityAuditAgent
 
 
 class WorkflowState(TypedDict):

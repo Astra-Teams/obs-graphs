@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.agents.article_improvement import ArticleImprovementAgent
-from src.agents.base import AgentResult, FileAction
+from src.nodes.article_improvement import ArticleImprovementAgent
+from src.nodes.base import AgentResult, FileAction
 
 
 @pytest.fixture

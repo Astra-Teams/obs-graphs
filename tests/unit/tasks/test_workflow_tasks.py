@@ -52,7 +52,7 @@ class TestRunWorkflowTask:
     """Tests for run_workflow_task Celery task."""
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.GithubClient")
     @patch("src.tasks.workflow_tasks.VaultService")
     @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     def test_task_retrieves_workflow_from_database(
@@ -112,7 +112,7 @@ class TestRunWorkflowTask:
         assert updated_workflow is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.GithubClient")
     def test_task_updates_status_to_running(
         self, mock_gh_service, mock_get_db, test_db
     ):
@@ -137,7 +137,7 @@ class TestRunWorkflowTask:
         assert workflow.started_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.GithubClient")
     @patch("src.tasks.workflow_tasks.VaultService")
     @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     def test_task_clones_repository(
@@ -193,7 +193,7 @@ class TestRunWorkflowTask:
         assert "repo_url" not in call_args.kwargs
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.GithubClient")
     @patch("src.tasks.workflow_tasks.VaultService")
     @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     def test_task_calls_orchestrator_and_applies_changes(
@@ -258,7 +258,7 @@ class TestRunWorkflowTask:
         assert mock_vault_instance.apply_changes.call_args[0][1] == mock_changes
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.GithubClient")
     @patch("src.tasks.workflow_tasks.VaultService")
     @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     def test_task_creates_pull_request(
@@ -318,7 +318,7 @@ class TestRunWorkflowTask:
         assert updated_workflow.pr_url == expected_pr_url
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.GithubClient")
     @patch("src.tasks.workflow_tasks.VaultService")
     @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     def test_task_updates_workflow_to_completed(
@@ -376,7 +376,7 @@ class TestRunWorkflowTask:
         assert updated_workflow.completed_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.GithubClient")
     @patch("src.tasks.workflow_tasks.VaultService")
     @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     def test_task_updates_workflow_to_failed_on_error(
@@ -426,7 +426,7 @@ class TestRunWorkflowTask:
         assert updated_workflow.completed_at is not None
 
     @patch("src.tasks.workflow_tasks.get_db")
-    @patch("src.tasks.workflow_tasks.GitHubService")
+    @patch("src.tasks.workflow_tasks.GithubClient")
     @patch("src.tasks.workflow_tasks.VaultService")
     @patch("src.tasks.workflow_tasks.WorkflowOrchestrator")
     @patch("src.tasks.workflow_tasks.shutil.rmtree")

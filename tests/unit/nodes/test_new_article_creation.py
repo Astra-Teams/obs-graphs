@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.agents.base import AgentResult, FileAction, FileChange
-from src.agents.new_article_creation import NewArticleCreationAgent
+from src.nodes.base import AgentResult, FileAction, FileChange
+from src.nodes.new_article_creation import NewArticleCreationAgent
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def mock_llm(llm_responses):
 @pytest.fixture
 def agent(mock_llm):
     """Create NewArticleCreationAgent with mocked LLM."""
-    with patch("src.agents.new_article_creation.ChatOpenAI") as mock_openai:
+    with patch("src.nodes.new_article_creation.ChatOpenAI") as mock_openai:
         mock_openai.return_value = mock_llm
         agent = NewArticleCreationAgent()
         agent.llm = mock_llm
@@ -66,7 +66,7 @@ class TestNewArticleCreationAgent:
 
     def test_agent_initialization(self):
         """Test that agent can be initialized."""
-        with patch("src.agents.new_article_creation.ChatOpenAI"):
+        with patch("src.nodes.new_article_creation.ChatOpenAI"):
             agent = NewArticleCreationAgent()
             assert agent is not None
             assert hasattr(agent, "llm")

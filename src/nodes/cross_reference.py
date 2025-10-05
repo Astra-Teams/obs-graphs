@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Sequence, Set, Tuple
 
-from src.agents.base import AgentResult, BaseAgent, FileAction, FileChange
+from src.nodes.base import AgentResult, BaseAgent, FileAction, FileChange
 
 
 @dataclass(frozen=True)

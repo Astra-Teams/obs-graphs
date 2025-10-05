@@ -9,8 +9,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.agents.base import FileAction
-from src.services.vault_service import VaultService
+from src.nodes.base import FileAction
+from src.services.vault import VaultService
 from src.workflows.orchestrator import WorkflowOrchestrator
 
 FIXTURES_ROOT = Path("tests/fixtures/vaults")
@@ -51,7 +51,7 @@ def mock_llm(monkeypatch: pytest.MonkeyPatch):
 
     fake_llm = FakeLLM()
     monkeypatch.setattr(
-        "src.agents.new_article_creation.ChatOpenAI", lambda *_, **__: fake_llm
+        "src.nodes.new_article_creation.ChatOpenAI", lambda *_, **__: fake_llm
     )
     return fake_llm
 

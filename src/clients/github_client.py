@@ -1,4 +1,4 @@
-"""Service for GitHub App authentication and repository operations."""
+"""Client for GitHub App authentication and repository operations."""
 
 from pathlib import Path
 from typing import Optional
@@ -10,16 +10,16 @@ from github.PullRequest import PullRequest
 from src.config.settings import get_settings
 
 
-class GitHubService:
+class GithubClient:
     """
-    Service for GitHub operations including authentication, cloning, and PR creation.
+    Client for GitHub operations including authentication, cloning, and PR creation.
 
-    This service handles GitHub App authentication and provides methods for
+    This client handles GitHub App authentication and provides methods for
     repository operations needed in the workflow automation system.
     """
 
     def __init__(self):
-        """Initialize the GitHub service with settings."""
+        """Initialize the GitHub client with settings."""
         self.settings = get_settings()
         self._github_client: Optional[Github] = None
 

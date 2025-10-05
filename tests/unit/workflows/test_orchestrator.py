@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.agents.base import AgentResult
+from src.nodes.base import AgentResult
 from src.workflows.orchestrator import (
     WorkflowOrchestrator,
     WorkflowPlan,

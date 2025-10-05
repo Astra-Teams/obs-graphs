@@ -1,21 +1,21 @@
-"""Agent for improving existing articles in the Obsidian Vault."""
+"""Agent for quality checking in the Obsidian Vault."""
 
 from pathlib import Path
 
-from src.agents.base import AgentResult, BaseAgent
+from src.nodes.base import AgentResult, BaseAgent
 
 
-class ArticleImprovementAgent(BaseAgent):
+class QualityAuditAgent(BaseAgent):
     """
-    Agent for improving existing articles.
+    Agent for quality checking.
 
-    This agent analyzes and enhances article content, returning content updates
-    for existing files.
+    This agent validates article quality against predefined standards and returns
+    quality issues and suggested fixes.
     """
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
         """
-        Execute the article improvement task.
+        Execute the quality audit task.
 
         Args:
             vault_path: Path to the local clone of the Obsidian Vault.
@@ -24,12 +24,12 @@ class ArticleImprovementAgent(BaseAgent):
         Returns:
             AgentResult containing success status, file changes, and metadata.
         """
-        # TODO: Implement the actual logic based on obsidian-agents/3-existing-article-improvement.md
+        # TODO: Implement the actual logic based on obsidian-agents/5-article-quality-audit.md
         # This is a placeholder implementation.
         return AgentResult(
             success=True,
             changes=[],
-            message="Article improvement is not yet implemented.",
+            message="Quality audit is not yet implemented.",
             metadata={},
         )
 
@@ -53,4 +53,4 @@ class ArticleImprovementAgent(BaseAgent):
         Returns:
             Human-readable agent name.
         """
-        return "Article Improvement Agent"
+        return "Quality Audit Agent"

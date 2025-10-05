@@ -7,11 +7,11 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from src.clients.github_client import GithubClient
 from src.config.settings import get_settings
 from src.db.database import get_db
 from src.db.models.workflow import Workflow, WorkflowStatus
-from src.services.github_service import GitHubService
-from src.services.vault_service import VaultService
+from src.services.vault import VaultService
 from src.tasks.celery_app import celery_app
 from src.workflows.orchestrator import WorkflowOrchestrator
 
@@ -28,7 +28,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
     2. Clone repository to temporary directory
     3. Analyze vault and execute agents via WorkflowOrchestrator
     4. Apply changes to local clone via VaultService
-    5. Commit and push changes via GitHubService
+    5. Commit and push changes via GithubClient
     6. Create pull request on GitHub
     7. Update workflow status and store results
     8. Clean up temporary directory
@@ -57,7 +57,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
         db.commit()
 
         # 3. Initialize services
-        github_service = GitHubService()
+        github_service = GithubClient()
         vault_service = VaultService()
         orchestrator = WorkflowOrchestrator()
 

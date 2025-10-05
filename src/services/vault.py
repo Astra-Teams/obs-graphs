@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from src.agents.base import FileAction, FileChange
+from src.nodes.base import FileAction, FileChange
 
 
 @dataclass

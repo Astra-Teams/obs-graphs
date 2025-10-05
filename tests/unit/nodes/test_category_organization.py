@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.agents.base import AgentResult, FileAction
-from src.agents.category_organization import CategoryOrganizationAgent
+from src.nodes.base import AgentResult, FileAction
+from src.nodes.category_organization import CategoryOrganizationAgent
 
 
 @pytest.fixture
