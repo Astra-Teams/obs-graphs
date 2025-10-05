@@ -3,21 +3,40 @@ name: Run Local Tests
 on:
   workflow_call:
 
+permissions:
+  contents: read
+  packages: read
+  pull-requests: read
+
 jobs:
   run-local-tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        test_target: [unit-test, sqlt-test]
+        test_target: [unit, sqlt]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Test Environment
-        uses: ./.github/actions/setup-test-env
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - name: Install uv
+        run: pipx install uv
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Create .env file for CI
+        run: cp .env.example .env
 
       - name: Run local tests
         env:
           USE_SQLITE: "true"
-        run: just ${{ matrix.test_target }}
+        run: just ${{ matrix.test_target }}-test
