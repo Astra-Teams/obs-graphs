@@ -54,22 +54,22 @@ setup:
 # Start all development containers in detached mode
 up:
     @echo "Starting up development services..."
-    @${DEV_COMPOSE} up -d
+    @{{DEV_COMPOSE}} up -d
 
 # Stop and remove all development containers
 down:
     @echo "Shutting down development services..."
-    @${DEV_COMPOSE} down --remove-orphans
+    @{{DEV_COMPOSE}} down --remove-orphans
 
 # Start all production-like containers
 up-prod:
     @echo "Starting up production-like services..."
-    @${PROD_COMPOSE} up -d --build --pull always --remove-orphans
+    @{{PROD_COMPOSE}} up -d --build --pull always --remove-orphans
 
 # Stop and remove all production-like containers
 down-prod:
     @echo "Shutting down production-like services..."
-    @${PROD_COMPOSE} down --remove-orphans
+    @{{PROD_COMPOSE}} down --remove-orphans
 
 # Rebuild and restart API container only
 rebuild:

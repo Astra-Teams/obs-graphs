@@ -38,6 +38,42 @@ just test
 
 Runs unit, database, and end-to-end tests using testcontainers for full isolation.
 
+## Troubleshooting Example: First Workflow Run
+
+This section documents a real-world troubleshooting session to get the first workflow running. It highlights common issues in a containerized environment and how they were resolved.
+
+1.  **`just up-prod` Fails with `unbound variable`**:
+    *   **Symptom**: The `just up-prod` command failed with a shell error.
+    *   **Root Cause**: The `justfile` was using shell-style `${VAR}` syntax instead of the correct `{{VAR}}` syntax for variable expansion.
+    *   **Fix**: Corrected the variable syntax in the `justfile` for all `docker compose` commands.
+
+2.  **`ModuleNotFoundError: No module named 'dev'`**:
+    *   **Symptom**: The application container failed to start, with logs showing a `ModuleNotFoundError`.
+    *   **Root Cause**: The production Docker image does not include the `dev/` directory, but `src/container.py` was unconditionally importing mock clients from it.
+    *   **Fix**: Modified `src/container.py` to conditionally import mock clients only when `USE_MOCK_*` environment variables are set to `true`.
+
+3.  **Celery Worker: `no such table: workflows`**:
+    *   **Symptom**: The Celery worker container started but failed immediately when a task was received.
+    *   **Root Cause**: The `celery-worker` service was not running database migrations, unlike the `api` service. The `entrypoint.sh` script only ran migrations for `uvicorn` commands.
+    *   **Fix**: Updated `entrypoint.sh` to also run migrations when the `celery` command is detected.
+
+4.  **Celery Worker: `POSTGRES_DB: parameter not set`**:
+    *   **Symptom**: The Celery worker container failed to start, with an error indicating the `POSTGRES_DB` environment variable was missing.
+    *   **Root Cause**: The `celery-worker` service in `docker-compose.yml` was missing the `environment` section that explicitly sets `POSTGRES_DB`.
+    *   **Fix**: Added the `environment` section to the `celery-worker` service definition in `docker-compose.yml`.
+
+5.  **GitHub API Error: `403 Not Found` (Repository Name)**:
+    *   **Symptom**: The workflow failed with a Git error indicating the repository was not found.
+    *   **Root Cause**: An environment variable mismatch. The application expected `OBSIDIAN_VAULT_REPO_FULL_NAME`, but the `.env` file defined `GITHUB_REPO_FULL_NAME`.
+    *   **Fix**: Renamed the variable in the `.env` file to match the application's settings.
+
+6.  **GitHub API Error: `403 Forbidden` (Permissions)**:
+    *   **Symptom**: After fixing the repository name, the workflow failed again with a permission error.
+    *   **Root Cause**: The `GITHUB_PAT` used did not have the necessary `contents: write` permission for the target repository.
+    *   **Fix**: The user was instructed to verify the Personal Access Token had the `repo` scope, which grants the required permissions to create branches and open pull requests.
+
+After these fixes, the workflow successfully ran, created a new branch, and opened a pull request.
+
 ## API Endpoints
 
 - `GET /` - Hello World

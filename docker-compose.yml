@@ -67,6 +67,9 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      - USE_SQLITE=false
+      - POSTGRES_DB=${POSTGRES_HOST_DB}
     volumes:
       - /tmp/obsidian-workflows:/tmp/obsidian-workflows
     networks:

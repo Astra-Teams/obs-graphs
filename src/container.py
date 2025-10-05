@@ -6,7 +6,6 @@ import redis
 from langchain_community.llms import Ollama
 from langchain_core.language_models.llms import BaseLLM
 
-from dev.mocks_clients import MockGithubClient, MockOllamaClient, MockRedisClient
 from src.clients import (
     GithubClient,
 )
@@ -60,6 +59,8 @@ class DependencyContainer:
         if self._github_client is None:
             settings = get_settings()
             if settings.USE_MOCK_GITHUB:
+                from dev.mocks_clients import MockGithubClient
+
                 self._github_client = MockGithubClient()
             else:
                 self._github_client = GithubClient(settings)
@@ -80,6 +81,8 @@ class DependencyContainer:
         if self._llm is None:
             settings = get_settings()
             if settings.USE_MOCK_LLM:
+                from dev.mocks_clients import MockOllamaClient
+
                 self._llm = MockOllamaClient()
             else:
                 self._llm = Ollama(
@@ -96,6 +99,8 @@ class DependencyContainer:
         if self._redis_client is None:
             settings = get_settings()
             if settings.USE_MOCK_REDIS:
+                from dev.mocks_clients import MockRedisClient
+
                 self._redis_client = MockRedisClient.get_client()
             else:
                 self._redis_client = redis.Redis.from_url(

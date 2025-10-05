@@ -7,7 +7,7 @@ set -eu
 # --- Wait for DB and run migrations ---
 # This section is skipped if the command is not the default uvicorn server
 # (e.g., if a user runs 'shell' or another command).
-if [ "$#" -eq 0 ] || [ "$1" = "uvicorn" ]; then
+if [ "$#" -eq 0 ] || [ "$1" = "uvicorn" ] || [ "$1" = "celery" ]; then
     count=0
     echo "Waiting for database to be ready..."
     
