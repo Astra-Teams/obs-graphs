@@ -1,0 +1,13 @@
+{
+  "enabledMcpjsonServers": [
+    "context7",
+    "voicevox",
+    "sequentialthinking",
+    "serena"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(uv run pytest:*)"
+    ]
+  }
+}

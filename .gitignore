@@ -38,7 +38,9 @@ htmlcov/
 # editor config
 .vscode/
 .idea/
-.claude/
+
+# local claude settings
+.claude/settings.local.json
 
 # Sublime Text
 *.sublime-project

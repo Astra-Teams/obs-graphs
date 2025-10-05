@@ -13,6 +13,7 @@ class ObsGraphsSettings(BaseSettings):
     from the project root, there's no need to explicitly specify the file path.
     """
 
+    DEBUG: bool = False
     USE_SQLITE: bool = True
 
     # PostgreSQL settings

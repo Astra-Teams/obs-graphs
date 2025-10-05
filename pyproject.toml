@@ -26,6 +26,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black>=25.1.0",
+    "fakeredis>=2.20.0",
     "filelock>=3.12.2,<4.0.0",
     "ipython>=9.4.0",
     "pytest>=8.4.1",

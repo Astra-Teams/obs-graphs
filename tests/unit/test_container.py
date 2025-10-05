@@ -13,12 +13,16 @@ def container():
     return DependencyContainer()
 
 
+@patch("src.container.get_settings")
 @patch("src.container.GithubClient")
 def test_get_github_client_lazy_instantiation(
-    mock_github_client, container: DependencyContainer
+    mock_github_client, mock_get_settings, container: DependencyContainer
 ):
     """Test that github client is lazily instantiated."""
     # Arrange
+    mock_settings = MagicMock()
+    mock_settings.DEBUG = False  # Set DEBUG to False to test production path
+    mock_get_settings.return_value = mock_settings
     mock_instance = MagicMock()
     mock_github_client.return_value = mock_instance
 
@@ -59,6 +63,7 @@ def test_get_llm_lazy_instantiation(
     """Test that LLM is lazily instantiated."""
     # Arrange
     mock_settings = MagicMock()
+    mock_settings.DEBUG = False  # Set DEBUG to False to test production path
     mock_settings.OLLAMA_MODEL = "test-model"
     mock_settings.OLLAMA_BASE_URL = "http://test-url"
     mock_get_settings.return_value = mock_settings
@@ -102,6 +107,7 @@ def test_get_node_new_article_creation_with_llm(
     """Test that new_article_creation node is instantiated with LLM."""
     # Arrange
     mock_settings = MagicMock()
+    mock_settings.DEBUG = False  # Set DEBUG to False to test production path
     mock_settings.OLLAMA_MODEL = "test-model"
     mock_settings.OLLAMA_BASE_URL = "http://test-url"
     mock_get_settings.return_value = mock_settings
