@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from src.api.v1.models.workflow import Workflow, WorkflowStatus
 from src.api.v1.tasks.workflow_tasks import run_workflow_task
 from src.db.database import Base
-from tests.fixtures.db.workflow_states import create_pending_workflow
+from tests.db.conftest import create_pending_workflow
 
 
 # Test database setup

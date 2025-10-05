@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from src.api.v1.models.workflow import Workflow, WorkflowStatus
-from tests.fixtures.db.workflow_states import (
+from tests.db.conftest import (
     create_pending_workflow,
     create_running_workflow,
 )
