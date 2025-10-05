@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.api.v1.nodes.base import AgentResult
 from src.api.v1.nodes.quality_audit import QualityAuditAgent
+from src.state import AgentResult
 
 
 @pytest.fixture
@@ -56,10 +56,6 @@ class TestQualityAuditAgent:
     def test_agent_initialization(self, agent):
         """Test that agent can be initialized."""
         assert agent is not None
-
-    def test_get_name(self, agent):
-        """Test that agent returns correct name."""
-        assert agent.get_name() == "Quality Audit Agent"
 
     def test_validate_input(self, agent):
         """Test validate_input accepts contexts."""

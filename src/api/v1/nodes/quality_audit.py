@@ -3,17 +3,21 @@
 from pathlib import Path
 
 from src.api.v1.prompts import render_prompt
+from src.protocols import NodeProtocol
 from src.state import AgentResult
 
-from .base import BaseAgent
+from .mixins import AgentDefaultsMixin, VaultScanMixin
 
 
-class QualityAuditAgent(BaseAgent):
+class QualityAuditAgent(AgentDefaultsMixin, VaultScanMixin, NodeProtocol):
     """
     Agent for quality checking.
 
     This agent validates article quality against predefined standards and returns
     quality issues and suggested fixes.
+
+    Uses AgentDefaultsMixin for common functionality like validation and result creation.
+    Uses VaultScanMixin for vault scanning utilities.
     """
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
@@ -30,31 +34,11 @@ class QualityAuditAgent(BaseAgent):
         # TODO: Implement the actual logic based on obsidian-agents/5-article-quality-audit.md
         # This is a placeholder implementation that demonstrates prompt loading
         prompt = render_prompt("quality_audit", article_content="")
-        return AgentResult(
-            success=True,
-            changes=[],
+
+        # Using mixin helper method for consistent result creation
+        return self._create_success_result(
             message="Quality audit is not yet implemented.",
             metadata={"prompt_loaded": bool(prompt)},
         )
 
-    def validate_input(self, context: dict) -> bool:
-        """
-        Validate that the context contains required information for this agent.
-
-        Args:
-            context: Execution context dictionary.
-
-        Returns:
-            True if context is valid, False otherwise.
-        """
-        # TODO: Implement actual validation logic.
-        return True
-
-    def get_name(self) -> str:
-        """
-        Get the name of this agent.
-
-        Returns:
-            Human-readable agent name.
-        """
-        return "Quality Audit Agent"
+    # validate_input() is inherited from AgentDefaultsMixin (returns True by default)

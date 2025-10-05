@@ -1,10 +1,7 @@
-"""Unit tests for base agent interface and utilities."""
-
-from pathlib import Path
+"""Unit tests for state module (FileAction, FileChange, AgentResult)."""
 
 import pytest
 
-from src.api.v1.nodes.base import BaseAgent
 from src.state import AgentResult, FileAction, FileChange
 
 
@@ -151,93 +148,3 @@ class TestAgentResult:
         result = AgentResult(success=True, changes=[], message="Test")
         assert isinstance(result.metadata, dict)
         assert len(result.metadata) == 0
-
-
-class TestBaseAgent:
-    """Test the BaseAgent abstract class."""
-
-    def test_cannot_instantiate_base_agent(self):
-        """Test that BaseAgent cannot be instantiated directly."""
-        with pytest.raises(TypeError):
-            BaseAgent()
-
-    def test_concrete_agent_must_implement_execute(self):
-        """Test that concrete agents must implement execute method."""
-
-        class IncompleteAgent(BaseAgent):
-            def validate_input(self, context: dict) -> bool:
-                return True
-
-            def get_name(self) -> str:
-                return "Incomplete"
-
-        with pytest.raises(TypeError):
-            IncompleteAgent()
-
-    def test_concrete_agent_must_implement_validate_input(self):
-        """Test that concrete agents must implement validate_input method."""
-
-        class IncompleteAgent(BaseAgent):
-            def execute(self, vault_path: Path, context: dict) -> AgentResult:
-                return AgentResult(True, [], "test", {})
-
-            def get_name(self) -> str:
-                return "Incomplete"
-
-        with pytest.raises(TypeError):
-            IncompleteAgent()
-
-    def test_concrete_agent_must_implement_get_name(self):
-        """Test that concrete agents must implement get_name method."""
-
-        class IncompleteAgent(BaseAgent):
-            def execute(self, vault_path: Path, context: dict) -> AgentResult:
-                return AgentResult(True, [], "test", {})
-
-            def validate_input(self, context: dict) -> bool:
-                return True
-
-        with pytest.raises(TypeError):
-            IncompleteAgent()
-
-    def test_complete_concrete_agent(self):
-        """Test that a complete concrete agent can be instantiated."""
-
-        class CompleteAgent(BaseAgent):
-            def execute(self, vault_path: Path, context: dict) -> AgentResult:
-                return AgentResult(
-                    success=True, changes=[], message="Test execution", metadata={}
-                )
-
-            def validate_input(self, context: dict) -> bool:
-                return True
-
-            def get_name(self) -> str:
-                return "CompleteAgent"
-
-        agent = CompleteAgent()
-        assert agent.get_name() == "CompleteAgent"
-        assert agent.validate_input({}) is True
-
-        result = agent.execute(Path("/tmp"), {})
-        assert isinstance(result, AgentResult)
-        assert result.success is True
-
-    def test_agent_execute_signature(self):
-        """Test that execute method has correct signature."""
-
-        class TestAgent(BaseAgent):
-            def execute(self, vault_path: Path, context: dict) -> AgentResult:
-                assert isinstance(vault_path, Path)
-                assert isinstance(context, dict)
-                return AgentResult(True, [], "test", {})
-
-            def validate_input(self, context: dict) -> bool:
-                return True
-
-            def get_name(self) -> str:
-                return "TestAgent"
-
-        agent = TestAgent()
-        result = agent.execute(Path("/tmp/vault"), {"test": "data"})
-        assert isinstance(result, AgentResult)

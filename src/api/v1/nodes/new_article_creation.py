@@ -8,12 +8,11 @@ from pathlib import Path
 from langchain_community.llms import Ollama
 
 from src.api.v1.prompts import render_prompt
+from src.protocols import NodeProtocol
 from src.state import AgentResult, FileAction, FileChange
 
-from .base import BaseAgent
 
-
-class NewArticleCreationAgent(BaseAgent):
+class NewArticleCreationAgent(NodeProtocol):
     """
     Agent responsible for creating new articles from scratch.
 
@@ -25,10 +24,6 @@ class NewArticleCreationAgent(BaseAgent):
     def __init__(self, llm: Ollama):
         """Initialize the new article creation agent."""
         self.llm = llm
-
-    def get_name(self) -> str:
-        """Get the name of this agent."""
-        return "NewArticleCreationAgent"
 
     def validate_input(self, context: dict) -> bool:
         """

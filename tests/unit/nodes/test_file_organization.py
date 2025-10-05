@@ -52,10 +52,6 @@ class TestFileOrganizationAgent:
         assert agent is not None
         assert isinstance(agent, FileOrganizationAgent)
 
-    def test_get_name(self, agent):
-        """Test that agent returns correct name."""
-        assert agent.get_name() == "File Organization Agent"
-
     def test_validate_input_accepts_any_context(self, agent):
         """Test validate_input accepts various contexts."""
         assert agent.validate_input({}) is True

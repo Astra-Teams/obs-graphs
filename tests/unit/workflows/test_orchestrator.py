@@ -16,11 +16,8 @@ from src.state import AgentResult
 class MockAgent(MagicMock):
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
         return AgentResult(
-            success=True, changes=[], message=f"{self.get_name()} executed"
+            success=True, changes=[], message=f"{self.__class__.__name__} executed"
         )
-
-    def get_name(self) -> str:
-        return self.__class__.__name__
 
 
 @pytest.fixture

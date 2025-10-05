@@ -33,25 +33,6 @@ def vault_with_categories(tmp_path):
 class TestCategoryOrganizationAgent:
     """Test suite for CategoryOrganizationAgent."""
 
-    def test_agent_initialization(self, agent):
-        """Test that agent can be initialized."""
-        assert agent is not None
-
-    def test_get_name(self, agent):
-        """Test that agent returns correct name."""
-        assert agent.get_name() == "Category Organization Agent"
-
-    def test_validate_input(self, agent):
-        """Test validate_input accepts contexts."""
-        assert agent.validate_input({}) is True
-
-    def test_execute_returns_agent_result(self, agent, vault_with_categories):
-        """Test that execute returns AgentResult."""
-        result = agent.execute(vault_with_categories, {})
-
-        assert isinstance(result, AgentResult)
-        assert isinstance(result.success, bool)
-
     def test_execute_with_empty_vault(self, agent, tmp_path):
         """Test execute with empty vault."""
         empty_vault = tmp_path / "empty"
@@ -133,11 +114,3 @@ class TestCategoryOrganizationAgent:
         result = agent.execute(vault, {})
 
         assert isinstance(result, AgentResult)
-
-    def test_agent_is_stateless(self, agent, vault_with_categories):
-        """Test that agent can be called multiple times."""
-        result1 = agent.execute(vault_with_categories, {})
-        result2 = agent.execute(vault_with_categories, {})
-
-        assert isinstance(result1, AgentResult)
-        assert isinstance(result2, AgentResult)

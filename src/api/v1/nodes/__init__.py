@@ -2,6 +2,4 @@
 
 from src.state import AgentResult, FileChange
 
-from .base import BaseAgent
-
-__all__ = ["BaseAgent", "AgentResult", "FileChange"]
+__all__ = ["AgentResult", "FileChange"]

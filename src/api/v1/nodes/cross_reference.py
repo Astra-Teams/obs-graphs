@@ -8,9 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Sequence, Set, Tuple
 
+from src.protocols import NodeProtocol
 from src.state import AgentResult, FileAction, FileChange
-
-from .base import BaseAgent
 
 
 @dataclass(frozen=True)
@@ -25,7 +24,7 @@ class _NoteProfile:
     content: str
 
 
-class CrossReferenceAgent(BaseAgent):
+class CrossReferenceAgent(NodeProtocol):
     """
     Agent that scans markdown files and adds contextual cross references.
 
@@ -132,9 +131,6 @@ class CrossReferenceAgent(BaseAgent):
             if any(not isinstance(item, str) for item in value):
                 return False
         return True
-
-    def get_name(self) -> str:
-        return "Cross Reference Agent"
 
     def _collect_note_profiles(self, vault_path: Path) -> List[_NoteProfile]:
         profiles: List[_NoteProfile] = []

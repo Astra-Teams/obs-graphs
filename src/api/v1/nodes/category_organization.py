@@ -3,17 +3,21 @@
 from pathlib import Path
 
 from src.api.v1.prompts import render_prompt
+from src.protocols import NodeProtocol
 from src.state import AgentResult
 
-from .base import BaseAgent
+from .mixins import AgentDefaultsMixin, VaultScanMixin
 
 
-class CategoryOrganizationAgent(BaseAgent):
+class CategoryOrganizationAgent(AgentDefaultsMixin, VaultScanMixin, NodeProtocol):
     """
     Agent for optimizing category structure.
 
     This agent reorganizes the vault structure, creates, and merges categories
     to ensure a clean and logical organization.
+
+    Uses AgentDefaultsMixin for common functionality like validation and result creation.
+    Uses VaultScanMixin for vault scanning utilities.
     """
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
@@ -30,31 +34,9 @@ class CategoryOrganizationAgent(BaseAgent):
         # TODO: Implement the actual logic based on obsidian-agents/4-category-structure-organization.md
         # This is a placeholder implementation that demonstrates prompt loading
         prompt = render_prompt("category_organization", vault_summary={})
-        return AgentResult(
-            success=True,
-            changes=[],
+
+        # Using mixin helper method for consistent result creation
+        return self._create_success_result(
             message="Category organization is not yet implemented.",
             metadata={"prompt_loaded": bool(prompt)},
         )
-
-    def validate_input(self, context: dict) -> bool:
-        """
-        Validate that the context contains required information for this agent.
-
-        Args:
-            context: Execution context dictionary.
-
-        Returns:
-            True if context is valid, False otherwise.
-        """
-        # TODO: Implement actual validation logic.
-        return True
-
-    def get_name(self) -> str:
-        """
-        Get the name of this agent.
-
-        Returns:
-            Human-readable agent name.
-        """
-        return "Category Organization Agent"

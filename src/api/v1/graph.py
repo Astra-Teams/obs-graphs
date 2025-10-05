@@ -356,7 +356,7 @@ Changes made by Obsidian Agents workflow
                 "metadata": result.metadata,
             }
             state["messages"].append(
-                f"{node.get_name()}: {result.message} ({len(result.changes)} changes)"
+                f"{node_name}: {result.message} ({len(result.changes)} changes)"
             )
 
             return state

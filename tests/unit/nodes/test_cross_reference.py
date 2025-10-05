@@ -52,10 +52,6 @@ class TestCrossReferenceAgent:
         agent = CrossReferenceAgent()
         assert agent is not None
 
-    def test_get_name(self, agent):
-        """Test that agent returns correct name."""
-        assert agent.get_name() == "Cross Reference Agent"
-
     def test_validate_input(self, agent):
         """Test validate_input accepts contexts."""
         assert agent.validate_input({}) is True

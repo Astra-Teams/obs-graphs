@@ -68,10 +68,6 @@ class TestNewArticleCreationAgent:
         assert hasattr(agent, "llm")
         assert agent.llm is mock_llm
 
-    def test_get_name(self, agent):
-        """Test that agent returns correct name."""
-        assert agent.get_name() == "NewArticleCreationAgent"
-
     def test_validate_input_with_valid_context(self, agent, basic_vault_context):
         """Test validate_input with valid context."""
         assert agent.validate_input(basic_vault_context) is True

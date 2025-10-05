@@ -40,9 +40,9 @@ class NodeProtocol(Protocol):
 
     def get_name(self) -> str:
         """
-        Get the name of this node.
+        Get the name of this node/agent.
 
         Returns:
-            Human-readable node name
+            Human-readable node/agent name
         """
         ...
