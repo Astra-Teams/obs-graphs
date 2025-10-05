@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.nodes.article_improvement import ArticleImprovementAgent
+from src.api.v1.nodes.article_improvement import ArticleImprovementAgent
 from src.state import AgentResult, FileAction
 
 

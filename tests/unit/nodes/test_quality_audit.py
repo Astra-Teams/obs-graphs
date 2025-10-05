@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.nodes.base import AgentResult
-from src.nodes.quality_audit import QualityAuditAgent
+from src.api.v1.nodes.base import AgentResult
+from src.api.v1.nodes.quality_audit import QualityAuditAgent
 
 
 @pytest.fixture

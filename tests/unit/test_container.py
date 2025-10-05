@@ -72,9 +72,7 @@ def test_get_llm_lazy_instantiation(
     # Assert
     assert llm1 is llm2
     assert llm1 is mock_instance
-    mock_ollama.assert_called_once_with(
-        model="test-model", base_url="http://test-url"
-    )
+    mock_ollama.assert_called_once_with(model="test-model", base_url="http://test-url")
 
 
 def test_get_node_valid_name(container: DependencyContainer):
@@ -116,45 +114,7 @@ def test_get_node_new_article_creation_with_llm(
     # Assert
     assert node is not None
     # Verify that get_llm was called (since it's lazy, it should be called during get_node)
-    mock_ollama.assert_called_once_with(
-        model="test-model", base_url="http://test-url"
-    )
-
-
-@patch("src.container.GraphBuilder")
-def test_get_graph_builder(mock_graph_builder, container: DependencyContainer):
-    """Test that graph builder is instantiated with vault service and nodes."""
-    # Arrange
-    mock_instance = MagicMock()
-    mock_graph_builder.return_value = mock_instance
-
-    # Act
-    builder = container.get_graph_builder()
-
-    # Assert
-    assert builder is mock_instance
-    # Should have been called with vault service and nodes dict
-    mock_graph_builder.assert_called_once()
-    args, kwargs = mock_graph_builder.call_args
-    vault_service, nodes = args
-    assert vault_service is not None  # Mocked vault service
-    assert isinstance(nodes, dict)
-    assert "article_improvement" in nodes
-
-
-@patch("src.tasks.workflow_tasks.run_workflow_task")
-def test_run_workflow(mock_run_task, container: DependencyContainer):
-    """Test that run_workflow dispatches the task."""
-    # Arrange
-    mock_task = MagicMock()
-    mock_run_task.delay.return_value = mock_task
-
-    # Act
-    result = container.run_workflow(123)
-
-    # Assert
-    assert result is mock_task
-    mock_run_task.delay.assert_called_once_with(123)
+    mock_ollama.assert_called_once_with(model="test-model", base_url="http://test-url")
 
 
 def test_get_container_singleton():

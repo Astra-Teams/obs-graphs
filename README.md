@@ -76,7 +76,7 @@ src/
 ├── container.py         # Dependency injection container
 ├── db/                  # Database models and connections
 ├── graph/               # LangGraph workflow definitions
-│   └── builder.py       # GraphBuilder for workflow orchestration
+│   └── graph.py         # GraphBuilder for workflow orchestration
 ├── nodes/               # Processing nodes/agents
 │   ├── article_improvement.py
 │   ├── category_organization.py

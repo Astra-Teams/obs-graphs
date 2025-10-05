@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.db.models.workflow import WorkflowStatus
+from src.api.v1.models.workflow import WorkflowStatus
 from src.state import WorkflowStrategy
 
 
@@ -38,7 +38,7 @@ class WorkflowRunResponse(BaseModel):
 
     id: int
     status: WorkflowStatus
-    celery_task_id: str
+    celery_task_id: Optional[str]
     message: str
 
 

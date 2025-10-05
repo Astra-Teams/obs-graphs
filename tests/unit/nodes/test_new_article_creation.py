@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from src.nodes.new_article_creation import NewArticleCreationAgent
+from src.api.v1.nodes.new_article_creation import NewArticleCreationAgent
 from src.state import AgentResult, FileAction, FileChange
 
 
@@ -14,9 +14,9 @@ from src.state import AgentResult, FileAction, FileChange
 def llm_responses():
     """Load mock LLM responses from fixture file."""
     fixture_path = (
-        Path(__file__).parent.parent.parent
-        / "fixtures"
-        / "mock_data"
+        Path(__file__).parent.parent.parent.parent
+        / "dev"
+        / "mocks"
         / "llm_responses.json"
     )
     with open(fixture_path, "r") as f:

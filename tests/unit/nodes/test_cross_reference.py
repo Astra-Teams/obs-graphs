@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.nodes.cross_reference import CrossReferenceAgent
+from src.api.v1.nodes.cross_reference import CrossReferenceAgent
 from src.state import AgentResult, FileAction
 
 

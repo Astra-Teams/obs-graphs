@@ -1,6 +1,7 @@
 """Node modules for Obsidian Vault workflow automation."""
 
-from src.nodes.base import BaseAgent
 from src.state import AgentResult, FileChange
+
+from .base import BaseAgent
 
 __all__ = ["BaseAgent", "AgentResult", "FileChange"]

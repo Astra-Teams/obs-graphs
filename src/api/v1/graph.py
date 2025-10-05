@@ -1,13 +1,16 @@
 """LangGraph-based workflow orchestration for Obsidian Vault nodes."""
 
+import shutil
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict
 
 from langgraph.graph import END, StateGraph
 
-from src.protocols.nodes_protocol import NodeProtocol
+from src.api.v1.schemas import WorkflowRunRequest
+from src.container import DependencyContainer
 from src.protocols.vault_protocol import VaultServiceProtocol
+from src.settings import get_settings
 from src.state import AgentResult, FileChange, GraphState
 
 
@@ -35,12 +38,16 @@ class WorkflowResult:
         changes: Aggregated list of all file changes from agents
         summary: Human-readable summary of what was done
         agent_results: Dictionary mapping agent names to their results
+        pr_url: URL of the created pull request
+        branch_name: Name of the created branch
     """
 
     success: bool
     changes: list[FileChange]
     summary: str
     agent_results: dict = field(default_factory=dict)
+    pr_url: str = ""
+    branch_name: str = ""
 
 
 class GraphBuilder:
@@ -51,20 +58,141 @@ class GraphBuilder:
     then executes them in the appropriate order using a state graph.
     """
 
-    def __init__(
-        self, vault_service: VaultServiceProtocol, nodes: Dict[str, NodeProtocol]
-    ):
+    def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
         """
-        Initialize the graph builder with dependencies.
+        Run the complete workflow: clone repo, analyze vault, execute agents, commit changes, create PR.
 
         Args:
-            vault_service: Service for vault operations
-            nodes: Dictionary of available nodes keyed by name
-        """
-        self.vault_service = vault_service
-        self.nodes = nodes
+            request: Workflow run request with optional strategy override
 
-    def analyze_vault(self, vault_path: Path) -> WorkflowPlan:
+        Returns:
+            WorkflowResult with execution results
+        """
+        settings = get_settings()
+        temp_path = None
+
+        try:
+            # Instantiate DependencyContainer
+            container = DependencyContainer()
+
+            # Get required services and clients
+            github_client = container.get_github_client()
+            vault_service = container.get_vault_service()
+
+            # Create temporary directory for vault clone
+            clone_base_path = Path(settings.WORKFLOW_CLONE_BASE_PATH)
+            clone_base_path.mkdir(parents=True, exist_ok=True)
+            temp_path = (
+                clone_base_path / f"workflow_{datetime.now(timezone.utc).timestamp()}"
+            )
+
+            # Clone repository
+            github_client.clone_repository(
+                target_path=temp_path,
+                branch=settings.WORKFLOW_DEFAULT_BRANCH,
+            )
+
+            # Analyze vault to create workflow plan
+            workflow_plan = self.analyze_vault(temp_path, vault_service)
+
+            # Override strategy if specified in request
+            if request.strategy:
+                workflow_plan.strategy = request.strategy
+
+            # Execute workflow
+            workflow_result = self.execute_workflow(temp_path, workflow_plan, container)
+
+            if not workflow_result.success:
+                raise Exception(f"Workflow execution failed: {workflow_result.summary}")
+
+            # Apply changes to vault
+            vault_service.apply_changes(temp_path, workflow_result.changes)
+
+            # Validate vault structure after changes
+            if not vault_service.validate_vault_structure(temp_path):
+                raise Exception(
+                    "Vault structure validation failed after applying changes"
+                )
+
+            # Create new branch for changes
+            branch_name = f"obsidian-agents/{workflow_plan.strategy}-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
+            github_client.create_branch(repo_path=temp_path, branch_name=branch_name)
+
+            # Commit and push changes
+            commit_message = f"""Automated vault improvements via {workflow_plan.strategy} strategy
+
+{workflow_result.summary}
+
+Changes made by Obsidian Agents workflow
+"""
+            pushed = github_client.commit_and_push(
+                repo_path=temp_path, branch_name=branch_name, message=commit_message
+            )
+
+            # If no changes were made, return success without PR
+            if not pushed:
+                workflow_result.pr_url = ""
+                workflow_result.branch_name = branch_name
+                return workflow_result
+
+            # Create pull request
+            pr_title = f"Automated vault improvements ({workflow_plan.strategy})"
+            pr_body = f"""## Automated Vault Improvements
+
+**Strategy**: {workflow_plan.strategy}
+
+### Summary
+{workflow_result.summary}
+
+### Details
+- **Total Changes**: {len(workflow_result.changes)} file operations
+- **Agents Executed**: {len(workflow_result.agent_results)}
+
+### Agent Results
+"""
+            for agent_name, result in workflow_result.agent_results.items():
+                pr_body += f"\n#### {agent_name}\n"
+                pr_body += (
+                    f"- Status: {'✅ Success' if result['success'] else '❌ Failed'}\n"
+                )
+                pr_body += f"- Message: {result['message']}\n"
+                pr_body += f"- Changes: {result['changes_count']}\n"
+
+            pr_body += "\n---\n*Generated by Obsidian Agents Workflow Automation*"
+
+            pr = github_client.create_pull_request(
+                repo_full_name=settings.GITHUB_REPO_FULL_NAME,
+                head_branch=branch_name,
+                title=pr_title,
+                body=pr_body,
+            )
+
+            # Update result with PR info
+            workflow_result.pr_url = pr.html_url
+            workflow_result.branch_name = branch_name
+
+            return workflow_result
+
+        except Exception as e:
+            return WorkflowResult(
+                success=False,
+                changes=[],
+                summary=f"Workflow failed: {str(e)}",
+                agent_results={},
+            )
+
+        finally:
+            # Clean up temporary directory
+            if temp_path and temp_path.exists():
+                try:
+                    shutil.rmtree(temp_path)
+                except Exception:
+                    # Log cleanup error but don't fail
+                    pass
+
+    def analyze_vault(
+        self, vault_path: Path, vault_service: VaultServiceProtocol
+    ) -> WorkflowPlan:
         """
         Analyze vault to determine which nodes to run and in what order.
 
@@ -75,7 +203,7 @@ class GraphBuilder:
             WorkflowPlan with ordered list of nodes and strategy
         """
         # Get vault summary for analysis
-        vault_summary = self.vault_service.get_vault_summary(vault_path)
+        vault_summary = vault_service.get_vault_summary(vault_path)
 
         total_articles = vault_summary.total_articles
 
@@ -104,7 +232,10 @@ class GraphBuilder:
         return WorkflowPlan(agents=agents, strategy=strategy)
 
     def execute_workflow(
-        self, vault_path: Path, workflow_plan: WorkflowPlan
+        self,
+        vault_path: Path,
+        workflow_plan: WorkflowPlan,
+        container: DependencyContainer,
     ) -> WorkflowResult:
         """
         Execute workflow using LangGraph state graph.
@@ -117,7 +248,7 @@ class GraphBuilder:
             WorkflowResult with aggregated changes and results
         """
         # Get vault summary for context
-        vault_summary = self.vault_service.get_vault_summary(vault_path)
+        vault_summary = container.get_vault_service().get_vault_summary(vault_path)
 
         # Initialize workflow state
         initial_state: GraphState = {
@@ -130,7 +261,7 @@ class GraphBuilder:
         }
 
         # Build state graph based on workflow plan
-        graph = self._build_graph(workflow_plan)
+        graph = self._build_graph(workflow_plan, container)
 
         # Execute the workflow
         try:
@@ -158,7 +289,9 @@ class GraphBuilder:
                 agent_results={},
             )
 
-    def _build_graph(self, workflow_plan: WorkflowPlan) -> StateGraph:
+    def _build_graph(
+        self, workflow_plan: WorkflowPlan, container: DependencyContainer
+    ) -> StateGraph:
         """
         Build LangGraph state graph based on workflow plan.
 
@@ -173,7 +306,7 @@ class GraphBuilder:
 
         # Add node nodes
         for node_name in workflow_plan.agents:
-            workflow.add_node(node_name, self._create_node_node(node_name))
+            workflow.add_node(node_name, self._create_node_node(node_name, container))
 
         # Add edges to create sequential execution
         workflow.set_entry_point(workflow_plan.agents[0])
@@ -188,7 +321,7 @@ class GraphBuilder:
 
         return workflow.compile()
 
-    def _create_node_node(self, node_name: str):
+    def _create_node_node(self, node_name: str, container: DependencyContainer):
         """
         Create a node function for the specified node.
 
@@ -201,7 +334,7 @@ class GraphBuilder:
 
         def node_node(state: GraphState) -> GraphState:
             """Execute the node and update state."""
-            node = self.nodes[node_name]
+            node = container.get_node(node_name)
 
             # Prepare context for node
             context = {

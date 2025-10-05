@@ -7,9 +7,10 @@ from pathlib import Path
 
 from langchain_community.llms import Ollama
 
-from src.nodes.base import BaseAgent
-from src.prompts import render_prompt
+from src.api.v1.prompts import render_prompt
 from src.state import AgentResult, FileAction, FileChange
+
+from .base import BaseAgent
 
 
 class NewArticleCreationAgent(BaseAgent):

@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 
-from src.db.models.workflow import Workflow, WorkflowStatus
+from src.api.v1.models.workflow import Workflow, WorkflowStatus
 
 
 def create_pending_workflow(db_session, **kwargs) -> Workflow:

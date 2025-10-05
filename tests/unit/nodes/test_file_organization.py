@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.nodes.file_organization import FileOrganizationAgent
+from src.api.v1.nodes.file_organization import FileOrganizationAgent
 from src.state import AgentResult, FileAction
 
 

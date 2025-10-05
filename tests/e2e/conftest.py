@@ -1,3 +1,9 @@
+"""E2E test specific fixtures.
+
+Common fixtures like vault_fixture, db_session, etc. are in tests/conftest.py.
+This file contains only E2E-specific fixtures like e2e_setup and api_base_url.
+"""
+
 import os
 import subprocess
 import time

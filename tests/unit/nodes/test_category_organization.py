@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.nodes.category_organization import CategoryOrganizationAgent
+from src.api.v1.nodes.category_organization import CategoryOrganizationAgent
 from src.state import AgentResult, FileAction
 
 

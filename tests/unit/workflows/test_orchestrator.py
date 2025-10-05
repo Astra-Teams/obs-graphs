@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.graph.builder import (
+from src.api.v1.graph import (
     GraphBuilder,
     WorkflowPlan,
     WorkflowResult,
@@ -52,25 +52,55 @@ def mock_agents():
         yield
 
 
-@pytest.fixture
-def orchestrator(mock_agents):
-    """Return a GraphBuilder instance with mocked agents."""
-    from src.container import get_container
+class MockVaultSummary:
+    def __init__(self, total_articles=0):
+        self.total_articles = total_articles
+        self.categories = []
+        self.recent_updates = []
 
-    container = get_container()
-    return container.get_graph_builder()
+
+@pytest.fixture
+def orchestrator():
+    """Return a GraphBuilder instance with mocked agents."""
+    from unittest.mock import MagicMock
+
+    from src.container import DependencyContainer
+
+    # Create a mock container
+    mock_container = MagicMock(spec=DependencyContainer)
+    mock_vault_service = MagicMock()
+
+    # Create a mock summary that can be modified
+    mock_summary = MockVaultSummary()
+    mock_vault_service.get_vault_summary.return_value = mock_summary
+
+    mock_container.get_vault_service.return_value = mock_vault_service
+
+    # Mock get_node to return MockAgent instances
+    def mock_get_node(name):
+        return MockAgent()
+
+    mock_container.get_node.side_effect = mock_get_node
+
+    return mock_container
 
 
 def test_analyze_vault_new_article_strategy(
-    orchestrator: GraphBuilder,
+    orchestrator,
     tmp_path: Path,
 ):
     """Test that analyze_vault determines the new_article strategy correctly."""
+
     # Arrange - create an empty vault (total_articles < 5)
     tmp_path.mkdir(exist_ok=True)
+    orchestrator.get_vault_service.return_value.get_vault_summary.return_value.total_articles = (
+        0
+    )
+
+    graph_builder = GraphBuilder()
 
     # Act
-    plan = orchestrator.analyze_vault(tmp_path)
+    plan = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
 
     # Assert
     assert isinstance(plan, WorkflowPlan)
@@ -79,17 +109,23 @@ def test_analyze_vault_new_article_strategy(
 
 
 def test_analyze_vault_improvement_strategy(
-    orchestrator: GraphBuilder,
+    orchestrator,
     tmp_path: Path,
 ):
     """Test that analyze_vault determines the improvement strategy correctly."""
+
     # Arrange - create a vault with 10 articles (total_articles >= 5)
     tmp_path.mkdir(exist_ok=True)
     for i in range(10):
         (tmp_path / f"article_{i}.md").write_text("# Test Article")
+    orchestrator.get_vault_service.return_value.get_vault_summary.return_value.total_articles = (
+        10
+    )
+
+    graph_builder = GraphBuilder()
 
     # Act
-    plan = orchestrator.analyze_vault(tmp_path)
+    plan = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
 
     # Assert
     assert isinstance(plan, WorkflowPlan)
@@ -97,20 +133,31 @@ def test_analyze_vault_improvement_strategy(
     assert "article_improvement" in plan.agents
 
 
-def test_execute_workflow(orchestrator: GraphBuilder, tmp_path: Path):
+def test_execute_workflow(orchestrator, tmp_path: Path):
     """Test that execute_workflow runs agents and aggregates results."""
+
     # Arrange
     tmp_path.mkdir(exist_ok=True)
     # Create a simple markdown file
     (tmp_path / "test.md").write_text("# Test Article")
+
+    # Modify the mock summary for this test
+    mock_summary = (
+        orchestrator.get_vault_service.return_value.get_vault_summary.return_value
+    )
+    mock_summary.total_articles = 5
+    mock_summary.categories = ["Test"]
+    mock_summary.recent_updates = ["test.md"]
 
     plan = WorkflowPlan(
         strategy="test_plan",
         agents=["new_article_creation", "file_organization"],
     )
 
+    graph_builder = GraphBuilder()
+
     # Act
-    result = orchestrator.execute_workflow(tmp_path, plan)
+    result = graph_builder.execute_workflow(tmp_path, plan, orchestrator)
 
     # Assert
     assert isinstance(result, WorkflowResult)

@@ -1,28 +1,22 @@
 """API endpoints for workflow management."""
 
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from src.api.v1.graph import GraphBuilder
+from src.api.v1.models.workflow import Workflow, WorkflowStatus
 from src.api.v1.schemas import (
     WorkflowListResponse,
     WorkflowResponse,
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
-from src.container import DependencyContainer
 from src.db.database import get_db
-from src.db.models.workflow import Workflow, WorkflowStatus
 
 router = APIRouter()
-
-
-def get_container_dependency() -> DependencyContainer:
-    """Get the dependency container from app state."""
-    from src.main import app
-
-    return app.state.container
 
 
 # Endpoints
@@ -30,24 +24,22 @@ def get_container_dependency() -> DependencyContainer:
 async def run_workflow(
     request: WorkflowRunRequest = WorkflowRunRequest(),
     db: Session = Depends(get_db),
-    container: DependencyContainer = Depends(get_container_dependency),
 ) -> WorkflowRunResponse:
     """
-    Trigger a new workflow execution.
+    Run a new workflow execution synchronously.
 
-    Creates a new Workflow record in the database with status=PENDING,
-    dispatches the run_workflow_task to Celery, and returns immediately
-    with the workflow ID and Celery task ID.
+    Creates a new Workflow record in the database, executes the workflow,
+    and returns the result.
 
     Args:
         request: Optional workflow run request with strategy parameter
         db: Database session dependency
 
     Returns:
-        WorkflowRunResponse with workflow ID, status, and task ID
+        WorkflowRunResponse with workflow ID, status, and message
 
     Raises:
-        HTTPException: If workflow creation or task dispatch fails
+        HTTPException: If workflow creation or execution fails
     """
     try:
         # Create new workflow record with PENDING status
@@ -59,25 +51,47 @@ async def run_workflow(
         db.commit()
         db.refresh(workflow)
 
-        # Dispatch Celery task
-        task = container.run_workflow(workflow.id)
+        # Update to RUNNING
+        workflow.status = WorkflowStatus.RUNNING
+        workflow.started_at = datetime.now(timezone.utc)
+        db.commit()
 
-        # Store Celery task ID in workflow record
-        workflow.celery_task_id = task.id
+        # Create GraphBuilder and run workflow
+        graph_builder = GraphBuilder()
+        result = graph_builder.run_workflow(request)
+
+        # Update workflow based on result
+        if result.success:
+            workflow.status = WorkflowStatus.COMPLETED
+            workflow.pr_url = result.pr_url
+            workflow.workflow_metadata = {
+                "agent_results": result.agent_results,
+                "total_changes": len(result.changes),
+                "branch_name": result.branch_name,
+            }
+        else:
+            workflow.status = WorkflowStatus.FAILED
+            workflow.error_message = result.summary
+
+        workflow.completed_at = datetime.now(timezone.utc)
         db.commit()
 
         return WorkflowRunResponse(
             id=workflow.id,
             status=workflow.status,
-            celery_task_id=task.id,
-            message=f"Workflow {workflow.id} has been queued for execution",
+            celery_task_id=None,  # No Celery task for synchronous execution
+            message=(
+                result.summary
+                if result.success
+                else f"Workflow failed: {result.summary}"
+            ),
         )
 
     except Exception as e:
         db.rollback()
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create workflow: {str(e)}",
+            detail=f"Failed to run workflow: {str(e)}",
         )
 
 

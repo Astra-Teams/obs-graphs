@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import shutil
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -12,14 +10,11 @@ import pytest
 from src.services.vault import VaultService
 from src.state import FileAction
 
-FIXTURES_ROOT = Path("tests/fixtures/vaults")
-LLM_FIXTURE_PATH = Path("tests/fixtures/mock_data/llm_responses.json")
-
 
 @pytest.fixture()
-def mock_llm(monkeypatch: pytest.MonkeyPatch):
+def mock_llm(monkeypatch: pytest.MonkeyPatch, llm_responses: dict):
     """Patch Ollama so the new article agent produces deterministic output."""
-    responses = json.loads(LLM_FIXTURE_PATH.read_text(encoding="utf-8"))
+    responses = llm_responses
 
     analysis_payload = json.dumps(
         [
@@ -53,23 +48,17 @@ def mock_llm(monkeypatch: pytest.MonkeyPatch):
     return fake_llm
 
 
-def _copy_vault_fixture(tmp_path: Path, fixture_name: str) -> Path:
-    destination = tmp_path / fixture_name
-    shutil.copytree(FIXTURES_ROOT / fixture_name, destination)
-    return destination
-
-
 class TestAgentIntegration:
     """Run the orchestrator end-to-end against vault fixtures."""
 
     @pytest.mark.skip(reason="Mock LLM integration needs fixing after Ollama migration")
     def test_new_article_agent_creates_content_in_empty_vault(
-        self, tmp_path: Path, mock_llm
+        self, vault_fixture, mock_llm
     ) -> None:
         """An empty vault should trigger the new article agent via the orchestrator."""
         from src.container import get_container
 
-        vault_path = _copy_vault_fixture(tmp_path, "empty_vault")
+        vault_path = vault_fixture("empty_vault")
         orchestrator = get_container().get_graph_builder()
 
         plan = orchestrator.analyze_vault(vault_path)
@@ -99,12 +88,12 @@ class TestAgentIntegration:
             assert "Docker Fundamentals" in content or "REST API" in content
 
     def test_improvement_strategy_runs_all_agents(
-        self, tmp_path: Path, mock_llm
+        self, vault_fixture, mock_llm
     ) -> None:
         """A populated vault should trigger the improvement strategy and execute all agents."""
         from src.container import get_container
 
-        vault_path = _copy_vault_fixture(tmp_path, "well_maintained_vault")
+        vault_path = vault_fixture("well_maintained_vault")
         orchestrator = get_container().get_graph_builder()
 
         plan = orchestrator.analyze_vault(vault_path)

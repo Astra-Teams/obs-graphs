@@ -4,14 +4,13 @@ from typing import Dict, Optional
 
 from langchain_community.llms import Ollama
 
+from src.api.v1.nodes.article_improvement import ArticleImprovementAgent
+from src.api.v1.nodes.category_organization import CategoryOrganizationAgent
+from src.api.v1.nodes.cross_reference import CrossReferenceAgent
+from src.api.v1.nodes.file_organization import FileOrganizationAgent
+from src.api.v1.nodes.new_article_creation import NewArticleCreationAgent
+from src.api.v1.nodes.quality_audit import QualityAuditAgent
 from src.clients.github_client import GithubClient
-from src.graph.builder import GraphBuilder
-from src.nodes.article_improvement import ArticleImprovementAgent
-from src.nodes.category_organization import CategoryOrganizationAgent
-from src.nodes.cross_reference import CrossReferenceAgent
-from src.nodes.file_organization import FileOrganizationAgent
-from src.nodes.new_article_creation import NewArticleCreationAgent
-from src.nodes.quality_audit import QualityAuditAgent
 from src.protocols import GithubClientProtocol, NodeProtocol, VaultServiceProtocol
 from src.services.vault import VaultService
 from src.settings import get_settings
@@ -25,7 +24,6 @@ class DependencyContainer:
         self._github_client: Optional[GithubClientProtocol] = None
         self._vault_service: Optional[VaultServiceProtocol] = None
         self._nodes: Dict[str, NodeProtocol] = {}
-        self._graph_builder = None  # Will be implemented in Phase 3
         self._llm: Optional[Ollama] = None
 
         # Registry of node classes
@@ -74,16 +72,9 @@ class DependencyContainer:
 
     def get_graph_builder(self):
         """Get the graph builder instance."""
-        if self._graph_builder is None:
-            nodes = {name: self.get_node(name) for name in self._node_classes}
-            self._graph_builder = GraphBuilder(self.get_vault_service(), nodes)
-        return self._graph_builder
+        from src.api.v1.graph import GraphBuilder
 
-    def run_workflow(self, workflow_id: int):
-        """Dispatch a workflow execution task."""
-        from src.tasks.workflow_tasks import run_workflow_task
-
-        return run_workflow_task.delay(workflow_id)
+        return GraphBuilder()
 
 
 # Global container instance

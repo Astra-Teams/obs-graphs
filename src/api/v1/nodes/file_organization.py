@@ -2,9 +2,10 @@
 
 from pathlib import Path
 
-from src.nodes.base import BaseAgent
-from src.prompts import render_prompt
+from src.api.v1.prompts import render_prompt
 from src.state import AgentResult
+
+from .base import BaseAgent
 
 
 class FileOrganizationAgent(BaseAgent):

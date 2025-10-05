@@ -45,18 +45,6 @@
         "CRITICAL"
       ],
       "description": "Professional coding agent with semantic tools for intelligent codebase analysis"
-    },
-    "github": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      },
-      "description": "GitHub repository management and interaction through MCP"
     }
   }
 }

@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.prompts.loader import render_prompt
+from src.api.v1.prompts.loader import render_prompt
 
 
 def test_render_prompt_with_context():
