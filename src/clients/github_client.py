@@ -68,7 +68,7 @@ class GithubClient(GithubClientProtocol):
 
             # Get authenticated clone URL
             repo_url = self.get_authenticated_clone_url(
-                self.settings.GITHUB_REPO_FULL_NAME
+                self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME
             )
 
             # Clone the repository

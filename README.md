@@ -144,7 +144,7 @@ Configure in `.env`:
 - `OLLAMA_BASE_URL` - Ollama server base URL (default: http://localhost:11434)
 - `OLLAMA_MODEL` - Ollama model to use (default: llama3.2:3b)
 - `GITHUB_PAT` - GitHub Personal Access Token for repository operations
-- `GITHUB_REPO_FULL_NAME` - Target repository (owner/repo format)
+- `OBSIDIAN_VAULT_REPO_FULL_NAME` - Target repository (owner/repo format)
 
 ## Testing
 

@@ -161,7 +161,7 @@ Changes made by Obsidian Agents workflow
             pr_body = "\n".join(pr_body_parts)
 
             pr = github_client.create_pull_request(
-                repo_full_name=settings.GITHUB_REPO_FULL_NAME,
+                repo_full_name=settings.OBSIDIAN_VAULT_REPO_FULL_NAME,
                 head_branch=branch_name,
                 title=pr_title,
                 body=pr_body,
