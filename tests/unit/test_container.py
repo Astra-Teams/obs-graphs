@@ -36,6 +36,27 @@ def test_get_github_client_lazy_instantiation(
     mock_github_client.assert_called_once()
 
 
+@patch("src.container.get_settings")
+def test_get_github_client_returns_mock_in_debug_mode(
+    mock_get_settings, container: DependencyContainer
+):
+    """Test that MockGithubClient is returned when DEBUG=True."""
+    # Arrange
+    mock_settings = MagicMock()
+    mock_settings.DEBUG = True  # Set DEBUG to True to test debug path
+    mock_get_settings.return_value = mock_settings
+
+    # Act
+    client1 = container.get_github_client()
+    client2 = container.get_github_client()
+
+    # Assert
+    from src.clients.mock_github_client import MockGithubClient
+
+    assert isinstance(client1, MockGithubClient)
+    assert client1 is client2  # Should be cached
+
+
 @patch("src.container.VaultService")
 def test_get_vault_service_lazy_instantiation(
     mock_vault_service, container: DependencyContainer
@@ -78,6 +99,27 @@ def test_get_llm_lazy_instantiation(
     assert llm1 is llm2
     assert llm1 is mock_instance
     mock_ollama.assert_called_once_with(model="test-model", base_url="http://test-url")
+
+
+@patch("src.container.get_settings")
+def test_get_llm_returns_mock_in_debug_mode(
+    mock_get_settings, container: DependencyContainer
+):
+    """Test that MockOllamaClient is returned when DEBUG=True."""
+    # Arrange
+    mock_settings = MagicMock()
+    mock_settings.DEBUG = True  # Set DEBUG to True to test debug path
+    mock_get_settings.return_value = mock_settings
+
+    # Act
+    llm1 = container.get_llm()
+    llm2 = container.get_llm()
+
+    # Assert
+    from src.clients.mock_ollama_client import MockOllamaClient
+
+    assert isinstance(llm1, MockOllamaClient)
+    assert llm1 is llm2  # Should be cached
 
 
 def test_get_node_valid_name(container: DependencyContainer):
@@ -132,3 +174,50 @@ def test_get_container_singleton():
     # Assert
     assert container1 is container2
     assert isinstance(container1, DependencyContainer)
+
+
+@patch("src.container.get_settings")
+@patch("src.container.redis.Redis")
+def test_get_redis_client_production_mode(
+    mock_redis, mock_get_settings, container: DependencyContainer
+):
+    """Test that redis.Redis is returned when DEBUG=False."""
+    # Arrange
+    mock_settings = MagicMock()
+    mock_settings.DEBUG = False
+    mock_settings.CELERY_BROKER_URL = "redis://localhost:6379/0"
+    mock_get_settings.return_value = mock_settings
+    mock_instance = MagicMock()
+    mock_redis.from_url.return_value = mock_instance
+
+    # Act
+    client1 = container.get_redis_client()
+    client2 = container.get_redis_client()
+
+    # Assert
+    assert client1 is client2  # Should be cached
+    assert client1 is mock_instance
+    mock_redis.from_url.assert_called_once_with(
+        "redis://localhost:6379/0", decode_responses=True
+    )
+
+
+@patch("src.container.get_settings")
+def test_get_redis_client_returns_mock_in_debug_mode(
+    mock_get_settings, container: DependencyContainer
+):
+    """Test that FakeRedis is returned when DEBUG=True."""
+    # Arrange
+    mock_settings = MagicMock()
+    mock_settings.DEBUG = True
+    mock_get_settings.return_value = mock_settings
+
+    # Act
+    client1 = container.get_redis_client()
+    client2 = container.get_redis_client()
+
+    # Assert
+    import fakeredis
+
+    assert isinstance(client1, fakeredis.FakeRedis)
+    assert client1 is client2  # Should be cached

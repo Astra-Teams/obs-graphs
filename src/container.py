@@ -1,7 +1,8 @@
 """Dependency injection container for the Obsidian Vault workflow application."""
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
+import redis
 from langchain_community.llms import Ollama
 from langchain_core.language_models.llms import BaseLLM
 
@@ -29,7 +30,7 @@ class DependencyContainer:
         self._vault_service: Optional[VaultServiceProtocol] = None
         self._nodes: Dict[str, NodeProtocol] = {}
         self._llm: Optional[BaseLLM] = None
-        self._redis_client = None
+        self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
 
         # Registry of node classes
         self._node_classes = {
@@ -77,7 +78,7 @@ class DependencyContainer:
                 )
         return self._llm
 
-    def get_redis_client(self):
+    def get_redis_client(self) -> Union[redis.Redis, "redis.FakeRedis"]:
         """
         Get the Redis client instance.
 
@@ -88,8 +89,6 @@ class DependencyContainer:
             if settings.DEBUG:
                 self._redis_client = MockRedisClient.get_client()
             else:
-                import redis
-
                 self._redis_client = redis.Redis.from_url(
                     settings.CELERY_BROKER_URL, decode_responses=True
                 )

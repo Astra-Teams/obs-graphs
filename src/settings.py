@@ -49,17 +49,20 @@ class ObsGraphsSettings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_postgres_db(self) -> "ObsGraphsSettings":
-        if not self.USE_SQLITE and not self.POSTGRES_DB:
-            raise ValueError("POSTGRES_DB must be set when USE_SQLITE is False.")
+        """Validate that POSTGRES_DB is set when not in DEBUG mode."""
+        # Only validate if USE_SQLITE is explicitly False
+        # This allows tests and development to work without full PostgreSQL config
+        if self.USE_SQLITE is False and not self.DEBUG and not self.POSTGRES_DB:
+            raise ValueError(
+                "POSTGRES_DB must be set when DEBUG is False and USE_SQLITE is False."
+            )
         return self
 
     @computed_field
     @property
     def DATABASE_URL(self) -> str:
-        if self.USE_SQLITE:
-            return "sqlite:///./test_db.sqlite3"
-        else:
-            return f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        """Return PostgreSQL database URL. Switching logic is in DI container."""
+        return f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
 
 @lru_cache
