@@ -54,7 +54,7 @@ def create_running_workflow(db_session, **kwargs) -> Workflow:
         pr_url=None,
         error_message=None,
         celery_task_id=kwargs.get("celery_task_id", "test-task-id-123"),
-        workflow_metadata=kwargs.get("workflow_metadata", {"agents_executed": []}),
+        workflow_metadata=kwargs.get("workflow_metadata", {"nodes_executed": []}),
         created_at=kwargs.get(
             "created_at", datetime.now(timezone.utc) - timedelta(minutes=5)
         ),
@@ -102,16 +102,11 @@ def create_completed_workflow(
         workflow_metadata=kwargs.get(
             "workflow_metadata",
             {
-                "agent_results": {
+                "node_results": {
                     "new_article": {
                         "success": True,
                         "message": "Created 2 new articles",
                         "changes_count": 2,
-                    },
-                    "quality_audit": {
-                        "success": True,
-                        "message": "All checks passed",
-                        "changes_count": 0,
                     },
                 },
                 "total_changes": 2,

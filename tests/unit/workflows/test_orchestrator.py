@@ -25,7 +25,11 @@ def mock_agents():
     """Fixture to mock all agent classes."""
     with (
         patch(
-            "src.container.NewArticleCreationAgent",
+            "src.container.ArticleProposalAgent",
+            return_value=MockAgent(),
+        ),
+        patch(
+            "src.container.ArticleContentGenerationAgent",
             return_value=MockAgent(),
         ),
         patch(
@@ -33,18 +37,10 @@ def mock_agents():
             return_value=MockAgent(),
         ),
         patch(
-            "src.container.ArticleImprovementAgent",
-            return_value=MockAgent(),
-        ),
-        patch(
             "src.container.CategoryOrganizationAgent",
             return_value=MockAgent(),
         ),
         patch("src.container.QualityAuditAgent", return_value=MockAgent()),
-        patch(
-            "src.container.CrossReferenceAgent",
-            return_value=MockAgent(),
-        ),
     ):
         yield
 
@@ -82,52 +78,44 @@ def orchestrator():
     return mock_container
 
 
-def test_analyze_vault_new_article_strategy(
+def test_analyze_vault_always_returns_new_article_strategy(
     orchestrator,
     tmp_path: Path,
 ):
-    """Test that analyze_vault determines the new_article strategy correctly."""
+    """Test that analyze_vault always returns the new_article strategy regardless of vault state."""
 
-    # Arrange - create an empty vault (total_articles < 5)
+    # Arrange - create a vault
     tmp_path.mkdir(exist_ok=True)
-    orchestrator.get_vault_service.return_value.get_vault_summary.return_value.total_articles = (
-        0
-    )
 
     graph_builder = GraphBuilder()
 
-    # Act
-    plan = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
+    # Act - test with empty vault
+    plan_empty = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
 
     # Assert
-    assert isinstance(plan, WorkflowPlan)
-    assert plan.strategy == "new_article"
-    assert "new_article_creation" in plan.agents
+    assert isinstance(plan_empty, WorkflowPlan)
+    assert plan_empty.strategy == "new_article"
+    assert plan_empty.nodes == [
+        "article_proposal",
+        "article_content_generation",
+    ]
 
-
-def test_analyze_vault_improvement_strategy(
-    orchestrator,
-    tmp_path: Path,
-):
-    """Test that analyze_vault determines the improvement strategy correctly."""
-
-    # Arrange - create a vault with 10 articles (total_articles >= 5)
-    tmp_path.mkdir(exist_ok=True)
+    # Act - test with vault containing many articles (10 articles)
     for i in range(10):
         (tmp_path / f"article_{i}.md").write_text("# Test Article")
     orchestrator.get_vault_service.return_value.get_vault_summary.return_value.total_articles = (
         10
     )
 
-    graph_builder = GraphBuilder()
+    plan_many = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
 
-    # Act
-    plan = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
-
-    # Assert
-    assert isinstance(plan, WorkflowPlan)
-    assert plan.strategy == "improvement"
-    assert "article_improvement" in plan.agents
+    # Assert - should still return new_article strategy
+    assert isinstance(plan_many, WorkflowPlan)
+    assert plan_many.strategy == "new_article"
+    assert plan_many.nodes == [
+        "article_proposal",
+        "article_content_generation",
+    ]
 
 
 def test_execute_workflow(orchestrator, tmp_path: Path):
@@ -148,7 +136,7 @@ def test_execute_workflow(orchestrator, tmp_path: Path):
 
     plan = WorkflowPlan(
         strategy="test_plan",
-        agents=["new_article_creation", "file_organization"],
+        nodes=["article_proposal"],
     )
 
     graph_builder = GraphBuilder()
@@ -159,6 +147,5 @@ def test_execute_workflow(orchestrator, tmp_path: Path):
     # Assert
     assert isinstance(result, WorkflowResult)
     assert result.success
-    assert len(result.agent_results) == 2
-    assert "new_article_creation" in result.agent_results
-    assert "file_organization" in result.agent_results
+    assert len(result.node_results) == 1
+    assert "article_proposal" in result.node_results

@@ -63,9 +63,8 @@ class TestWorkflowE2E:
             # Manually update to COMPLETED to simulate success
             completed_at = datetime.now(timezone.utc)
             metadata = {
-                "agent_results": {
+                "node_results": {
                     "new_article": {"success": True, "changes_count": 1},
-                    "quality_audit": {"success": True, "changes_count": 0},
                 },
                 "total_changes": 1,
                 "branch_name": f"obsidian-agents/{workflow_id}-new_article",

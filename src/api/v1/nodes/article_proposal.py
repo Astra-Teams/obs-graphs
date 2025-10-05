@@ -1,6 +1,5 @@
-"""Agent for creating new articles from scratch in the Obsidian Vault."""
+"""Agent for proposing new articles based on vault analysis."""
 
-import datetime
 import json
 import re
 from pathlib import Path
@@ -10,20 +9,20 @@ from langchain_community.llms import Ollama
 from src.api.v1.prompts import render_prompt
 from src.protocols import NodeProtocol
 from src.settings import get_settings
-from src.state import AgentResult, FileAction, FileChange
+from src.state import AgentResult
 
 
-class NewArticleCreationAgent(NodeProtocol):
+class ArticleProposalAgent(NodeProtocol):
     """
-    Agent responsible for creating new articles from scratch.
+    Agent responsible for analyzing vault and proposing new articles.
 
     This agent analyzes the current vault structure and content to identify
-    gaps or opportunities for new articles. It uses LLM to generate high-quality
-    article content based on vault analysis.
+    gaps or opportunities for new articles. It uses LLM to generate article
+    proposals that will be passed to the content generation agent.
     """
 
     def __init__(self, llm: Ollama):
-        """Initialize the new article creation agent."""
+        """Initialize the article proposal agent."""
         self.llm = llm
         self._settings = get_settings()
 
@@ -44,14 +43,14 @@ class NewArticleCreationAgent(NodeProtocol):
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
         """
-        Execute new article creation based on vault analysis.
+        Execute article proposal based on vault analysis.
 
         Args:
             vault_path: Path to the local clone of the Obsidian Vault
             context: Dictionary containing vault_summary with categories and existing articles
 
         Returns:
-            AgentResult with new file changes to create articles
+            AgentResult with article_proposals in metadata
 
         Raises:
             ValueError: If input validation fails
@@ -89,43 +88,30 @@ class NewArticleCreationAgent(NodeProtocol):
                     changes=[],
                     message="No new articles needed based on vault analysis",
                     metadata={
-                        "articles_created": 0,
+                        "article_proposals": [],
                         "vault_articles_count": total_articles,
                         "categories_analyzed": len(categories),
                     },
                 )
 
-            # Generate content for each suggested article
-            changes = []
-            for suggestion in article_suggestions:
-                article_content = self._generate_article_content(
-                    suggestion, vault_summary
-                )
-                changes.append(
-                    FileChange(
-                        path=suggestion["path"],
-                        action=FileAction.CREATE,
-                        content=article_content,
-                    )
-                )
-
             metadata = {
-                "articles_created": len(changes),
+                "article_proposals": article_suggestions,
+                "proposals_count": len(article_suggestions),
                 "vault_articles_count": total_articles,
                 "categories_analyzed": len(categories),
             }
 
-            message = f"Created {len(changes)} new article(s) based on vault analysis"
+            message = f"Proposed {len(article_suggestions)} new article(s) based on vault analysis"
 
             return AgentResult(
-                success=True, changes=changes, message=message, metadata=metadata
+                success=True, changes=[], message=message, metadata=metadata
             )
 
         except Exception as e:
             return AgentResult(
                 success=False,
                 changes=[],
-                message=f"Failed to create new articles: {str(e)}",
+                message=f"Failed to propose new articles: {str(e)}",
                 metadata={"error": str(e)},
             )
 
@@ -181,60 +167,3 @@ class NewArticleCreationAgent(NodeProtocol):
 
         # Fallback: return None if parsing fails
         return None
-
-    def _generate_article_content(self, suggestion: dict, vault_summary: dict) -> str:
-        """
-        Generate full article content based on suggestion.
-
-        Args:
-            suggestion: Article suggestion dictionary
-            vault_summary: Vault summary for context
-
-        Returns:
-            Complete markdown content for the article
-        """
-        content_prompt = render_prompt(
-            "new_article_content",
-            title=suggestion["title"],
-            category=suggestion["category"],
-            description=suggestion["description"],
-        )
-
-        try:
-            response = self.llm.invoke(content_prompt)
-            content = response.content
-
-            # Ensure frontmatter is present
-            if not content.startswith("---"):
-                # Add minimal frontmatter
-                frontmatter = f"""---
-title: {suggestion['title']}
-category: {suggestion['category']}
-created: {datetime.datetime.now().strftime('%Y-%m-%d')}
----
-
-"""
-                content = frontmatter + content
-
-            return content
-
-        except Exception:
-            # Fallback to minimal article structure
-            return f"""---
-title: {suggestion['title']}
-category: {suggestion['category']}
-created: {datetime.datetime.now().strftime('%Y-%m-%d')}
----
-
-# {suggestion['title']}
-
-{suggestion['description']}
-
-## Overview
-
-[Content to be expanded]
-
-## Related Topics
-
-- [Links to be added]
-"""

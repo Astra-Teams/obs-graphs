@@ -2,20 +2,12 @@
 
 from src.state import AgentResult, FileChange
 
-from .article_improvement import ArticleImprovementAgent
-from .category_organization import CategoryOrganizationAgent
-from .cross_reference import CrossReferenceAgent
-from .file_organization import FileOrganizationAgent
-from .new_article_creation import NewArticleCreationAgent
-from .quality_audit import QualityAuditAgent
+from .article_content_generation import ArticleContentGenerationAgent
+from .article_proposal import ArticleProposalAgent
 
 __all__ = [
-    "ArticleImprovementAgent",
-    "CategoryOrganizationAgent",
-    "CrossReferenceAgent",
-    "FileOrganizationAgent",
-    "NewArticleCreationAgent",
-    "QualityAuditAgent",
+    "ArticleContentGenerationAgent",
+    "ArticleProposalAgent",
     "AgentResult",
     "FileChange",
 ]
