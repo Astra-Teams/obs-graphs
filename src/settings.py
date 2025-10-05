@@ -28,7 +28,7 @@ class ObsGraphsSettings(BaseSettings):
 
     # GitHub Authentication
     GITHUB_PAT: str = ""
-    GITHUB_REPO_FULL_NAME: str = ""
+    OBSIDIAN_VAULT_REPO_FULL_NAME: str = ""
 
     # Celery Configuration
     CELERY_BROKER_URL: str = "redis://redis:6379/0"
