@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from src.api.v1.nodes import NewArticleCreationAgent
+from src.api.v1.nodes.new_article_creation import NewArticleCreationAgent
 from src.state import AgentResult, FileAction, FileChange
 
 
@@ -60,6 +60,13 @@ def basic_vault_context():
 
 class TestNewArticleCreationAgent:
     """Test suite for NewArticleCreationAgent."""
+
+    def test_agent_initialization(self, mock_llm):
+        """Test that agent can be initialized."""
+        agent = NewArticleCreationAgent(mock_llm)
+        assert agent is not None
+        assert hasattr(agent, "llm")
+        assert agent.llm is mock_llm
 
     def test_validate_input_with_valid_context(self, agent, basic_vault_context):
         """Test validate_input with valid context."""
