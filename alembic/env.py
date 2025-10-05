@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, pool
 
 from alembic import context
-from src.config.settings import get_settings
+from src.settings import get_settings
 from src.db.database import Base
 
 # Import all models so they are registered with Base

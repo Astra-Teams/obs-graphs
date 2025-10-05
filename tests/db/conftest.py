@@ -7,7 +7,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
-from src.config.settings import get_settings
+from src.settings import get_settings
 from src.db.database import Base, create_db_session, get_engine
 from src.main import app
 

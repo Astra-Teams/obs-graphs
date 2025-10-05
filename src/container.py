@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from langchain_community.llms import Ollama
 
 from src.clients.github_client import GithubClient
-from src.config.settings import get_settings
+from src.settings import get_settings
 from src.graph.builder import GraphBuilder
 from src.nodes.article_improvement import ArticleImprovementAgent
 from src.nodes.category_organization import CategoryOrganizationAgent

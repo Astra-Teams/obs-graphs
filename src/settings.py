@@ -5,7 +5,7 @@ from pydantic import computed_field, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 
-class Settings(BaseSettings):
+class ObsGraphsSettings(BaseSettings):
     """
     Application settings loaded from environment variables.
 
@@ -48,13 +48,13 @@ class Settings(BaseSettings):
         return v
 
     @model_validator(mode="after")
-    def _check_postgres_db(self) -> "Settings":
+    def _check_postgres_db(self) -> "ObsGraphsSettings":
         if not self.USE_SQLITE and not self.POSTGRES_DB:
             raise ValueError("POSTGRES_DB must be set when USE_SQLITE is False.")
         return self
 
     @model_validator(mode="after")
-    def _validate_github_app_credentials(self) -> "Settings":
+    def _validate_github_app_credentials(self) -> "ObsGraphsSettings":
         github_fields = [
             self.GITHUB_APP_ID,
             self.GITHUB_APP_PRIVATE_KEY_PATH,
@@ -79,5 +79,5 @@ class Settings(BaseSettings):
 
 
 @lru_cache
-def get_settings() -> Settings:
-    return Settings()
+def get_settings() -> ObsGraphsSettings:
+    return ObsGraphsSettings()

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.clients.github_client import GithubClient
-from src.config.settings import get_settings
+from src.settings import get_settings
 
 
 @pytest.fixture

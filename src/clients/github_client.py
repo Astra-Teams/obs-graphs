@@ -7,7 +7,7 @@ from git import Repo
 from github import Auth, Github, GithubException
 from github.PullRequest import PullRequest
 
-from src.config.settings import get_settings
+from src.settings import get_settings
 from src.protocols import GithubClientProtocol
 
 
