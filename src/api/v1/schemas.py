@@ -15,6 +15,10 @@ class WorkflowRunRequest(BaseModel):
         None,
         description="Optional strategy to force specific workflow type",
     )
+    async_execution: bool = Field(
+        False,
+        description="Whether to execute workflow asynchronously using Celery",
+    )
 
 
 class WorkflowResponse(BaseModel):

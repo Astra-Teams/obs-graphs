@@ -9,6 +9,7 @@ from langchain_community.llms import Ollama
 
 from src.api.v1.prompts import render_prompt
 from src.protocols import NodeProtocol
+from src.settings import get_settings
 from src.state import AgentResult, FileAction, FileChange
 
 
@@ -24,6 +25,7 @@ class NewArticleCreationAgent(NodeProtocol):
     def __init__(self, llm: Ollama):
         """Initialize the new article creation agent."""
         self.llm = llm
+        self._settings = get_settings()
 
     def validate_input(self, context: dict) -> bool:
         """
@@ -171,7 +173,9 @@ class NewArticleCreationAgent(NodeProtocol):
                                 "path": s["filename"],
                             }
                         )
-                return valid_suggestions[:3]  # Limit to 3 articles max
+                return valid_suggestions[
+                    : self._settings.MAX_NEW_ARTICLES_PER_RUN
+                ]  # Limit to max articles per run
             except json.JSONDecodeError:
                 return None
 

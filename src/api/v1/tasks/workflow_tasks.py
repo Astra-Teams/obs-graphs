@@ -1,5 +1,6 @@
 """Celery tasks for executing Obsidian Vault workflows."""
 
+import logging
 import shutil
 import time
 from datetime import datetime, timezone
@@ -13,6 +14,7 @@ from src.db.database import get_db
 from src.settings import get_settings
 from src.tasks.celery_app import celery_app
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 container = get_container()
 
@@ -41,7 +43,6 @@ def run_workflow_task(self, workflow_id: int) -> None:
     # Get database session
     db: Session = next(get_db())
     workflow = None
-    temp_path = None
 
     try:
         # 1. Retrieve workflow from database
@@ -90,14 +91,6 @@ def run_workflow_task(self, workflow_id: int) -> None:
         raise
 
     finally:
-        # 14. Clean up temporary directory
-        if temp_path and temp_path.exists():
-            try:
-                shutil.rmtree(temp_path)
-            except Exception as cleanup_error:
-                # Log cleanup error but don't fail the task
-                print(f"Warning: Failed to clean up {temp_path}: {cleanup_error}")
-
         # Close database session
         db.close()
 
@@ -115,15 +108,15 @@ def cleanup_old_workflows() -> None:
     if not clone_base_path.exists():
         return
 
-    # Clean up any workflow_* directories older than 1 day
+    # Clean up any workflow_* directories older than configured seconds
     current_time = time.time()
     for temp_dir in clone_base_path.glob("workflow_*"):
         if temp_dir.is_dir():
-            # Check if directory is older than 24 hours
+            # Check if directory is older than configured time
             dir_age = current_time - temp_dir.stat().st_mtime
-            if dir_age > 86400:  # 24 hours in seconds
+            if dir_age > settings.WORKFLOW_TEMP_DIR_CLEANUP_SECONDS:
                 try:
                     shutil.rmtree(temp_dir)
-                    print(f"Cleaned up old workflow directory: {temp_dir}")
+                    logger.info(f"Cleaned up old workflow directory: {temp_dir}")
                 except Exception as e:
-                    print(f"Failed to clean up {temp_dir}: {e}")
+                    logger.error(f"Failed to clean up {temp_dir}: {e}")

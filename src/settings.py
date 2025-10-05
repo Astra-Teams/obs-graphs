@@ -1,7 +1,6 @@
 from functools import lru_cache
-from pathlib import Path
 
-from pydantic import computed_field, field_validator, model_validator
+from pydantic import computed_field, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -34,6 +33,14 @@ class ObsGraphsSettings(BaseSettings):
     # Workflow Configuration
     WORKFLOW_CLONE_BASE_PATH: str = "/tmp/obsidian-workflows"
     WORKFLOW_DEFAULT_BRANCH: str = "main"
+    WORKFLOW_TEMP_DIR_CLEANUP_SECONDS: int = 86400
+
+    # Agent Configuration
+    CROSS_REFERENCE_MIN_SHARED_KEYWORDS: int = 2
+    MAX_NEW_ARTICLES_PER_RUN: int = 3
+
+    # API Configuration
+    API_MAX_PAGE_SIZE: int = 100
 
     # LLM Configuration
     OLLAMA_MODEL: str = "llama3.2:3b"
