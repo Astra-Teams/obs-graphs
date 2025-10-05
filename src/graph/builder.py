@@ -1,30 +1,14 @@
-"""LangGraph-based workflow orchestration for Obsidian Vault agents."""
+"""LangGraph-based workflow orchestration for Obsidian Vault nodes."""
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Annotated, TypedDict
+from typing import Dict
 
 from langgraph.graph import END, StateGraph
-from langgraph.graph.message import add_messages
 
-from src.nodes.article_improvement import ArticleImprovementAgent
-from src.nodes.category_organization import CategoryOrganizationAgent
-from src.nodes.cross_reference import CrossReferenceAgent
-from src.nodes.file_organization import FileOrganizationAgent
-from src.nodes.new_article_creation import NewArticleCreationAgent
-from src.nodes.quality_audit import QualityAuditAgent
-from src.state import AgentResult, FileChange
-
-
-class WorkflowState(TypedDict):
-    """State passed between agents in the workflow graph."""
-
-    vault_path: Path
-    vault_summary: dict
-    strategy: str
-    accumulated_changes: list[FileChange]
-    agent_results: dict
-    messages: Annotated[list, add_messages]
+from src.protocols.nodes_protocol import NodeProtocol
+from src.protocols.vault_protocol import VaultServiceProtocol
+from src.state import AgentResult, FileChange, GraphState
 
 
 @dataclass
@@ -59,39 +43,39 @@ class WorkflowResult:
     agent_results: dict = field(default_factory=dict)
 
 
-class WorkflowOrchestrator:
+class GraphBuilder:
     """
-    Orchestrates the execution of agents using LangGraph.
+    Builds and orchestrates the execution of nodes using LangGraph.
 
-    This class analyzes the vault to determine which agents should run,
+    This class analyzes the vault to determine which nodes should run,
     then executes them in the appropriate order using a state graph.
     """
 
-    def __init__(self):
-        """Initialize the workflow orchestrator with all available agents."""
-        self.agents = {
-            "new_article": NewArticleCreationAgent(),
-            "file_organization": FileOrganizationAgent(),
-            "article_improvement": ArticleImprovementAgent(),
-            "category_organization": CategoryOrganizationAgent(),
-            "quality_audit": QualityAuditAgent(),
-            "cross_reference": CrossReferenceAgent(),
-        }
+    def __init__(self, vault_service: VaultServiceProtocol, nodes: Dict[str, NodeProtocol]):
+        """
+        Initialize the graph builder with dependencies.
+
+        Args:
+            vault_service: Service for vault operations
+            nodes: Dictionary of available nodes keyed by name
+        """
+        self.vault_service = vault_service
+        self.nodes = nodes
 
     def analyze_vault(self, vault_path: Path) -> WorkflowPlan:
         """
-        Analyze vault to determine which agents to run and in what order.
+        Analyze vault to determine which nodes to run and in what order.
 
         Args:
             vault_path: Path to the local clone of the Obsidian Vault
 
         Returns:
-            WorkflowPlan with ordered list of agents and strategy
+            WorkflowPlan with ordered list of nodes and strategy
         """
         # Get vault summary for analysis
-        vault_summary = self._get_vault_summary(vault_path)
+        vault_summary = self.vault_service.get_vault_summary(vault_path)
 
-        total_articles = vault_summary.get("total_articles", 0)
+        total_articles = vault_summary.total_articles
 
         # Determine strategy based on vault state
         if total_articles < 5:
@@ -125,18 +109,18 @@ class WorkflowOrchestrator:
 
         Args:
             vault_path: Path to the local clone of the Obsidian Vault
-            workflow_plan: Plan specifying which agents to run
+            workflow_plan: Plan specifying which nodes to run
 
         Returns:
             WorkflowResult with aggregated changes and results
         """
         # Get vault summary for context
-        vault_summary = self._get_vault_summary(vault_path)
+        vault_summary = self.vault_service.get_vault_summary(vault_path)
 
         # Initialize workflow state
-        initial_state: WorkflowState = {
+        initial_state: GraphState = {
             "vault_path": vault_path,
-            "vault_summary": vault_summary,
+            "vault_summary": vault_summary.__dict__,  # Convert to dict for TypedDict
             "strategy": workflow_plan.strategy,
             "accumulated_changes": [],
             "agent_results": {},
@@ -177,47 +161,47 @@ class WorkflowOrchestrator:
         Build LangGraph state graph based on workflow plan.
 
         Args:
-            workflow_plan: Plan specifying agent execution order
+            workflow_plan: Plan specifying node execution order
 
         Returns:
             Configured StateGraph ready for execution
         """
         # Create state graph
-        workflow = StateGraph(WorkflowState)
+        workflow = StateGraph(GraphState)
 
-        # Add agent nodes
-        for agent_name in workflow_plan.agents:
-            workflow.add_node(agent_name, self._create_agent_node(agent_name))
+        # Add node nodes
+        for node_name in workflow_plan.agents:
+            workflow.add_node(node_name, self._create_node_node(node_name))
 
         # Add edges to create sequential execution
         workflow.set_entry_point(workflow_plan.agents[0])
 
         for i in range(len(workflow_plan.agents) - 1):
-            current_agent = workflow_plan.agents[i]
-            next_agent = workflow_plan.agents[i + 1]
-            workflow.add_edge(current_agent, next_agent)
+            current_node = workflow_plan.agents[i]
+            next_node = workflow_plan.agents[i + 1]
+            workflow.add_edge(current_node, next_node)
 
-        # Last agent leads to END
+        # Last node leads to END
         workflow.add_edge(workflow_plan.agents[-1], END)
 
         return workflow.compile()
 
-    def _create_agent_node(self, agent_name: str):
+    def _create_node_node(self, node_name: str):
         """
-        Create a node function for the specified agent.
+        Create a node function for the specified node.
 
         Args:
-            agent_name: Name of the agent to create node for
+            node_name: Name of the node to create node for
 
         Returns:
             Callable node function for use in state graph
         """
 
-        def agent_node(state: WorkflowState) -> WorkflowState:
-            """Execute the agent and update state."""
-            agent = self.agents[agent_name]
+        def node_node(state: GraphState) -> GraphState:
+            """Execute the node and update state."""
+            node = self.nodes[node_name]
 
-            # Prepare context for agent
+            # Prepare context for node
             context = {
                 "vault_summary": state["vault_summary"],
                 "strategy": state["strategy"],
@@ -225,68 +209,31 @@ class WorkflowOrchestrator:
                 "previous_results": state["agent_results"],
             }
 
-            # Execute agent
-            result: AgentResult = agent.execute(state["vault_path"], context)
+            # Execute node
+            result: AgentResult = node.execute(state["vault_path"], context)
 
             # Update state with results
             state["accumulated_changes"].extend(result.changes)
-            state["agent_results"][agent_name] = {
+            state["agent_results"][node_name] = {
                 "success": result.success,
                 "message": result.message,
                 "changes_count": len(result.changes),
                 "metadata": result.metadata,
             }
             state["messages"].append(
-                f"{agent.get_name()}: {result.message} ({len(result.changes)} changes)"
+                f"{node.get_name()}: {result.message} ({len(result.changes)} changes)"
             )
 
             return state
 
-        return agent_node
-
-    def _get_vault_summary(self, vault_path: Path) -> dict:
-        """
-        Get summary of vault contents.
-
-        Args:
-            vault_path: Path to the vault
-
-        Returns:
-            Dictionary with vault statistics
-        """
-        if not vault_path.exists():
-            return {"total_articles": 0, "categories": [], "recent_updates": []}
-
-        # Count markdown files
-        md_files = list(vault_path.rglob("*.md"))
-        total_articles = len(md_files)
-
-        # Get categories (directories)
-        categories = []
-        for item in vault_path.iterdir():
-            if item.is_dir() and not item.name.startswith("."):
-                categories.append(item.name)
-
-        # Get recent updates (last 5 modified files)
-        recent_updates = []
-        if md_files:
-            sorted_files = sorted(
-                md_files, key=lambda f: f.stat().st_mtime, reverse=True
-            )
-            recent_updates = [f.name for f in sorted_files[:5]]
-
-        return {
-            "total_articles": total_articles,
-            "categories": categories,
-            "recent_updates": recent_updates,
-        }
+        return node_node
 
     def _generate_summary(self, agent_results: dict, strategy: str) -> str:
         """
         Generate human-readable summary of workflow execution.
 
         Args:
-            agent_results: Results from all executed agents
+            agent_results: Results from all executed nodes
             strategy: Workflow strategy that was used
 
         Returns:
@@ -301,13 +248,13 @@ class WorkflowOrchestrator:
 
         summary_parts = [
             f"Workflow completed with '{strategy}' strategy.",
-            f"Executed {len(successful_agents)}/{len(agent_results)} agents successfully.",
+            f"Executed {len(successful_agents)}/{len(agent_results)} nodes successfully.",
             f"Total changes: {total_changes} file operations.",
         ]
 
-        # Add agent-specific details
-        for agent_name, result in agent_results.items():
+        # Add node-specific details
+        for node_name, result in agent_results.items():
             if result["success"]:
-                summary_parts.append(f"- {agent_name}: {result['message']}")
+                summary_parts.append(f"- {node_name}: {result['message']}")
 
         return "\n".join(summary_parts)

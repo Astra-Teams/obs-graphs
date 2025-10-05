@@ -3,6 +3,7 @@
 from typing import Dict, Optional
 
 from src.clients.github_client import GithubClient
+from src.graph.builder import GraphBuilder
 from src.nodes.article_improvement import ArticleImprovementAgent
 from src.nodes.category_organization import CategoryOrganizationAgent
 from src.nodes.cross_reference import CrossReferenceAgent
@@ -55,8 +56,10 @@ class DependencyContainer:
 
     def get_graph_builder(self):
         """Get the graph builder instance."""
-        # TODO: Implement in Phase 3 when GraphBuilder is created
-        raise NotImplementedError("GraphBuilder not yet implemented")
+        if self._graph_builder is None:
+            nodes = {name: self.get_node(name) for name in self._node_classes}
+            self._graph_builder = GraphBuilder(self.get_vault_service(), nodes)
+        return self._graph_builder
 
 
 # Global container instance

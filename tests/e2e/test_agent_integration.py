@@ -9,9 +9,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.nodes.base import FileAction
+from src.state import FileAction
 from src.services.vault import VaultService
-from src.workflows.orchestrator import WorkflowOrchestrator
+from src.workflows import WorkflowOrchestrator
 
 FIXTURES_ROOT = Path("tests/fixtures/vaults")
 LLM_FIXTURE_PATH = Path("tests/fixtures/mock_data/llm_responses.json")

@@ -1,9 +1,12 @@
 """Workflow orchestration modules for agent execution."""
 
-from src.workflows.orchestrator import (
-    WorkflowOrchestrator,
+from src.graph.builder import (
+    GraphBuilder,
     WorkflowPlan,
     WorkflowResult,
 )
 
-__all__ = ["WorkflowOrchestrator", "WorkflowPlan", "WorkflowResult"]
+# Backward compatibility alias
+WorkflowOrchestrator = GraphBuilder
+
+__all__ = ["GraphBuilder", "WorkflowOrchestrator", "WorkflowPlan", "WorkflowResult"]

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.state import AgentResult
-from src.workflows.orchestrator import (
+from src.workflows import (
     WorkflowOrchestrator,
     WorkflowPlan,
     WorkflowResult,
@@ -28,24 +28,24 @@ def mock_agents():
     """Fixture to mock all agent classes."""
     with (
         patch(
-            "src.workflows.orchestrator.NewArticleCreationAgent",
+            "src.container.NewArticleCreationAgent",
             return_value=MockAgent(),
         ),
         patch(
-            "src.workflows.orchestrator.FileOrganizationAgent",
+            "src.container.FileOrganizationAgent",
             return_value=MockAgent(),
         ),
         patch(
-            "src.workflows.orchestrator.ArticleImprovementAgent",
+            "src.container.ArticleImprovementAgent",
             return_value=MockAgent(),
         ),
         patch(
-            "src.workflows.orchestrator.CategoryOrganizationAgent",
+            "src.container.CategoryOrganizationAgent",
             return_value=MockAgent(),
         ),
-        patch("src.workflows.orchestrator.QualityAuditAgent", return_value=MockAgent()),
+        patch("src.container.QualityAuditAgent", return_value=MockAgent()),
         patch(
-            "src.workflows.orchestrator.CrossReferenceAgent",
+            "src.container.CrossReferenceAgent",
             return_value=MockAgent(),
         ),
     ):
@@ -55,7 +55,9 @@ def mock_agents():
 @pytest.fixture
 def orchestrator(mock_agents):
     """Return a WorkflowOrchestrator instance with mocked agents."""
-    return WorkflowOrchestrator()
+    from src.container import get_container
+    container = get_container()
+    return container.get_graph_builder()
 
 
 def test_analyze_vault_new_article_strategy(

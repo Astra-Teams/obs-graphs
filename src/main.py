@@ -1,11 +1,24 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from src.api.v1.routers.workflows import router as workflows_router
+from src.container import get_container
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events."""
+    # Startup: Initialize application dependencies
+    app.state.container = get_container()
+    yield
+    # Shutdown: Add cleanup logic here if needed
+
 
 app = FastAPI(
     title="FastAPI Template",
     version="0.1.0",
     description="A FastAPI template project",
+    lifespan=lifespan,
 )
 
 # Include routers
