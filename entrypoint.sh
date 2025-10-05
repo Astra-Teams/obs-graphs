@@ -7,30 +7,34 @@ set -eu
 # --- Wait for DB and run migrations ---
 # This section is skipped if the command is not the default uvicorn server
 # (e.g., if a user runs 'shell' or another command).
-if [ "$#" -eq 0 ] || [ "$1" = "uvicorn" ]; then
-    count=0
-    echo "Waiting for database to be ready..."
-    
-    # Create database if it doesn't exist
-    echo "Checking if database exists and creating if necessary..."
-    while ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -h db -U "${POSTGRES_USER}" -d postgres -c "SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'" | grep -q 1; do
-        echo "Creating database ${POSTGRES_DB}..."
-        PGPASSWORD="${POSTGRES_PASSWORD}" psql -h db -U "${POSTGRES_USER}" -d postgres -c "CREATE DATABASE \"${POSTGRES_DB}\";" || true
-        sleep 1
-    done
-    echo "Database exists."
-    
-    while ! alembic upgrade head; do
-        count=$((count + 1))
-        if [ ${count} -ge 30 ]; then
-            echo "Failed to connect to database after 30 attempts. Exiting."
-            exit 1
-        fi
-        echo "Migration failed, retrying in 2 seconds... (${count}/30)"
-        sleep 2
-    done
-    echo "Database migrations completed successfully."
-fi
+case "${1:-}" in
+    "" | uvicorn | celery)
+        count=0
+        echo "Waiting for database to be ready..."
+        
+        # Create database if it doesn't exist
+        echo "Checking if database exists and creating if necessary..."
+        while ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -h db -U "${POSTGRES_USER}" -d postgres -c "SELECT 1 FROM pg_database WHERE datname='${POSTGRES_DB}'" | grep -q 1; do
+            echo "Creating database ${POSTGRES_DB}..."
+            PGPASSWORD="${POSTGRES_PASSWORD}" psql -h db -U "${POSTGRES_USER}" -d postgres -c "CREATE DATABASE \"${POSTGRES_DB}\";" || true
+            sleep 1
+        done
+        echo "Database exists."
+        
+        while ! alembic upgrade head; do
+            count=$((count + 1))
+            if [ ${count} -ge 30 ]; then
+                echo "Failed to connect to database after 30 attempts. Exiting."
+                exit 1
+            fi
+            echo "Migration failed, retrying in 2 seconds... (${count}/30)"
+            sleep 2
+        done
+        echo "Database migrations completed successfully."
+        ;;
+    *)
+        ;;
+esac
 
 # --- Start Uvicorn server (or run another command) ---
 # If arguments are passed to the script, execute them instead of the default server.
