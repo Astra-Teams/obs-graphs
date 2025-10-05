@@ -6,18 +6,12 @@ import redis
 from langchain_community.llms import Ollama
 from langchain_core.language_models.llms import BaseLLM
 
-from src.api.v1.nodes.article_improvement import ArticleImprovementAgent
-from src.api.v1.nodes.category_organization import CategoryOrganizationAgent
-from src.api.v1.nodes.cross_reference import CrossReferenceAgent
-from src.api.v1.nodes.file_organization import FileOrganizationAgent
-from src.api.v1.nodes.new_article_creation import NewArticleCreationAgent
-from src.api.v1.nodes.quality_audit import QualityAuditAgent
-from src.clients.github_client import GithubClient
-from src.clients.mock_github_client import MockGithubClient
-from src.clients.mock_ollama_client import MockOllamaClient
-from src.clients.mock_redis_client import MockRedisClient
+from dev.mocks_clients import MockGithubClient, MockOllamaClient, MockRedisClient
+from src.clients import (
+    GithubClient,
+)
 from src.protocols import GithubClientProtocol, NodeProtocol, VaultServiceProtocol
-from src.services.vault import VaultService
+from src.services import VaultService
 from src.settings import get_settings
 
 
@@ -32,25 +26,40 @@ class DependencyContainer:
         self._llm: Optional[BaseLLM] = None
         self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
 
-        # Registry of node classes
+        # Registry of node classes (module, class_name)
         self._node_classes = {
-            "article_improvement": ArticleImprovementAgent,
-            "category_organization": CategoryOrganizationAgent,
-            "cross_reference": CrossReferenceAgent,
-            "file_organization": FileOrganizationAgent,
-            "new_article_creation": NewArticleCreationAgent,
-            "quality_audit": QualityAuditAgent,
+            "article_improvement": (
+                "src.api.v1.nodes.article_improvement",
+                "ArticleImprovementAgent",
+            ),
+            "category_organization": (
+                "src.api.v1.nodes.category_organization",
+                "CategoryOrganizationAgent",
+            ),
+            "cross_reference": (
+                "src.api.v1.nodes.cross_reference",
+                "CrossReferenceAgent",
+            ),
+            "file_organization": (
+                "src.api.v1.nodes.file_organization",
+                "FileOrganizationAgent",
+            ),
+            "new_article_creation": (
+                "src.api.v1.nodes.new_article_creation",
+                "NewArticleCreationAgent",
+            ),
+            "quality_audit": ("src.api.v1.nodes.quality_audit", "QualityAuditAgent"),
         }
 
     def get_github_client(self) -> GithubClientProtocol:
         """
         Get the GitHub client instance.
 
-        Returns MockGithubClient if DEBUG=True, otherwise GithubClient.
+        Returns MockGithubClient if USE_MOCK_GITHUB=True, otherwise GithubClient.
         """
         if self._github_client is None:
             settings = get_settings()
-            if settings.DEBUG:
+            if settings.USE_MOCK_GITHUB:
                 self._github_client = MockGithubClient()
             else:
                 self._github_client = GithubClient(settings)
@@ -66,11 +75,11 @@ class DependencyContainer:
         """
         Get the LLM instance.
 
-        Returns MockOllamaClient if DEBUG=True, otherwise Ollama.
+        Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise Ollama.
         """
         if self._llm is None:
             settings = get_settings()
-            if settings.DEBUG:
+            if settings.USE_MOCK_LLM:
                 self._llm = MockOllamaClient()
             else:
                 self._llm = Ollama(
@@ -82,11 +91,11 @@ class DependencyContainer:
         """
         Get the Redis client instance.
 
-        Returns FakeRedis if DEBUG=True, otherwise redis.Redis.
+        Returns FakeRedis if USE_MOCK_REDIS=True, otherwise redis.Redis.
         """
         if self._redis_client is None:
             settings = get_settings()
-            if settings.DEBUG:
+            if settings.USE_MOCK_REDIS:
                 self._redis_client = MockRedisClient.get_client()
             else:
                 self._redis_client = redis.Redis.from_url(
@@ -100,11 +109,18 @@ class DependencyContainer:
             if name not in self._node_classes:
                 raise ValueError(f"Unknown node: {name}")
 
+            # Import the class dynamically
+            module_name, class_name = self._node_classes[name]
+            import importlib
+
+            module = importlib.import_module(module_name)
+            node_class = getattr(module, class_name)
+
             # Instantiate with dependencies
             if name == "new_article_creation":
-                self._nodes[name] = self._node_classes[name](self.get_llm())
+                self._nodes[name] = node_class(self.get_llm())
             else:
-                self._nodes[name] = self._node_classes[name]()
+                self._nodes[name] = node_class()
         return self._nodes[name]
 
     def get_graph_builder(self):

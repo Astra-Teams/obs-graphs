@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.services.vault import VaultService
+from src.services import VaultService
 from src.state import FileAction, FileChange, VaultSummary
 
 

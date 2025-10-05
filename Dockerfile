@@ -69,6 +69,7 @@ ENV PATH="/app/.venv/bin:${PATH}"
 COPY --chown=appuser:appgroup src/ ./src
 COPY --chown=appuser:appgroup alembic/ ./alembic
 COPY --chown=appuser:appgroup tests/ ./tests
+COPY --chown=appuser:appgroup dev/ ./dev
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
 

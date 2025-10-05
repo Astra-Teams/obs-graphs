@@ -34,17 +34,17 @@ def db_engine():
     """
     Fixture that provides DB engine for the entire test session.
 
-    DEBUG=true case (sqlt-test):
+    USE_SQLITE=true case (sqlt-test):
         - Creates all tables (create_all) for SQLite DB and returns engine.
         - Drops all tables (drop_all) at session end.
-    DEBUG=false case (pstg-test):
+    USE_SQLITE=false case (pstg-test):
         - Returns engine for PostgreSQL migrated by entrypoint.sh.
         - Truncates all tables at session start to ensure clean state.
         - (Does not create/drop tables)
     """
     engine = get_engine()
 
-    if settings.DEBUG:
+    if settings.USE_SQLITE:
         # For SQLite mode, create all tables from models before tests
         Base.metadata.create_all(bind=engine)
     else:
@@ -61,7 +61,7 @@ def db_engine():
 
     yield engine
 
-    if settings.DEBUG:
+    if settings.USE_SQLITE:
         # For SQLite mode, drop all tables after tests
         Base.metadata.drop_all(bind=engine)
         # Remove the SQLite file

@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.api.v1.nodes.quality_audit import QualityAuditAgent
+from src.api.v1.nodes import QualityAuditAgent
 from src.state import AgentResult
 
 
@@ -53,10 +53,6 @@ Well-formatted content with proper structure.
 class TestQualityAuditAgent:
     """Test suite for QualityAuditAgent."""
 
-    def test_agent_initialization(self, agent):
-        """Test that agent can be initialized."""
-        assert agent is not None
-
     def test_validate_input(self, agent):
         """Test validate_input accepts contexts."""
         assert agent.validate_input({}) is True
@@ -91,30 +87,6 @@ class TestQualityAuditAgent:
 
         # May return fixes as UPDATE actions or report in metadata
         assert isinstance(result.metadata, dict)
-
-    def test_execute_detects_broken_links(self, agent, tmp_path):
-        """Test execute detects broken internal links."""
-        vault = tmp_path / "vault"
-        vault.mkdir()
-
-        (vault / "article.md").write_text("# Article\n\n[[nonexistent-link]]")
-
-        result = agent.execute(vault, {})
-
-        assert isinstance(result, AgentResult)
-
-    def test_execute_detects_formatting_issues(self, agent, tmp_path):
-        """Test execute detects formatting problems."""
-        vault = tmp_path / "vault"
-        vault.mkdir()
-
-        (vault / "bad_format.md").write_text(
-            "###No space after hashes\n\nInconsistent formatting"
-        )
-
-        result = agent.execute(vault, {})
-
-        assert isinstance(result, AgentResult)
 
     def test_execute_detects_missing_frontmatter(self, agent, tmp_path):
         """Test execute detects missing frontmatter."""

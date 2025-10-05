@@ -21,7 +21,7 @@ def test_get_github_client_lazy_instantiation(
     """Test that github client is lazily instantiated."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.DEBUG = False  # Set DEBUG to False to test production path
+    mock_settings.USE_MOCK_GITHUB = False  # Use real client
     mock_get_settings.return_value = mock_settings
     mock_instance = MagicMock()
     mock_github_client.return_value = mock_instance
@@ -37,13 +37,13 @@ def test_get_github_client_lazy_instantiation(
 
 
 @patch("src.container.get_settings")
-def test_get_github_client_returns_mock_in_debug_mode(
+def test_get_github_client_returns_mock_when_flag_enabled(
     mock_get_settings, container: DependencyContainer
 ):
-    """Test that MockGithubClient is returned when DEBUG=True."""
+    """Test that MockGithubClient is returned when USE_MOCK_GITHUB=True."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.DEBUG = True  # Set DEBUG to True to test debug path
+    mock_settings.USE_MOCK_GITHUB = True  # Use mock client
     mock_get_settings.return_value = mock_settings
 
     # Act
@@ -51,7 +51,7 @@ def test_get_github_client_returns_mock_in_debug_mode(
     client2 = container.get_github_client()
 
     # Assert
-    from src.clients.mock_github_client import MockGithubClient
+    from dev.mocks_clients import MockGithubClient
 
     assert isinstance(client1, MockGithubClient)
     assert client1 is client2  # Should be cached
@@ -84,7 +84,7 @@ def test_get_llm_lazy_instantiation(
     """Test that LLM is lazily instantiated."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.DEBUG = False  # Set DEBUG to False to test production path
+    mock_settings.USE_MOCK_LLM = False  # Use real client
     mock_settings.OLLAMA_MODEL = "test-model"
     mock_settings.OLLAMA_BASE_URL = "http://test-url"
     mock_get_settings.return_value = mock_settings
@@ -102,13 +102,13 @@ def test_get_llm_lazy_instantiation(
 
 
 @patch("src.container.get_settings")
-def test_get_llm_returns_mock_in_debug_mode(
+def test_get_llm_returns_mock_when_flag_enabled(
     mock_get_settings, container: DependencyContainer
 ):
-    """Test that MockOllamaClient is returned when DEBUG=True."""
+    """Test that MockOllamaClient is returned when USE_MOCK_LLM=True."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.DEBUG = True  # Set DEBUG to True to test debug path
+    mock_settings.USE_MOCK_LLM = True  # Use mock client
     mock_get_settings.return_value = mock_settings
 
     # Act
@@ -116,7 +116,7 @@ def test_get_llm_returns_mock_in_debug_mode(
     llm2 = container.get_llm()
 
     # Assert
-    from src.clients.mock_ollama_client import MockOllamaClient
+    from dev.mocks_clients import MockOllamaClient
 
     assert isinstance(llm1, MockOllamaClient)
     assert llm1 is llm2  # Should be cached
@@ -149,7 +149,7 @@ def test_get_node_new_article_creation_with_llm(
     """Test that new_article_creation node is instantiated with LLM."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.DEBUG = False  # Set DEBUG to False to test production path
+    mock_settings.USE_MOCK_LLM = False  # Use real client
     mock_settings.OLLAMA_MODEL = "test-model"
     mock_settings.OLLAMA_BASE_URL = "http://test-url"
     mock_get_settings.return_value = mock_settings
@@ -181,10 +181,10 @@ def test_get_container_singleton():
 def test_get_redis_client_production_mode(
     mock_redis, mock_get_settings, container: DependencyContainer
 ):
-    """Test that redis.Redis is returned when DEBUG=False."""
+    """Test that redis.Redis is returned when USE_MOCK_REDIS=False."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.DEBUG = False
+    mock_settings.USE_MOCK_REDIS = False  # Use real client
     mock_settings.CELERY_BROKER_URL = "redis://localhost:6379/0"
     mock_get_settings.return_value = mock_settings
     mock_instance = MagicMock()
@@ -203,13 +203,13 @@ def test_get_redis_client_production_mode(
 
 
 @patch("src.container.get_settings")
-def test_get_redis_client_returns_mock_in_debug_mode(
+def test_get_redis_client_returns_mock_when_flag_enabled(
     mock_get_settings, container: DependencyContainer
 ):
-    """Test that FakeRedis is returned when DEBUG=True."""
+    """Test that FakeRedis is returned when USE_MOCK_REDIS=True."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.DEBUG = True
+    mock_settings.USE_MOCK_REDIS = True  # Use mock client
     mock_get_settings.return_value = mock_settings
 
     # Act

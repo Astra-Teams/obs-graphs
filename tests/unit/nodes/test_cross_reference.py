@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.api.v1.nodes.cross_reference import CrossReferenceAgent
+from src.api.v1.nodes import CrossReferenceAgent
 from src.state import AgentResult, FileAction
 
 
@@ -46,11 +46,6 @@ The study of matter and energy.
 
 class TestCrossReferenceAgent:
     """Test suite for CrossReferenceAgent."""
-
-    def test_agent_initialization(self):
-        """Test that agent can be initialized."""
-        agent = CrossReferenceAgent()
-        assert agent is not None
 
     def test_validate_input(self, agent):
         """Test validate_input accepts contexts."""

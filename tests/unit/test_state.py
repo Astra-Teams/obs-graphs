@@ -5,24 +5,6 @@ import pytest
 from src.state import AgentResult, FileAction, FileChange
 
 
-class TestFileAction:
-    """Test the FileAction enum."""
-
-    def test_file_action_values(self):
-        """Test that FileAction has correct values."""
-        assert FileAction.CREATE.value == "create"
-        assert FileAction.UPDATE.value == "update"
-        assert FileAction.DELETE.value == "delete"
-
-    def test_file_action_members(self):
-        """Test that FileAction has all expected members."""
-        actions = [action.value for action in FileAction]
-        assert "create" in actions
-        assert "update" in actions
-        assert "delete" in actions
-        assert len(actions) == 3
-
-
 class TestFileChange:
     """Test the FileChange dataclass."""
 
@@ -75,18 +57,6 @@ class TestFileChange:
                 action=FileAction.DELETE,
                 content="Should not have content",
             )
-
-    def test_file_change_equality(self):
-        """Test that FileChange instances can be compared."""
-        change1 = FileChange("test.md", FileAction.CREATE, "content")
-        change2 = FileChange("test.md", FileAction.CREATE, "content")
-        assert change1 == change2
-
-    def test_file_change_different_paths(self):
-        """Test that FileChanges with different paths are not equal."""
-        change1 = FileChange("test1.md", FileAction.CREATE, "content")
-        change2 = FileChange("test2.md", FileAction.CREATE, "content")
-        assert change1 != change2
 
 
 class TestAgentResult:

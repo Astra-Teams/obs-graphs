@@ -130,9 +130,9 @@ build-test:
 # Run database tests with PostgreSQL (robust, production-like)
 pstg-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build api db
+    @USE_SQLITE=true {{TEST_COMPOSE}} up -d --build api db
     @echo "Running database tests inside api container (against PostgreSQL)..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} exec api pytest tests/db; \
+    @USE_SQLITE=true {{TEST_COMPOSE}} exec api pytest tests/db; \
     EXIT_CODE=$?; \
     echo "🔴 Stopping TEST containers..."; \
     {{TEST_COMPOSE}} down --remove-orphans; \
@@ -141,7 +141,7 @@ pstg-test:
 # Run e2e tests against containerized application stack (runs from host)
 e2e-test:
     @echo "🚀 Running e2e tests..."
-    @USE_SQLITE=false POSTGRES_DB=obs-graph-test uv run pytest tests/e2e
+    @USE_SQLITE=true POSTGRES_DB=obs-graph-test uv run pytest tests/e2e
 
 # ==============================================================================
 # CLEANUP

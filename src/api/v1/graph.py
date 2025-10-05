@@ -9,7 +9,7 @@ from langgraph.graph import END, StateGraph
 
 from src.api.v1.schemas import WorkflowRunRequest
 from src.container import DependencyContainer
-from src.protocols.vault_protocol import VaultServiceProtocol
+from src.protocols import VaultServiceProtocol
 from src.settings import get_settings
 from src.state import AgentResult, FileChange, GraphState
 

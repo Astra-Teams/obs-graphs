@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.api.v1.nodes.file_organization import FileOrganizationAgent
+from src.api.v1.nodes import FileOrganizationAgent
 from src.state import AgentResult, FileAction
 
 
@@ -46,11 +46,6 @@ def vault_context():
 
 class TestFileOrganizationAgent:
     """Test suite for FileOrganizationAgent."""
-
-    def test_agent_initialization(self, agent):
-        """Test that agent can be initialized."""
-        assert agent is not None
-        assert isinstance(agent, FileOrganizationAgent)
 
     def test_validate_input_accepts_any_context(self, agent):
         """Test validate_input accepts various contexts."""

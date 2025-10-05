@@ -25,11 +25,22 @@ This project is an AI-powered workflow automation tool for Obsidian vaults, util
 
 - **Dependency Injection (DI)**: Protocol-based DI container (`src/container.py`)
 - **Modular Nodes**: Extensible agent system
-- **DB Switching**: Environment variable (`USE_SQLITE`) for DB selection
+- **Service Switching**: Individual flags control each external service (database, GitHub, LLM, Redis)
 - **Design Patterns**:
     - **Lazy Instantiation**: Dependencies are created on first access
     - **Settings Pattern**: Configuration management using Pydantic BaseSettings
     - **Repository Pattern**: File operations in vault services
+
+### Service Control Flags
+
+Control each service independently via `.env`:
+- `USE_SQLITE` - SQLite/PostgreSQL
+- `USE_MOCK_GITHUB` - Mock/Real GitHub
+- `USE_MOCK_LLM` - Mock/Real Ollama
+- `USE_MOCK_REDIS` - FakeRedis/Real Redis
+
+### Mock Definitions
+Define mocks in `dev/mocks/` with appropriate directory structure.
 
 ## 3. Coding Conventions
 
