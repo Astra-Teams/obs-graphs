@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.nodes.base import FileAction, FileChange
-from src.services.vault import VaultService, VaultSummary
+from src.services.vault import VaultService
+from src.state import FileAction, FileChange, VaultSummary
 
 
 @pytest.fixture

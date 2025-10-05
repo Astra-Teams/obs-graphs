@@ -1,29 +1,13 @@
 """Service for managing Obsidian Vault file operations."""
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from src.nodes.base import FileAction, FileChange
+from src.protocols import VaultServiceProtocol
+from src.state import FileAction, FileChange, VaultSummary
 
 
-@dataclass
-class VaultSummary:
-    """
-    Dataclass representing a summary of the vault's state.
-
-    Attributes:
-        total_articles: Total number of markdown files in the vault.
-        categories: List of top-level directories representing categories.
-        recent_updates: List of recently modified files.
-    """
-
-    total_articles: int
-    categories: List[str]
-    recent_updates: List[str]
-
-
-class VaultService:
+class VaultService(VaultServiceProtocol):
     """Service for handling file operations within the Obsidian Vault."""
 
     def apply_changes(self, vault_path: Path, changes: List[FileChange]) -> None:

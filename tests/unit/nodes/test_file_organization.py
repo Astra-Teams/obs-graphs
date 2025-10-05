@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.nodes.base import AgentResult, FileAction
 from src.nodes.file_organization import FileOrganizationAgent
+from src.state import AgentResult, FileAction
 
 
 @pytest.fixture

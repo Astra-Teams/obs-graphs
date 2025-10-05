@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-from src.nodes.base import AgentResult, BaseAgent
+from src.nodes.base import BaseAgent
+from src.state import AgentResult
 
 
 class ArticleImprovementAgent(BaseAgent):

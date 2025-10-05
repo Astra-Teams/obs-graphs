@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from src.nodes.article_improvement import ArticleImprovementAgent
-from src.nodes.base import AgentResult, FileAction
+from src.state import AgentResult, FileAction
 
 
 @pytest.fixture

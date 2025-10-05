@@ -42,8 +42,8 @@ class Workflow(Base):
         index=True,
     )
     strategy = Column(String(100), nullable=True)
-    started_at = Column(DateTime, nullable=True)
-    completed_at = Column(DateTime, nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
     pr_url = Column(String(500), nullable=True)
     error_message = Column(Text, nullable=True)
     celery_task_id = Column(String(255), nullable=True)

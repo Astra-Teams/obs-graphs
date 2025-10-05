@@ -8,9 +8,10 @@ from github import Auth, Github, GithubException
 from github.PullRequest import PullRequest
 
 from src.config.settings import get_settings
+from src.protocols import GithubClientProtocol
 
 
-class GithubClient:
+class GithubClient(GithubClientProtocol):
     """
     Client for GitHub operations including authentication, cloning, and PR creation.
 

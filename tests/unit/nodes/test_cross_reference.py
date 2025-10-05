@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.nodes.base import AgentResult, FileAction
 from src.nodes.cross_reference import CrossReferenceAgent
+from src.state import AgentResult, FileAction
 
 
 @pytest.fixture

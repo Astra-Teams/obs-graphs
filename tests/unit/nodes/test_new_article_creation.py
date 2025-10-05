@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.nodes.base import AgentResult, FileAction, FileChange
 from src.nodes.new_article_creation import NewArticleCreationAgent
+from src.state import AgentResult, FileAction, FileChange
 
 
 @pytest.fixture
