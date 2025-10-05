@@ -66,7 +66,7 @@ def e2e_setup() -> Generator[None, None, None]:
     host_port = os.getenv("TEST_PORT", "8002")
     health_url = f"http://{host_bind_ip}:{host_port}/health"
 
-    project_name = os.getenv("PROJECT_NAME", "fastapi-template")
+    project_name = os.getenv("PROJECT_NAME", "obs-graph")
     test_project_name = f"{project_name}-test"
 
     # Define compose commands

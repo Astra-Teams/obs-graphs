@@ -39,11 +39,13 @@ class ObsGraphsSettings(BaseSettings):
 
     # LLM Configuration
     OLLAMA_MODEL: str = "llama3.2:3b"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     @field_validator("GITHUB_APP_PRIVATE_KEY_PATH")
     @classmethod
     def _validate_private_key_path(cls, v: str) -> str:
-        if v and not Path(v).exists():
+        # Skip validation for empty string or placeholder paths
+        if v and not v.startswith("/path/to/") and not Path(v).exists():
             raise ValueError(f"GitHub App private key file not found: {v}")
         return v
 

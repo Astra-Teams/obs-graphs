@@ -54,7 +54,9 @@ class DependencyContainer:
         """Get the LLM instance."""
         if self._llm is None:
             settings = get_settings()
-            self._llm = Ollama(model=settings.OLLAMA_MODEL)
+            self._llm = Ollama(
+                model=settings.OLLAMA_MODEL, base_url=settings.OLLAMA_BASE_URL
+            )
         return self._llm
 
     def get_node(self, name: str) -> NodeProtocol:

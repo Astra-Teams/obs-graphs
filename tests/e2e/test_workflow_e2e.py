@@ -24,7 +24,7 @@ def _get_test_db_engine() -> Engine:
     host = os.getenv("HOST_BIND_IP", "127.0.0.1")
     port = os.getenv("POSTGRES_PORT", "5432")
     db_name = os.getenv("POSTGRES_TEST_DB") or os.getenv(
-        "POSTGRES_HOST_DB", "fastapi-template-test"
+        "POSTGRES_HOST_DB", "obs-graph-test"
     )
 
     url = f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db_name}"

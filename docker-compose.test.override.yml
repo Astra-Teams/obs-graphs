@@ -1,4 +1,15 @@
 services:
+  ollama:
+    build:
+      context: ./ollama
+      dockerfile: Dockerfile
+      args:
+        BUILT_IN_OLLAMA_MODELS: ${CONTAINER_OLLAMA_MODEL}
+    volumes:
+      - ollama:/root/.ollama
+    networks:
+      - backend
+
   db:
     ports:
       - "${HOST_BIND_IP}:5432:5432"
@@ -12,3 +23,14 @@ services:
       - "${HOST_BIND_IP}:${TEST_PORT}:8000"
     environment:
       - POSTGRES_DB=${POSTGRES_TEST_DB}
+      - OLLAMA_MODEL=${CONTAINER_OLLAMA_MODEL}
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+volumes:
+  ollama:
+    driver: local
+    name: ${PROJECT_NAME}-ollama
+    external: false

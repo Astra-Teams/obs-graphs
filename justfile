@@ -40,7 +40,7 @@ setup:
         echo ".env already exists. Skipping creation."; \
     fi
     @echo "💡 You can customize .env for your specific needs:"
-    @echo "   📝 Change OLLAMA_HOST to switch between container/host Ollama"
+    @echo "   📝 Change OLLAMA_BASE_URL to switch between container/host Ollama"
     @echo "   📝 Adjust other settings as needed"
     @echo ""
     @echo "Pulling PostgreSQL image for tests..."
@@ -123,7 +123,7 @@ docker-test: build-test pstg-test e2e-test
 build-test:
     @echo "Building Docker image for testing..."
     @TEMP_IMAGE_TAG=$(date +%s)-build-test; \
-    docker build --target production --tag temp-build-test:$TEMP_IMAGE_TAG -f api/Dockerfile . && \
+    docker build --target production --tag temp-build-test:$TEMP_IMAGE_TAG -f Dockerfile . && \
     echo "Build successful. Cleaning up temporary image..." && \
     docker rmi temp-build-test:$TEMP_IMAGE_TAG || true
 
@@ -141,7 +141,7 @@ pstg-test:
 # Run e2e tests against containerized application stack (runs from host)
 e2e-test:
     @echo "🚀 Running e2e tests..."
-    @USE_SQLITE=false POSTGRES_DB=fastapi-template-test uv run pytest tests/e2e
+    @USE_SQLITE=false POSTGRES_DB=obs-graph-test uv run pytest tests/e2e
 
 # ==============================================================================
 # CLEANUP

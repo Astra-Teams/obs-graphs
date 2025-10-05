@@ -119,8 +119,8 @@ Configure in `.env`:
 - `POSTGRES_HOST_DB` - Production database name
 - `POSTGRES_DEV_DB` - Development database name
 - `POSTGRES_TEST_DB` - Test database name
-- `OLLAMA_HOST` - Ollama server host (default: http://host.docker.internal:11434)
-- `OLLAMA_MODEL` - Ollama model to use (default: llama3.2)
+- `OLLAMA_BASE_URL` - Ollama server base URL (default: http://localhost:11434)
+- `OLLAMA_MODEL` - Ollama model to use (default: llama3.2:3b)
 - `GITHUB_APP_ID` - GitHub App ID for repository operations
 - `GITHUB_APP_PRIVATE_KEY_PATH` - Path to GitHub App private key
 - `GITHUB_INSTALLATION_ID` - GitHub App installation ID

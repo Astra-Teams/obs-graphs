@@ -505,7 +505,7 @@ wheels = [
 ]
 
 [[package]]
-name = "fastapi-template"
+name = "obs-graph"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
