@@ -1,85 +1,51 @@
-"""Client for GitHub App authentication and repository operations."""
+"""Client for GitHub Personal Access Token authentication and repository operations."""
 
 from pathlib import Path
 from typing import Optional
 
 from git import Repo
-from github import Auth, Github, GithubException
+from github import Github, GithubException
 from github.PullRequest import PullRequest
 
 from src.protocols import GithubClientProtocol
-from src.settings import get_settings
+from src.settings import ObsGraphsSettings
 
 
 class GithubClient(GithubClientProtocol):
     """
     Client for GitHub operations including authentication, cloning, and PR creation.
 
-    This client handles GitHub App authentication and provides methods for
-    repository operations needed in the workflow automation system.
+    This client handles GitHub Personal Access Token authentication and provides
+    methods for repository operations needed in the workflow automation system.
     """
 
-    def __init__(self):
+    def __init__(self, settings: ObsGraphsSettings):
         """Initialize the GitHub client with settings."""
-        self.settings = get_settings()
+        self.settings = settings
         self._github_client: Optional[Github] = None
 
     def authenticate(self) -> Github:
         """
-        Authenticate as GitHub App using private key and app ID.
+        Authenticate using Personal Access Token.
 
         Returns:
             Authenticated GitHub API client.
 
         Raises:
-            ValueError: If GitHub App credentials are not configured.
-            FileNotFoundError: If private key file is not found.
-            Exception: If authentication fails.
+            ValueError: If GitHub PAT is not configured.
         """
         if self._github_client is not None:
             return self._github_client
 
         # Validate required settings
-        if not all(
-            [
-                self.settings.GITHUB_APP_ID,
-                self.settings.GITHUB_APP_PRIVATE_KEY_PATH,
-                self.settings.GITHUB_INSTALLATION_ID,
-            ]
-        ):
+        if not self.settings.GITHUB_PAT:
             raise ValueError(
-                "GitHub App credentials not configured. Set GITHUB_APP_ID, "
-                "GITHUB_APP_PRIVATE_KEY_PATH, and GITHUB_INSTALLATION_ID."
+                "GitHub Personal Access Token not configured. Set GITHUB_PAT."
             )
 
-        # Read private key
-        private_key_path = Path(self.settings.GITHUB_APP_PRIVATE_KEY_PATH)
-        if not private_key_path.exists():
-            raise FileNotFoundError(
-                f"GitHub App private key not found: {private_key_path}"
-            )
-
-        with open(private_key_path, "r") as key_file:
-            private_key = key_file.read()
-
-        # Generate JWT for GitHub App authentication
-        # Authenticate as GitHub App
-        auth = Auth.AppAuth(app_id=self.settings.GITHUB_APP_ID, private_key=private_key)
-        github_app = Github(auth=auth)
-
-        # Get installation access token
-        try:
-            installation = github_app.get_app().get_installation(
-                int(self.settings.GITHUB_INSTALLATION_ID)
-            )
-            installation_auth = installation.get_access_token()
-
-            # Create authenticated client with installation token
-            self._github_client = Github(installation_auth.token)
-            return self._github_client
-
-        except GithubException as e:
-            raise Exception(f"Failed to authenticate with GitHub: {e}")
+        # Create authenticated client with PAT
+        self._github_client = Github(self.settings.GITHUB_PAT)
+        return self._github_client
 
     def clone_repository(self, target_path: Path, branch: str = "main") -> None:
         """
@@ -242,10 +208,5 @@ class GithubClient(GithubClientProtocol):
         Returns:
             HTTPS clone URL with authentication token embedded.
         """
-        github_client = self.authenticate()
-
-        # Get the installation access token
-        token = github_client._Github__requester.auth.token
-
-        # Construct authenticated URL
-        return f"https://x-access-token:{token}@github.com/{repo_full_name}.git"
+        # Construct authenticated URL with PAT
+        return f"https://x-access-token:{self.settings.GITHUB_PAT}@github.com/{repo_full_name}.git"

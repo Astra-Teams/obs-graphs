@@ -39,7 +39,8 @@ class DependencyContainer:
     def get_github_client(self) -> GithubClientProtocol:
         """Get the GitHub client instance."""
         if self._github_client is None:
-            self._github_client = GithubClient()
+            settings = get_settings()
+            self._github_client = GithubClient(settings)
         return self._github_client
 
     def get_vault_service(self) -> VaultServiceProtocol:
