@@ -47,6 +47,7 @@ packages = ["sdk"]
 [tool.pytest.ini_options]
 python_files = "test_*.py"
 asyncio_mode = "auto"
+addopts = "-v -s --tb=short"
 
 [tool.black]
 target-version = ['py312']

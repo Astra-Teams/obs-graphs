@@ -7,9 +7,9 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
-from src.settings import get_settings
 from src.db.database import Base, create_db_session, get_engine
 from src.main import app
+from src.settings import get_settings
 
 # Load .env and determine USE_SQLITE flag
 load_dotenv()

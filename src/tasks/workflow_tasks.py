@@ -7,10 +7,10 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from src.settings import get_settings
 from src.container import get_container
 from src.db.database import get_db
 from src.db.models.workflow import Workflow, WorkflowStatus
+from src.settings import get_settings
 from src.tasks.celery_app import celery_app
 
 settings = get_settings()

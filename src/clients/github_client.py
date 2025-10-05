@@ -7,8 +7,8 @@ from git import Repo
 from github import Auth, Github, GithubException
 from github.PullRequest import PullRequest
 
-from src.settings import get_settings
 from src.protocols import GithubClientProtocol
+from src.settings import get_settings
 
 
 class GithubClient(GithubClientProtocol):

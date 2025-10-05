@@ -5,7 +5,6 @@ from typing import Dict, Optional
 from langchain_community.llms import Ollama
 
 from src.clients.github_client import GithubClient
-from src.settings import get_settings
 from src.graph.builder import GraphBuilder
 from src.nodes.article_improvement import ArticleImprovementAgent
 from src.nodes.category_organization import CategoryOrganizationAgent
@@ -15,6 +14,7 @@ from src.nodes.new_article_creation import NewArticleCreationAgent
 from src.nodes.quality_audit import QualityAuditAgent
 from src.protocols import GithubClientProtocol, NodeProtocol, VaultServiceProtocol
 from src.services.vault import VaultService
+from src.settings import get_settings
 
 
 class DependencyContainer:
