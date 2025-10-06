@@ -93,14 +93,16 @@ class GraphBuilder:
             )
 
             # Analyze vault to create workflow plan
-            workflow_plan = self.analyze_vault(temp_path, vault_service)
+            workflow_plan = self.analyze_vault(temp_path, vault_service, request)
 
             # Override strategy if specified in request
             if request.strategy:
                 workflow_plan.strategy = request.strategy
 
             # Execute workflow
-            workflow_result = self.execute_workflow(temp_path, workflow_plan, container)
+            workflow_result = self.execute_workflow(
+                temp_path, workflow_plan, container, request.prompt
+            )
 
             if not workflow_result.success:
                 raise Exception(f"Workflow execution failed: {workflow_result.summary}")
@@ -140,26 +142,38 @@ class GraphBuilder:
                     pass
 
     def analyze_vault(
-        self, vault_path: Path, vault_service: VaultServiceProtocol
+        self, vault_path: Path, vault_service: VaultServiceProtocol, request: WorkflowRunRequest
     ) -> WorkflowPlan:
         """
-        Analyze vault to determine which nodes to run and in what order.
+        Analyze vault and request to determine which nodes to run and in what order.
 
-        The workflow always uses the new_article strategy.
+        If a prompt is provided, uses research_proposal strategy.
+        Otherwise, uses new_article strategy.
 
         Args:
             vault_path: Path to the local clone of the Obsidian Vault
+            vault_service: Vault service instance
+            request: Workflow run request
 
         Returns:
             WorkflowPlan with ordered list of nodes and strategy
         """
-        # Always use new article creation strategy
-        strategy = "new_article"
-        nodes = [
-            "article_proposal",
-            "article_content_generation",
-            "github_pr_creation",
-        ]
+        # Check if this is a research workflow (prompt provided)
+        if request.prompt and request.prompt.strip():
+            strategy = "research_proposal"
+            nodes = [
+                "article_proposal",
+                "deep_research",
+                "github_pr_creation",
+            ]
+        else:
+            # Default: new article creation strategy
+            strategy = "new_article"
+            nodes = [
+                "article_proposal",
+                "article_content_generation",
+                "github_pr_creation",
+            ]
 
         return WorkflowPlan(nodes=nodes, strategy=strategy)
 
@@ -168,6 +182,7 @@ class GraphBuilder:
         vault_path: Path,
         workflow_plan: WorkflowPlan,
         container: DependencyContainer,
+        prompt: str = "",
     ) -> WorkflowResult:
         """
         Execute workflow using LangGraph state graph.
@@ -175,6 +190,8 @@ class GraphBuilder:
         Args:
             vault_path: Path to the local clone of the Obsidian Vault
             workflow_plan: Plan specifying which nodes to run
+            container: Dependency container
+            prompt: User prompt for research workflows
 
         Returns:
             WorkflowResult with aggregated changes and results
@@ -187,6 +204,7 @@ class GraphBuilder:
             "vault_path": vault_path,
             "vault_summary": vault_summary.__dict__,  # Convert to dict for TypedDict
             "strategy": workflow_plan.strategy,
+            "prompt": prompt,
             "accumulated_changes": [],
             "node_results": {},
             "messages": [],
@@ -272,9 +290,15 @@ class GraphBuilder:
             context = {
                 "vault_summary": state["vault_summary"],
                 "strategy": state["strategy"],
+                "prompt": state["prompt"],
                 "previous_changes": state["accumulated_changes"],
                 "previous_results": state["node_results"],
             }
+
+            # Add metadata from previous nodes to context
+            for prev_node_name, prev_result in state["node_results"].items():
+                if "metadata" in prev_result:
+                    context.update(prev_result["metadata"])
 
             # Execute node
             result: AgentResult = node.execute(state["vault_path"], context)

@@ -31,49 +31,41 @@ class ArticleProposalAgent(NodeProtocol):
         Validate that the context contains required information.
 
         Args:
-            context: Must contain 'vault_summary' with vault analysis data
+            context: Must contain 'prompt' for research topic generation
 
         Returns:
             True if context is valid, False otherwise
         """
-        if "vault_summary" not in context:
-            return False
-        vault_summary = context["vault_summary"]
-        return isinstance(vault_summary, dict) and "categories" in vault_summary
+        return "prompt" in context and isinstance(context["prompt"], str) and len(context["prompt"].strip()) > 0
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
         """
-        Execute article proposal based on vault analysis.
+        Execute research topic proposal based on user prompt.
 
         Args:
             vault_path: Path to the local clone of the Obsidian Vault
-            context: Dictionary containing vault_summary with categories and existing articles
+            context: Dictionary containing 'prompt' with user's research request
 
         Returns:
-            AgentResult with article_proposals in metadata
+            AgentResult with topic metadata (title, summary, tags, slug)
 
         Raises:
             ValueError: If input validation fails
         """
         if not self.validate_input(context):
-            raise ValueError(
-                "Invalid context: vault_summary with categories is required"
-            )
+            raise ValueError("Invalid context: prompt is required")
 
-        vault_summary = context["vault_summary"]
-        categories = vault_summary.get("categories", [])
-        total_articles = vault_summary.get("total_articles", 0)
+        prompt = context["prompt"].strip()
 
-        # Analyze vault to identify new article opportunities
-        analysis_prompt = self._create_analysis_prompt(vault_summary)
+        # Generate research topic from prompt
+        topic_prompt = render_prompt("research_topic_proposal", prompt=prompt)
 
         try:
-            # Get LLM suggestions for new articles
-            response = self.llm.invoke(analysis_prompt)
-            article_suggestions = self._parse_article_suggestions(response.content)
+            # Get LLM response with JSON topic proposal
+            response = self.llm.invoke(topic_prompt)
+            topic_data = self._parse_topic_proposal(response)
 
-            # Check if parsing failed (malformed response)
-            if article_suggestions is None:
+            if topic_data is None:
                 return AgentResult(
                     success=False,
                     changes=[],
@@ -81,27 +73,16 @@ class ArticleProposalAgent(NodeProtocol):
                     metadata={"error": "malformed_json"},
                 )
 
-            # Check if no articles were suggested
-            if len(article_suggestions) == 0:
-                return AgentResult(
-                    success=True,
-                    changes=[],
-                    message="No new articles needed based on vault analysis",
-                    metadata={
-                        "article_proposals": [],
-                        "vault_articles_count": total_articles,
-                        "categories_analyzed": len(categories),
-                    },
-                )
-
+            # Store topic metadata for downstream nodes
             metadata = {
-                "article_proposals": article_suggestions,
-                "proposals_count": len(article_suggestions),
-                "vault_articles_count": total_articles,
-                "categories_analyzed": len(categories),
+                "topic_title": topic_data["title"],
+                "topic_summary": topic_data["summary"],
+                "tags": topic_data["tags"],
+                "proposal_slug": topic_data["slug"],
+                "proposal_filename": f"{topic_data['slug']}.md",
             }
 
-            message = f"Proposed {len(article_suggestions)} new article(s) based on vault analysis"
+            message = f"Generated research topic: {topic_data['title']}"
 
             return AgentResult(
                 success=True, changes=[], message=message, metadata=metadata
@@ -111,59 +92,33 @@ class ArticleProposalAgent(NodeProtocol):
             return AgentResult(
                 success=False,
                 changes=[],
-                message=f"Failed to propose new articles: {str(e)}",
+                message=f"Failed to generate research topic: {str(e)}",
                 metadata={"error": str(e)},
             )
 
-    def _create_analysis_prompt(self, vault_summary: dict) -> str:
+    def _parse_topic_proposal(self, llm_response: str) -> dict | None:
         """
-        Create a prompt for analyzing the vault and suggesting new articles.
-
-        Args:
-            vault_summary: Summary of the vault's current state
-
-        Returns:
-            Prompt string for LLM
-        """
-        return render_prompt(
-            "new_article_creation",
-            total_articles=vault_summary.get("total_articles", 0),
-            categories=vault_summary.get("categories", []),
-            recent_updates=vault_summary.get("recent_updates", []),
-        )
-
-    def _parse_article_suggestions(self, llm_response: str) -> list[dict] | None:
-        """
-        Parse LLM response to extract article suggestions.
+        Parse LLM response to extract topic proposal JSON.
 
         Args:
             llm_response: Raw response from LLM
 
         Returns:
-            List of article suggestion dictionaries, or None if parsing fails
+            Dictionary with title, summary, tags, slug, or None if parsing fails
         """
         # Try to extract JSON from the response
-        json_match = re.search(r"\[.*\]", llm_response, re.DOTALL)
+        json_match = re.search(r"\{.*\}", llm_response, re.DOTALL)
         if json_match:
             try:
-                suggestions = json.loads(json_match.group())
-                # Validate and normalize suggestions
-                valid_suggestions = []
-                for s in suggestions:
-                    if all(k in s for k in ["title", "category", "filename"]):
-                        valid_suggestions.append(
-                            {
-                                "title": s["title"],
-                                "category": s["category"],
-                                "description": s.get("description", ""),
-                                "path": s["filename"],
-                            }
-                        )
-                return valid_suggestions[
-                    : self._settings.MAX_NEW_ARTICLES_PER_RUN
-                ]  # Limit to max articles per run
+                topic_data = json.loads(json_match.group())
+                # Validate required fields
+                required_fields = ["title", "summary", "tags", "slug"]
+                if all(k in topic_data for k in required_fields):
+                    # Validate tags format
+                    if isinstance(topic_data["tags"], list) and 3 <= len(topic_data["tags"]) <= 6:
+                        # Ensure lowercase tags
+                        topic_data["tags"] = [tag.lower() for tag in topic_data["tags"]]
+                        return topic_data
             except json.JSONDecodeError:
-                return None
-
-        # Fallback: return None if parsing fails
+                pass
         return None

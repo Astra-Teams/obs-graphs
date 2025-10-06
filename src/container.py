@@ -6,10 +6,13 @@ import redis
 from langchain_community.llms import Ollama
 from langchain_core.language_models.llms import BaseLLM
 
-from src.clients import (
-    GithubClient,
+from src.clients import GithubClient, ResearchApiClient
+from src.protocols import (
+    GithubClientProtocol,
+    NodeProtocol,
+    ResearchClientProtocol,
+    VaultServiceProtocol,
 )
-from src.protocols import GithubClientProtocol, NodeProtocol, VaultServiceProtocol
 from src.services import VaultService
 from src.settings import get_settings
 
@@ -21,6 +24,7 @@ class DependencyContainer:
         """Initialize the container with empty caches."""
         self._github_client: Optional[GithubClientProtocol] = None
         self._vault_service: Optional[VaultServiceProtocol] = None
+        self._research_client: Optional[ResearchClientProtocol] = None
         self._nodes: Dict[str, NodeProtocol] = {}
         self._llm: Optional[BaseLLM] = None
         self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
@@ -34,6 +38,10 @@ class DependencyContainer:
             "article_content_generation": (
                 "src.api.v1.nodes.article_content_generation",
                 "ArticleContentGenerationAgent",
+            ),
+            "deep_research": (
+                "src.api.v1.nodes.deep_research",
+                "DeepResearchAgent",
             ),
             "github_pr_creation": (
                 "src.api.v1.nodes.github_pr_creation",
@@ -62,6 +70,25 @@ class DependencyContainer:
         if self._vault_service is None:
             self._vault_service = VaultService()
         return self._vault_service
+
+    def get_research_client(self) -> ResearchClientProtocol:
+        """
+        Get the research API client instance.
+
+        Returns MockResearchApiClient if USE_MOCK_RESEARCH_API=True, otherwise ResearchApiClient.
+        """
+        if self._research_client is None:
+            settings = get_settings()
+            if settings.USE_MOCK_RESEARCH_API:
+                from dev.mocks_clients import MockResearchApiClient
+
+                self._research_client = MockResearchApiClient()
+            else:
+                self._research_client = ResearchApiClient(
+                    base_url=settings.RESEARCH_API_BASE_URL,
+                    timeout=settings.RESEARCH_API_TIMEOUT_SECONDS,
+                )
+        return self._research_client
 
     def get_llm(self) -> BaseLLM:
         """
@@ -117,6 +144,8 @@ class DependencyContainer:
                 self._nodes[name] = node_class(self.get_llm())
             elif name == "github_pr_creation":
                 self._nodes[name] = node_class(self.get_github_client())
+            elif name == "deep_research":
+                self._nodes[name] = node_class(self.get_research_client())
             else:
                 self._nodes[name] = node_class()
         return self._nodes[name]
