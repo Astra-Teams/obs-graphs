@@ -44,17 +44,14 @@ Define mocks in `dev/mock_vault/` with appropriate directory structure.
 
 ### Git Submodules
 
-External dependencies managed as Git submodules:
-- **ollama-deep-researcher**: Located at `submodules/ollama-deep-researcher`
-  - Repository: `git@github.com:Astra-Teams/ollama-deep-researcher.git`
-  - Used only in development via `docker-compose.dev.override.yml`
-  - **Development/Testing**: Use as code reference for implementation
-  - **Production**: Import from GitHub dependency in `pyproject.toml`, deployed as separate service
+- **ollama-deep-researcher** (`submodules/ollama-deep-researcher`)
+  - Source for the external research service consumed via HTTP (`RESEARCH_API_BASE_URL`, default `http://ollama-deep-researcher:8000`).
+  - Run the service separately (e.g. build the submodule's Dockerfile or `uv run uvicorn ollama_deep_researcher.api.main:app`) whenever `USE_MOCK_RESEARCH_API=false`.
+  - CI/local installs no longer pull a Python package; the submodule is the reference implementation.
 
 **Important**:
-- **Never modify submodule code directly** in this repository
-- Changes needed? Explain modifications to users and update in the source repository
-- Production imports must use the package defined in `pyproject.toml` dependencies
+- Fetch with `git submodule update --init --recursive` after cloning.
+- Avoid editing the submodule directly here—contribute upstream instead.
 
 ## 3. Coding Conventions
 
