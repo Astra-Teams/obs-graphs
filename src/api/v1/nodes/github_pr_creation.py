@@ -154,7 +154,15 @@ Changes made by Obsidian Agents workflow
         Returns:
             Tuple of (title, body)
         """
-        title = f"Automated vault improvements ({strategy})"
+        # Customize title for research proposals
+        if strategy == "research_proposal":
+            # Extract proposal title from deep_research metadata
+            deep_research_result = node_results.get("deep_research", {})
+            proposal_metadata = deep_research_result.get("metadata", {})
+            proposal_filename = proposal_metadata.get("proposal_filename", "research proposal")
+            title = f"Research Proposal: {proposal_filename.replace('.md', '').replace('-', ' ').title()}"
+        else:
+            title = f"Automated vault improvements ({strategy})"
 
         # Generate summary
         summary_parts = []
@@ -163,17 +171,49 @@ Changes made by Obsidian Agents workflow
                 summary_parts.append(f"- {node_name}: {result['message']}")
         summary = "\n".join(summary_parts)
 
-        # Build PR body
-        body_parts = [
-            "## Automated Vault Improvements",
-            f"\n**Strategy**: {strategy}",
-            "\n### Summary",
-            summary,
-            "\n### Details",
-            f"- **Total Changes**: {len(changes)} file operations",
-            f"- **Nodes Executed**: {len(node_results)}",
-            "\n### Node Results",
-        ]
+        # Build PR body with strategy-specific content
+        if strategy == "research_proposal":
+            body_parts = [
+                "## Research Proposal",
+                "\n### Overview",
+                "This PR contains a new research proposal generated from a user prompt.",
+            ]
+
+            # Add proposal metadata if available
+            article_proposal_result = node_results.get("article_proposal", {})
+            article_metadata = article_proposal_result.get("metadata", {})
+
+            if "topic_title" in article_metadata:
+                body_parts.append(f"\n**Topic**: {article_metadata['topic_title']}")
+            if "tags" in article_metadata:
+                tags_str = ", ".join(article_metadata["tags"])
+                body_parts.append(f"**Tags**: {tags_str}")
+
+            deep_research_result = node_results.get("deep_research", {})
+            deep_metadata = deep_research_result.get("metadata", {})
+            if "sources_count" in deep_metadata:
+                body_parts.append(f"**Sources**: {deep_metadata['sources_count']} references")
+
+            body_parts.extend([
+                "\n### Summary",
+                summary,
+                "\n### Details",
+                f"- **Proposal File**: {deep_metadata.get('proposal_path', 'N/A')}",
+                f"- **Total Changes**: {len(changes)} file operation(s)",
+                f"- **Nodes Executed**: {len(node_results)}",
+            ])
+        else:
+            body_parts = [
+                "## Automated Vault Improvements",
+                f"\n**Strategy**: {strategy}",
+                "\n### Summary",
+                summary,
+                "\n### Details",
+                f"- **Total Changes**: {len(changes)} file operations",
+                f"- **Nodes Executed**: {len(node_results)}",
+            ]
+
+        body_parts.append("\n### Node Results")
 
         for node_name, result in node_results.items():
             body_parts.append(f"\n#### {node_name}")

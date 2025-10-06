@@ -142,7 +142,7 @@ class GraphBuilder:
                     pass
 
     def analyze_vault(
-        self, vault_path: Path, vault_service: VaultServiceProtocol, request: WorkflowRunRequest
+        self, _vault_path: Path, _vault_service: VaultServiceProtocol, request: WorkflowRunRequest
     ) -> WorkflowPlan:
         """
         Analyze vault and request to determine which nodes to run and in what order.
@@ -296,7 +296,7 @@ class GraphBuilder:
             }
 
             # Add metadata from previous nodes to context
-            for prev_node_name, prev_result in state["node_results"].items():
+            for _prev_node_name, prev_result in state["node_results"].items():
                 if "metadata" in prev_result:
                     context.update(prev_result["metadata"])
 
