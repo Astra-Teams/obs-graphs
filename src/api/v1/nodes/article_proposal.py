@@ -36,7 +36,11 @@ class ArticleProposalAgent(NodeProtocol):
         Returns:
             True if context is valid, False otherwise
         """
-        return "prompt" in context and isinstance(context["prompt"], str) and len(context["prompt"].strip()) > 0
+        return (
+            "prompt" in context
+            and isinstance(context["prompt"], str)
+            and len(context["prompt"].strip()) > 0
+        )
 
     def execute(self, vault_path: Path, context: dict) -> AgentResult:
         """
@@ -63,7 +67,7 @@ class ArticleProposalAgent(NodeProtocol):
         try:
             # Get LLM response with JSON topic proposal
             response = self.llm.invoke(topic_prompt)
-            topic_data = self._parse_topic_proposal(response)
+            topic_data = self._parse_topic_proposal(response.content)
 
             if topic_data is None:
                 return AgentResult(
@@ -115,7 +119,10 @@ class ArticleProposalAgent(NodeProtocol):
                 required_fields = ["title", "summary", "tags", "slug"]
                 if all(k in topic_data for k in required_fields):
                     # Validate tags format
-                    if isinstance(topic_data["tags"], list) and 3 <= len(topic_data["tags"]) <= 6:
+                    if (
+                        isinstance(topic_data["tags"], list)
+                        and 3 <= len(topic_data["tags"]) <= 6
+                    ):
                         # Ensure lowercase tags
                         topic_data["tags"] = [tag.lower() for tag in topic_data["tags"]]
                         return topic_data

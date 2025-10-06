@@ -142,7 +142,10 @@ class GraphBuilder:
                     pass
 
     def analyze_vault(
-        self, _vault_path: Path, _vault_service: VaultServiceProtocol, request: WorkflowRunRequest
+        self,
+        _vault_path: Path,
+        _vault_service: VaultServiceProtocol,
+        request: WorkflowRunRequest,
     ) -> WorkflowPlan:
         """
         Analyze vault and request to determine which nodes to run and in what order.

@@ -54,5 +54,9 @@ class Workflow(Base):
     )
 
     def __repr__(self):
-        prompt_preview = f"{self.prompt[:50]}..." if self.prompt and len(self.prompt) > 50 else self.prompt
+        prompt_preview = (
+            f"{self.prompt[:50]}..."
+            if self.prompt and len(self.prompt) > 50
+            else self.prompt
+        )
         return f"<Workflow(id={self.id}, status={self.status.value}, strategy={self.strategy}, prompt={prompt_preview!r})>"

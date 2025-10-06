@@ -159,7 +159,9 @@ Changes made by Obsidian Agents workflow
             # Extract proposal title from deep_research metadata
             deep_research_result = node_results.get("deep_research", {})
             proposal_metadata = deep_research_result.get("metadata", {})
-            proposal_filename = proposal_metadata.get("proposal_filename", "research proposal")
+            proposal_filename = proposal_metadata.get(
+                "proposal_filename", "research proposal"
+            )
             title = f"Research Proposal: {proposal_filename.replace('.md', '').replace('-', ' ').title()}"
         else:
             title = f"Automated vault improvements ({strategy})"
@@ -192,16 +194,20 @@ Changes made by Obsidian Agents workflow
             deep_research_result = node_results.get("deep_research", {})
             deep_metadata = deep_research_result.get("metadata", {})
             if "sources_count" in deep_metadata:
-                body_parts.append(f"**Sources**: {deep_metadata['sources_count']} references")
+                body_parts.append(
+                    f"**Sources**: {deep_metadata['sources_count']} references"
+                )
 
-            body_parts.extend([
-                "\n### Summary",
-                summary,
-                "\n### Details",
-                f"- **Proposal File**: {deep_metadata.get('proposal_path', 'N/A')}",
-                f"- **Total Changes**: {len(changes)} file operation(s)",
-                f"- **Nodes Executed**: {len(node_results)}",
-            ])
+            body_parts.extend(
+                [
+                    "\n### Summary",
+                    summary,
+                    "\n### Details",
+                    f"- **Proposal File**: {deep_metadata.get('proposal_path', 'N/A')}",
+                    f"- **Total Changes**: {len(changes)} file operation(s)",
+                    f"- **Nodes Executed**: {len(node_results)}",
+                ]
+            )
         else:
             body_parts = [
                 "## Automated Vault Improvements",

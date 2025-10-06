@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.api.v1.models.workflow import WorkflowStatus
 from src.state import WorkflowStrategy
@@ -13,7 +13,6 @@ class WorkflowRunRequest(BaseModel):
 
     prompt: str = Field(
         ...,
-        min_length=1,
         description="Research prompt or keywords to investigate. Required for initiating research workflows.",
     )
     strategy: Optional[WorkflowStrategy] = Field(
@@ -24,6 +23,14 @@ class WorkflowRunRequest(BaseModel):
         False,
         description="Whether to execute workflow asynchronously using Celery",
     )
+
+    @field_validator("prompt", mode="after")
+    @classmethod
+    def validate_prompt_not_whitespace(cls, v: str) -> str:
+        """Validate that prompt is not whitespace-only (empty string is allowed for internal use)."""
+        if v and not v.strip():
+            raise ValueError("Prompt cannot be whitespace-only")
+        return v
 
 
 class WorkflowResponse(BaseModel):

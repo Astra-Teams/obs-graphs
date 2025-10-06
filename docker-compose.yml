@@ -32,6 +32,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
+      ssh:
+        - default
     ports:
       - "${HOST_BIND_IP}:${HOST_PORT}:8000"
     depends_on:
@@ -59,6 +61,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
+      ssh:
+        - default
     command: celery -A src.tasks.celery_app worker --loglevel=info
     depends_on:
       redis:

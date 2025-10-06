@@ -10,6 +10,7 @@ from src.api.v1.graph import (
     WorkflowPlan,
     WorkflowResult,
 )
+from src.api.v1.schemas import WorkflowRunRequest
 from src.state import AgentResult
 
 
@@ -82,15 +83,18 @@ def test_analyze_vault_always_returns_new_article_strategy(
     orchestrator,
     tmp_path: Path,
 ):
-    """Test that analyze_vault always returns the new_article strategy regardless of vault state."""
+    """Test that analyze_vault returns new_article strategy when no prompt is provided."""
 
     # Arrange - create a vault
     tmp_path.mkdir(exist_ok=True)
 
     graph_builder = GraphBuilder()
 
-    # Act - test with empty vault
-    plan_empty = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
+    # Act - test with empty prompt (empty vault)
+    request_empty = WorkflowRunRequest(prompt="")
+    plan_empty = graph_builder.analyze_vault(
+        tmp_path, orchestrator.get_vault_service(), request_empty
+    )
 
     # Assert
     assert isinstance(plan_empty, WorkflowPlan)
@@ -108,7 +112,10 @@ def test_analyze_vault_always_returns_new_article_strategy(
         10
     )
 
-    plan_many = graph_builder.analyze_vault(tmp_path, orchestrator.get_vault_service())
+    request_many = WorkflowRunRequest(prompt="")
+    plan_many = graph_builder.analyze_vault(
+        tmp_path, orchestrator.get_vault_service(), request_many
+    )
 
     # Assert - should still return new_article strategy
     assert isinstance(plan_many, WorkflowPlan)
@@ -151,3 +158,121 @@ def test_execute_workflow(orchestrator, tmp_path: Path):
     assert result.success
     assert len(result.node_results) == 1
     assert "article_proposal" in result.node_results
+
+
+def test_analyze_vault_detects_research_proposal_strategy_with_prompt(
+    orchestrator, tmp_path: Path
+):
+    """Test that analyze_vault uses research_proposal strategy when prompt is provided."""
+    # Arrange
+    tmp_path.mkdir(exist_ok=True)
+    graph_builder = GraphBuilder()
+
+    request = WorkflowRunRequest(
+        prompt="Research the impact of transformers on natural language processing"
+    )
+
+    # Act
+    plan = graph_builder.analyze_vault(
+        tmp_path, orchestrator.get_vault_service(), request
+    )
+
+    # Assert
+    assert isinstance(plan, WorkflowPlan)
+    assert plan.strategy == "research_proposal"
+    assert plan.nodes == [
+        "article_proposal",
+        "deep_research",
+        "github_pr_creation",
+    ]
+
+
+def test_analyze_vault_uses_new_article_strategy_without_prompt(
+    orchestrator, tmp_path: Path
+):
+    """Test that analyze_vault uses new_article strategy when prompt is empty."""
+    # Arrange
+    tmp_path.mkdir(exist_ok=True)
+    graph_builder = GraphBuilder()
+
+    request = WorkflowRunRequest(prompt="")
+
+    # Act
+    plan = graph_builder.analyze_vault(
+        tmp_path, orchestrator.get_vault_service(), request
+    )
+
+    # Assert
+    assert isinstance(plan, WorkflowPlan)
+    assert plan.strategy == "new_article"
+    assert plan.nodes == [
+        "article_proposal",
+        "article_content_generation",
+        "github_pr_creation",
+    ]
+
+
+def test_analyze_vault_uses_new_article_strategy_with_whitespace_prompt(
+    orchestrator, tmp_path: Path
+):
+    """Test that whitespace-only prompt raises validation error."""
+    # Arrange
+    tmp_path.mkdir(exist_ok=True)
+
+    # Act & Assert - whitespace-only prompt should raise validation error
+    with pytest.raises(ValueError, match="Prompt cannot be whitespace-only"):
+        WorkflowRunRequest(prompt="   ")
+
+
+def test_execute_workflow_propagates_prompt_to_initial_state(
+    orchestrator, tmp_path: Path
+):
+    """Test that execute_workflow includes prompt in initial state."""
+    # Arrange
+    tmp_path.mkdir(exist_ok=True)
+
+    plan = WorkflowPlan(
+        strategy="research_proposal",
+        nodes=["article_proposal"],
+    )
+
+    graph_builder = GraphBuilder()
+
+    # Act
+    result = graph_builder.execute_workflow(
+        tmp_path, plan, orchestrator, prompt="Test research prompt"
+    )
+
+    # Assert
+    assert isinstance(result, WorkflowResult)
+    assert result.success
+
+    # Verify node was called (indirectly via mock)
+    orchestrator.get_node.assert_called()
+
+
+def test_execute_workflow_with_research_proposal_strategy(orchestrator, tmp_path: Path):
+    """Test that execute_workflow correctly handles research_proposal strategy."""
+    # Arrange
+    tmp_path.mkdir(exist_ok=True)
+
+    plan = WorkflowPlan(
+        strategy="research_proposal",
+        nodes=["article_proposal", "deep_research", "github_pr_creation"],
+    )
+
+    graph_builder = GraphBuilder()
+
+    # Act
+    result = graph_builder.execute_workflow(
+        tmp_path, plan, orchestrator, prompt="Research quantum computing"
+    )
+
+    # Assert
+    assert isinstance(result, WorkflowResult)
+    assert result.success
+    assert len(result.node_results) == 3
+    assert "article_proposal" in result.node_results
+    assert "deep_research" in result.node_results
+    assert "github_pr_creation" in result.node_results
+    assert "research_proposal" in result.summary

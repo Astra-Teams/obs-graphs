@@ -40,7 +40,7 @@ Control each service independently via `.env`:
 - `USE_MOCK_REDIS` - FakeRedis/Real Redis
 
 ### Mock Definitions
-Define mocks in `dev/mocks/` with appropriate directory structure.
+Define mocks in `dev/mock_vault/` with appropriate directory structure.
 
 ### Git Submodules
 

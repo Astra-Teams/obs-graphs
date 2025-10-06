@@ -19,6 +19,8 @@ services:
   api:
     build:
       target: development
+      ssh:
+        - default
     ports: !override
       - "${HOST_BIND_IP}:${TEST_PORT}:8000"
     environment:

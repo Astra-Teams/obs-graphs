@@ -24,11 +24,16 @@ FROM base as dev-deps
 
 # Install system dependencies required for the application
 # - curl: used for debugging in the development container
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# - git: required for SSH-based git dependencies (ollama-deep-researcher)
+# - openssh-client: required for SSH authentication
+RUN apt-get update && apt-get install -y curl git openssh-client && rm -rf /var/lib/apt/lists/*
 
-# Install all dependencies, including development ones
+# Install all dependencies, including development ones with SSH key mount
 RUN --mount=type=cache,target=/root/.cache \
-  uv sync
+    --mount=type=ssh \
+    mkdir -p /root/.ssh && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts && \
+    uv sync
 
 
 # ==============================================================================
@@ -37,9 +42,15 @@ RUN --mount=type=cache,target=/root/.cache \
 # ==============================================================================
 FROM base as prod-deps
 
-# Install only production dependencies
+# Install git and openssh for SSH-based dependencies
+RUN apt-get update && apt-get install -y git openssh-client && rm -rf /var/lib/apt/lists/*
+
+# Install only production dependencies with SSH key mount
 RUN --mount=type=cache,target=/root/.cache \
-  uv sync --no-dev
+    --mount=type=ssh \
+    mkdir -p /root/.ssh && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts && \
+    uv sync --no-dev
 
 
 
