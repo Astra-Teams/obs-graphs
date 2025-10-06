@@ -1492,7 +1492,6 @@ dependencies = [
     { name = "langchain-openai" },
     { name = "langgraph" },
     { name = "ollama" },
-    { name = "ollama-deep-researcher" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
     { name = "pygithub" },
@@ -1528,7 +1527,6 @@ requires-dist = [
     { name = "langchain-openai", specifier = ">=0.0.5,<0.3.0" },
     { name = "langgraph", specifier = ">=0.0.20,<0.3.0" },
     { name = "ollama", specifier = ">=0.5.3,<0.6.0" },
-    { name = "ollama-deep-researcher", git = "https://github.com/Astra-Teams/ollama-deep-researcher.git" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1,<4.0" },
     { name = "pydantic-settings", specifier = ">=2.4.0,<3.0.0" },
     { name = "pygithub", specifier = ">=2.1.0,<3.0.0" },
@@ -1563,27 +1561,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/91/6d/ae96027416dcc2e98c944c050c492789502d7d7c0b95a740f0bb39268632/ollama-0.5.3.tar.gz", hash = "sha256:40b6dff729df3b24e56d4042fd9d37e231cee8e528677e0d085413a1d6692394", size = 43331, upload-time = "2025-08-07T21:44:10.422Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/f6/2091e50b8b6c3e6901f6eab283d5efd66fb71c86ddb1b4d68766c3eeba0f/ollama-0.5.3-py3-none-any.whl", hash = "sha256:a8303b413d99a9043dbf77ebf11ced672396b59bec27e6d5db67c88f01b279d2", size = 13490, upload-time = "2025-08-07T21:44:09.353Z" },
-]
-
-[[package]]
-name = "ollama-deep-researcher"
-version = "0.0.1"
-source = { git = "https://github.com/Astra-Teams/ollama-deep-researcher.git#aef46e640bd9547fbd981d14cada57140d89111d" }
-dependencies = [
-    { name = "beautifulsoup4" },
-    { name = "ddgs" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "jinja2" },
-    { name = "langchain-community" },
-    { name = "langchain-ollama" },
-    { name = "langgraph" },
-    { name = "pydantic-settings" },
-    { name = "python-dotenv" },
-    { name = "python-json-logger" },
-    { name = "requests" },
-    { name = "tiktoken" },
-    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [[package]]
