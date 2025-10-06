@@ -24,16 +24,18 @@ FROM base as dev-deps
 
 # Install system dependencies required for the application
 # - curl: used for debugging in the development container
-# - git: required for SSH-based git dependencies (ollama-deep-researcher)
-# - openssh-client: required for SSH authentication
-RUN apt-get update && apt-get install -y curl git openssh-client && rm -rf /var/lib/apt/lists/*
+# - git: required for git dependencies
+RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
 
-# Install all dependencies, including development ones with SSH key mount
+# Install all dependencies, including development ones
+# Use GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN for private git dependencies
+ARG GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-    --mount=type=ssh \
-    mkdir -p /root/.ssh && \
-    ssh-keyscan github.com >> /root/.ssh/known_hosts && \
-    uv sync
+    if [ -n "$GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN" ]; then \
+        git config --global url."https://${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    fi && \
+    uv sync && \
+    git config --global --unset url."https://${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}@github.com/".insteadOf || true
 
 
 # ==============================================================================
@@ -42,15 +44,18 @@ RUN --mount=type=cache,target=/root/.cache \
 # ==============================================================================
 FROM base as prod-deps
 
-# Install git and openssh for SSH-based dependencies
-RUN apt-get update && apt-get install -y git openssh-client && rm -rf /var/lib/apt/lists/*
+# Install git for git dependencies
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# Install only production dependencies with SSH key mount
+# Install only production dependencies
+# Use GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN for private git dependencies
+ARG GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-    --mount=type=ssh \
-    mkdir -p /root/.ssh && \
-    ssh-keyscan github.com >> /root/.ssh/known_hosts && \
-    uv sync --no-dev
+    if [ -n "$GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN" ]; then \
+        git config --global url."https://${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    fi && \
+    uv sync --no-dev && \
+    git config --global --unset url."https://${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}@github.com/".insteadOf || true
 
 
 

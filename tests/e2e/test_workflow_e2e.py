@@ -52,7 +52,7 @@ class TestWorkflowE2E:
     def test_successful_workflow_lifecycle(self, api_base_url: str) -> None:
         """Simulate a successful workflow execution end-to-end."""
         with httpx.Client(base_url=api_base_url, timeout=30.0) as client:
-            response = client.post("/api/v1/workflows/run", json={})
+            response = client.post("/api/v1/workflows/run", json={"prompt": ""})
             assert response.status_code == 201
             payload = response.json()
 
@@ -106,7 +106,7 @@ class TestWorkflowE2E:
     def test_failed_workflow_surfaces_error_details(self, api_base_url: str) -> None:
         """Simulate a workflow that fails during execution and verify diagnostics."""
         with httpx.Client(base_url=api_base_url, timeout=30.0) as client:
-            response = client.post("/api/v1/workflows/run", json={})
+            response = client.post("/api/v1/workflows/run", json={"prompt": ""})
             assert response.status_code == 201
             workflow_id = response.json()["id"]
 
@@ -151,7 +151,8 @@ class TestWorkflowE2E:
             # Use async execution to avoid waiting for workflow completion
             with httpx.Client(base_url=api_base_url, timeout=10.0) as client:
                 response = client.post(
-                    "/api/v1/workflows/run", json={"async_execution": True}
+                    "/api/v1/workflows/run",
+                    json={"prompt": "", "async_execution": True},
                 )
                 assert response.status_code == 201
                 return response.json()

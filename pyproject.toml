@@ -15,7 +15,7 @@ dependencies = [
     "langchain-openai>=0.0.5",
     "langgraph>=0.0.20",
     "ollama>=0.5.3,<0.6.0",
-    "ollama-deep-researcher @ git+ssh://git@github.com/Astra-Teams/ollama-deep-researcher.git",
+    "ollama-deep-researcher @ git+https://github.com/Astra-Teams/ollama-deep-researcher.git",
     "psycopg[binary]>=3.1,<4.0",
     "pydantic-settings>=2.4.0,<3.0.0",
     "pygithub>=2.1.0,<3.0.0",
