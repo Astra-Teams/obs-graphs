@@ -93,7 +93,9 @@ class GraphBuilder:
             )
 
             # Analyze vault to create workflow plan
-            workflow_plan = self.determine_workflow_plan(temp_path, vault_service, request)
+            workflow_plan = self.determine_workflow_plan(
+                temp_path, vault_service, request
+            )
 
             # Override strategy if specified in request
             if request.strategy:

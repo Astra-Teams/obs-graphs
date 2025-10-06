@@ -1,7 +1,6 @@
 """HTTP client for ollama-deep-researcher service."""
 
 import logging
-from typing import Optional
 
 import httpx
 

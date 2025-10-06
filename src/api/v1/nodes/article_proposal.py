@@ -1,7 +1,6 @@
 """Agent for proposing new articles based on vault analysis."""
 
 import json
-import re
 from pathlib import Path
 
 from langchain_community.llms import Ollama
@@ -111,8 +110,8 @@ class ArticleProposalAgent(NodeProtocol):
             Dictionary with title, summary, tags, slug, or None if parsing fails
         """
         # Try to extract JSON from the response by finding the first '{' and last '}'
-        start_index = llm_response.find('{')
-        end_index = llm_response.rfind('}')
+        start_index = llm_response.find("{")
+        end_index = llm_response.rfind("}")
         if start_index != -1 and end_index > start_index:
             json_str = llm_response[start_index : end_index + 1]
             try:
