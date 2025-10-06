@@ -42,6 +42,20 @@ Control each service independently via `.env`:
 ### Mock Definitions
 Define mocks in `dev/mocks/` with appropriate directory structure.
 
+### Git Submodules
+
+External dependencies managed as Git submodules:
+- **ollama-deep-researcher**: Located at `submodules/ollama-deep-researcher`
+  - Repository: `git@github.com:Astra-Teams/ollama-deep-researcher.git`
+  - Used only in development via `docker-compose.dev.override.yml`
+  - **Development/Testing**: Use as code reference for implementation
+  - **Production**: Import from GitHub dependency in `pyproject.toml`, deployed as separate service
+
+**Important**:
+- **Never modify submodule code directly** in this repository
+- Changes needed? Explain modifications to users and update in the source repository
+- Production imports must use the package defined in `pyproject.toml` dependencies
+
 ## 3. Coding Conventions
 
 - **Formatter**: `black` (Python 3.12), `ruff` (rules: E, F, I)
