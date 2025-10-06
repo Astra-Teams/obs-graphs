@@ -27,27 +27,14 @@ class DependencyContainer:
 
         # Registry of node classes (module, class_name)
         self._node_classes = {
-            "article_improvement": (
-                "src.api.v1.nodes.article_improvement",
-                "ArticleImprovementAgent",
+            "article_proposal": (
+                "src.api.v1.nodes.article_proposal",
+                "ArticleProposalAgent",
             ),
-            "category_organization": (
-                "src.api.v1.nodes.category_organization",
-                "CategoryOrganizationAgent",
+            "article_content_generation": (
+                "src.api.v1.nodes.article_content_generation",
+                "ArticleContentGenerationAgent",
             ),
-            "cross_reference": (
-                "src.api.v1.nodes.cross_reference",
-                "CrossReferenceAgent",
-            ),
-            "file_organization": (
-                "src.api.v1.nodes.file_organization",
-                "FileOrganizationAgent",
-            ),
-            "new_article_creation": (
-                "src.api.v1.nodes.new_article_creation",
-                "NewArticleCreationAgent",
-            ),
-            "quality_audit": ("src.api.v1.nodes.quality_audit", "QualityAuditAgent"),
         }
 
     def get_github_client(self) -> GithubClientProtocol:
@@ -122,7 +109,7 @@ class DependencyContainer:
             node_class = getattr(module, class_name)
 
             # Instantiate with dependencies
-            if name == "new_article_creation":
+            if name in ["article_proposal", "article_content_generation"]:
                 self._nodes[name] = node_class(self.get_llm())
             else:
                 self._nodes[name] = node_class()

@@ -150,7 +150,7 @@ def mock_graph_builder_run_workflow():
         success=True,
         changes=[],
         summary="Mock workflow completed successfully",
-        agent_results={},
+        node_results={},
         pr_url="https://github.com/test/repo/pull/1",
         branch_name="mock-branch",
     )

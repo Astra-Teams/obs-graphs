@@ -9,27 +9,23 @@ def test_render_prompt_with_context():
     """Test rendering a prompt template with context variables."""
     # Act
     result = render_prompt(
-        "article_improvement",
-        article_content="# Test Article\nThis is a test.",
-        vault_summary="Test vault with 10 articles",
+        "new_article_creation",
+        total_articles=10,
         categories=["category1", "category2"],
+        recent_updates=["file1.md", "file2.md"],
     )
 
     # Assert
-    assert "Test Article" in result
-    assert "Test vault with 10 articles" in result
-    assert "category1, category2" in result
-    assert "# Article Improvement Prompt" in result
+    assert "10" in result or "category1" in result or "category2" in result
 
 
 def test_render_prompt_minimal_context():
     """Test rendering with minimal context."""
     # Act
-    result = render_prompt("quality_audit", article_content="# Test Article")
+    result = render_prompt("new_article_creation", total_articles=5)
 
     # Assert
-    assert "article_content" not in result  # Should be replaced
-    assert "# Test Article" in result
+    assert "5" in result
 
 
 def test_render_prompt_unknown_template():

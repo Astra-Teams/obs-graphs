@@ -125,12 +125,12 @@ def test_get_llm_returns_mock_when_flag_enabled(
 def test_get_node_valid_name(container: DependencyContainer):
     """Test getting a node with a valid name."""
     # Act
-    node = container.get_node("article_improvement")
+    node = container.get_node("article_proposal")
 
     # Assert
     assert node is not None
     # Should be cached
-    node2 = container.get_node("article_improvement")
+    node2 = container.get_node("article_proposal")
     assert node is node2
 
 
@@ -146,7 +146,7 @@ def test_get_node_invalid_name(container: DependencyContainer):
 def test_get_node_new_article_creation_with_llm(
     mock_ollama, mock_get_settings, container: DependencyContainer
 ):
-    """Test that new_article_creation node is instantiated with LLM."""
+    """Test that article_proposal node is instantiated with LLM."""
     # Arrange
     mock_settings = MagicMock()
     mock_settings.USE_MOCK_LLM = False  # Use real client
@@ -157,7 +157,7 @@ def test_get_node_new_article_creation_with_llm(
     mock_ollama.return_value = mock_llm
 
     # Act
-    node = container.get_node("new_article_creation")
+    node = container.get_node("article_proposal")
 
     # Assert
     assert node is not None

@@ -91,7 +91,7 @@ class GraphState(TypedDict):
     vault_summary: Dict
     strategy: str
     accumulated_changes: List[FileChange]
-    agent_results: Dict
+    node_results: Dict
     messages: Annotated[List, add_messages]
 
 
@@ -121,7 +121,7 @@ class GraphStateModel(BaseModel):
     vault_summary: VaultSummaryModel
     strategy: WorkflowStrategy
     accumulated_changes: List[FileChange]
-    agent_results: Dict[str, AgentResultModel]
+    node_results: Dict[str, AgentResultModel]
     messages: List[str]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
