@@ -35,6 +35,10 @@ class DependencyContainer:
                 "src.api.v1.nodes.article_content_generation",
                 "ArticleContentGenerationAgent",
             ),
+            "github_pr_creation": (
+                "src.api.v1.nodes.github_pr_creation",
+                "GithubPRCreationAgent",
+            ),
         }
 
     def get_github_client(self) -> GithubClientProtocol:
@@ -111,6 +115,8 @@ class DependencyContainer:
             # Instantiate with dependencies
             if name in ["article_proposal", "article_content_generation"]:
                 self._nodes[name] = node_class(self.get_llm())
+            elif name == "github_pr_creation":
+                self._nodes[name] = node_class(self.get_github_client())
             else:
                 self._nodes[name] = node_class()
         return self._nodes[name]

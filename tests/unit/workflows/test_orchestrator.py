@@ -98,6 +98,7 @@ def test_analyze_vault_always_returns_new_article_strategy(
     assert plan_empty.nodes == [
         "article_proposal",
         "article_content_generation",
+        "github_pr_creation",
     ]
 
     # Act - test with vault containing many articles (10 articles)
@@ -115,6 +116,7 @@ def test_analyze_vault_always_returns_new_article_strategy(
     assert plan_many.nodes == [
         "article_proposal",
         "article_content_generation",
+        "github_pr_creation",
     ]
 
 

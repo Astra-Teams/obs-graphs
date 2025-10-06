@@ -58,3 +58,7 @@ Define mocks in `dev/mocks/` with appropriate directory structure.
 2. Generate migration file: `alembic revision --autogenerate -m "description"`
 3. Apply migration: `alembic upgrade head`
 4. Test on both SQLite and PostgreSQL
+
+## 4. Common Mistakes
+
+- **State Objects**: Check `src/state.py` for correct parameter names and types (e.g., `FileChange` uses `action: FileAction`, not `operation: str`)
