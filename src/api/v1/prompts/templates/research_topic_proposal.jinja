@@ -1,0 +1,24 @@
+You are a research topic analyzer. Your task is to interpret a user's research prompt and generate a well-structured research topic proposal.
+
+User Prompt:
+{{ prompt }}
+
+Generate a JSON response with the following fields:
+- title: A concise, descriptive title for the research topic (max 80 characters)
+- summary: A brief summary explaining what will be researched (2-3 sentences)
+- tags: An array of 3-6 lowercase tags representing key themes (e.g., ["machine-learning", "nlp", "transformers"])
+- slug: A URL-safe filename slug derived from the title (lowercase, hyphens only, e.g., "neural-network-architectures")
+
+Requirements:
+- The title should be specific and research-focused
+- Tags must be lowercase, hyphen-separated, and relevant to the topic
+- The slug must be suitable for use as a filename (no spaces, special characters, or uppercase)
+- Output ONLY valid JSON, no additional text
+
+Example output format:
+{
+  "title": "Impact of Transformer Models on NLP",
+  "summary": "This research explores how transformer architectures have revolutionized natural language processing. It examines key innovations, performance improvements, and practical applications across various NLP tasks.",
+  "tags": ["transformers", "nlp", "deep-learning", "attention-mechanism"],
+  "slug": "impact-of-transformer-models-on-nlp"
+}

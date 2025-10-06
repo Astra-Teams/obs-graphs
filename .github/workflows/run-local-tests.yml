@@ -13,6 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         test_target: [unit, sqlt]
+    env:
+      VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
+      OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${{ secrets.OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

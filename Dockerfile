@@ -24,11 +24,18 @@ FROM base as dev-deps
 
 # Install system dependencies required for the application
 # - curl: used for debugging in the development container
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# - git: required for git dependencies
+RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
 
 # Install all dependencies, including development ones
+# Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
+ARG OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-  uv sync
+    if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
+        git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    fi && \
+    uv sync && \
+    git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
 
 
 # ==============================================================================
@@ -37,9 +44,18 @@ RUN --mount=type=cache,target=/root/.cache \
 # ==============================================================================
 FROM base as prod-deps
 
+# Install git for git dependencies
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
 # Install only production dependencies
+# Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
+ARG OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-  uv sync --no-dev
+    if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
+        git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    fi && \
+    uv sync --no-dev && \
+    git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
 
 
 

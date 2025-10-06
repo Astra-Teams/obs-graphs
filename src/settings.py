@@ -18,6 +18,7 @@ class ObsGraphsSettings(BaseSettings):
     USE_MOCK_GITHUB: bool = False
     USE_MOCK_LLM: bool = False
     USE_MOCK_REDIS: bool = False
+    USE_MOCK_RESEARCH_API: bool = False
 
     # PostgreSQL settings
     POSTGRES_HOST: str = "db"
@@ -27,7 +28,7 @@ class ObsGraphsSettings(BaseSettings):
     POSTGRES_DB: str = ""
 
     # GitHub Authentication
-    GITHUB_PAT: str = ""
+    VAULT_GITHUB_TOKEN: str = ""
     OBSIDIAN_VAULT_REPO_FULL_NAME: str = ""
 
     # Celery Configuration
@@ -48,6 +49,10 @@ class ObsGraphsSettings(BaseSettings):
 
     # LLM Configuration
     OLLAMA_MODEL: str = "llama3.2:3b"
+
+    # Research API Configuration
+    RESEARCH_API_BASE_URL: str = "http://ollama-deep-researcher:8000"
+    RESEARCH_API_TIMEOUT_SECONDS: float = 300.0
     OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     @model_validator(mode="after")

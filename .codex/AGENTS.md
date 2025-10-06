@@ -40,7 +40,18 @@ Control each service independently via `.env`:
 - `USE_MOCK_REDIS` - FakeRedis/Real Redis
 
 ### Mock Definitions
-Define mocks in `dev/mocks/` with appropriate directory structure.
+Define mocks in `dev/mock_vault/` with appropriate directory structure.
+
+### Git Submodules
+
+- **ollama-deep-researcher** (`submodules/ollama-deep-researcher`)
+  - Source for the external research service consumed via HTTP (`RESEARCH_API_BASE_URL`, default `http://ollama-deep-researcher:8000`).
+  - Run the service separately (e.g. build the submodule's Dockerfile or `uv run uvicorn ollama_deep_researcher.api.main:app`) whenever `USE_MOCK_RESEARCH_API=false`.
+  - CI/local installs no longer pull a Python package; the submodule is the reference implementation.
+
+**Important**:
+- Fetch with `git submodule update --init --recursive` after cloning.
+- Avoid editing the submodule directly here—contribute upstream instead.
 
 ## 3. Coding Conventions
 
@@ -58,3 +69,7 @@ Define mocks in `dev/mocks/` with appropriate directory structure.
 2. Generate migration file: `alembic revision --autogenerate -m "description"`
 3. Apply migration: `alembic upgrade head`
 4. Test on both SQLite and PostgreSQL
+
+## 4. Common Mistakes
+
+- **State Objects**: Check `src/state.py` for correct parameter names and types (e.g., `FileChange` uses `action: FileAction`, not `operation: str`)

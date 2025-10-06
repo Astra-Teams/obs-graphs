@@ -38,13 +38,13 @@ class GithubClient(GithubClientProtocol):
             return self._github_client
 
         # Validate required settings
-        if not self.settings.GITHUB_PAT:
+        if not self.settings.VAULT_GITHUB_TOKEN:
             raise ValueError(
-                "GitHub Personal Access Token not configured. Set GITHUB_PAT."
+                "GitHub Personal Access Token not configured. Set VAULT_GITHUB_TOKEN."
             )
 
         # Create authenticated client with PAT
-        self._github_client = Github(self.settings.GITHUB_PAT)
+        self._github_client = Github(self.settings.VAULT_GITHUB_TOKEN)
         return self._github_client
 
     def clone_repository(self, target_path: Path, branch: str = "main") -> None:
@@ -209,4 +209,4 @@ class GithubClient(GithubClientProtocol):
             HTTPS clone URL with authentication token embedded.
         """
         # Construct authenticated URL with PAT
-        return f"https://x-access-token:{self.settings.GITHUB_PAT}@github.com/{repo_full_name}.git"
+        return f"https://x-access-token:{self.settings.VAULT_GITHUB_TOKEN}@github.com/{repo_full_name}.git"

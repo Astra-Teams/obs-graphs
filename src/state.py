@@ -66,6 +66,7 @@ class WorkflowStrategy(str, Enum):
 
     NEW_ARTICLE = "new_article"
     IMPROVEMENT = "improvement"
+    RESEARCH_PROPOSAL = "research_proposal"
 
 
 @dataclass
@@ -90,6 +91,7 @@ class GraphState(TypedDict):
     vault_path: Path
     vault_summary: Dict
     strategy: str
+    prompt: str
     accumulated_changes: List[FileChange]
     node_results: Dict
     messages: Annotated[List, add_messages]
@@ -120,6 +122,7 @@ class GraphStateModel(BaseModel):
     vault_path: str  # Path as string for serialization
     vault_summary: VaultSummaryModel
     strategy: WorkflowStrategy
+    prompt: str
     accumulated_changes: List[FileChange]
     node_results: Dict[str, AgentResultModel]
     messages: List[str]

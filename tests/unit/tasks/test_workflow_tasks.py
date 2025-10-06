@@ -258,3 +258,137 @@ class TestRunWorkflowTask:
             run_workflow_task(99999)
 
         assert "not found" in str(exc_info.value).lower()
+
+    @patch("src.api.v1.tasks.workflow_tasks.get_db")
+    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    def test_task_propagates_prompt_to_workflow_request(
+        self,
+        mock_graph_builder,
+        mock_get_db,
+        test_db,
+    ):
+        """Test that task propagates prompt from workflow record to WorkflowRunRequest."""
+        # Create workflow with prompt
+        workflow = Workflow(
+            prompt="Test research prompt for propagation",
+            status=WorkflowStatus.PENDING,
+            strategy=None,
+        )
+        test_db.add(workflow)
+        test_db.commit()
+        test_db.refresh(workflow)
+
+        mock_get_db.return_value = iter([test_db])
+
+        mock_builder_instance = MagicMock()
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.changes = []
+        mock_result.summary = "Success"
+        mock_result.agent_results = {}
+        mock_result.pr_url = ""
+        mock_result.branch_name = "test-branch"
+        mock_builder_instance.run_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
+
+        workflow_id = workflow.id
+
+        run_workflow_task(workflow_id)
+
+        # Verify run_workflow was called with request containing prompt
+        mock_builder_instance.run_workflow.assert_called_once()
+        call_args = mock_builder_instance.run_workflow.call_args[0]
+        request = call_args[0]
+
+        assert hasattr(request, "prompt")
+        assert request.prompt == "Test research prompt for propagation"
+
+    @patch("src.api.v1.tasks.workflow_tasks.get_db")
+    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    def test_task_propagates_empty_prompt_when_null(
+        self,
+        mock_graph_builder,
+        mock_get_db,
+        test_db,
+    ):
+        """Test that task propagates empty string when workflow prompt is NULL."""
+        # Create workflow with NULL prompt (old records)
+        workflow = Workflow(
+            prompt=None,
+            status=WorkflowStatus.PENDING,
+            strategy=None,
+        )
+        test_db.add(workflow)
+        test_db.commit()
+        test_db.refresh(workflow)
+
+        mock_get_db.return_value = iter([test_db])
+
+        mock_builder_instance = MagicMock()
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.changes = []
+        mock_result.summary = "Success"
+        mock_result.agent_results = {}
+        mock_result.pr_url = ""
+        mock_result.branch_name = "test-branch"
+        mock_builder_instance.run_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
+
+        workflow_id = workflow.id
+
+        run_workflow_task(workflow_id)
+
+        # Verify run_workflow was called with empty prompt
+        mock_builder_instance.run_workflow.assert_called_once()
+        call_args = mock_builder_instance.run_workflow.call_args[0]
+        request = call_args[0]
+
+        assert hasattr(request, "prompt")
+        assert request.prompt == ""
+
+    @patch("src.api.v1.tasks.workflow_tasks.get_db")
+    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    def test_task_propagates_prompt_with_strategy(
+        self,
+        mock_graph_builder,
+        mock_get_db,
+        test_db,
+    ):
+        """Test that task propagates both prompt and strategy to WorkflowRunRequest."""
+        from src.state import WorkflowStrategy
+
+        # Create workflow with prompt and strategy
+        workflow = Workflow(
+            prompt="Research quantum computing",
+            status=WorkflowStatus.PENDING,
+            strategy=WorkflowStrategy.RESEARCH_PROPOSAL,
+        )
+        test_db.add(workflow)
+        test_db.commit()
+        test_db.refresh(workflow)
+
+        mock_get_db.return_value = iter([test_db])
+
+        mock_builder_instance = MagicMock()
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.changes = []
+        mock_result.summary = "Success"
+        mock_result.agent_results = {}
+        mock_result.pr_url = ""
+        mock_result.branch_name = "test-branch"
+        mock_builder_instance.run_workflow.return_value = mock_result
+        mock_graph_builder.return_value = mock_builder_instance
+
+        workflow_id = workflow.id
+
+        run_workflow_task(workflow_id)
+
+        # Verify run_workflow was called with both prompt and strategy
+        mock_builder_instance.run_workflow.assert_called_once()
+        call_args = mock_builder_instance.run_workflow.call_args[0]
+        request = call_args[0]
+
+        assert request.prompt == "Research quantum computing"
+        assert request.strategy == WorkflowStrategy.RESEARCH_PROPOSAL

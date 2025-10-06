@@ -59,7 +59,10 @@ def run_workflow_task(self, workflow_id: int) -> None:
         # 3. Create GraphBuilder and run workflow
         from src.api.v1.schemas import WorkflowRunRequest
 
-        request = WorkflowRunRequest(strategy=workflow.strategy)
+        request = WorkflowRunRequest(
+            prompt=workflow.prompt or "",
+            strategy=workflow.strategy,
+        )
         graph_builder = container.get_graph_builder()
         result = graph_builder.run_workflow(request)
 

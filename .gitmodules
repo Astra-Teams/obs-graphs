@@ -1,0 +1,3 @@
+[submodule "submodules/ollama-deep-researcher"]
+	path = submodules/ollama-deep-researcher
+	url = git@github.com:Astra-Teams/ollama-deep-researcher.git

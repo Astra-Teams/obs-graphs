@@ -29,8 +29,10 @@ help:
 
 # Initialize project: install dependencies, create .env file and pull required Docker images
 setup:
-    @echo "Installing python dependencies with uv..."
+    @echo "🐍 Installing python dependencies with uv..."
     @uv sync
+    @echo "📦 Initializing and updating git submodules..."
+    @git submodule update --init --recursive
     @echo "Creating environment file..."
     @if [ ! -f .env ] && [ -f .env.example ]; then \
         echo "Creating .env from .env.example..."; \
