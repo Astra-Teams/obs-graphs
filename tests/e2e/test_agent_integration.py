@@ -61,7 +61,7 @@ class TestAgentIntegration:
         vault_path = vault_fixture("empty_vault")
         orchestrator = get_container().get_graph_builder()
 
-        plan = orchestrator.analyze_vault(vault_path)
+        plan = orchestrator.determine_workflow_plan(vault_path)
         assert plan.strategy == "new_article"
         assert plan.agents[0] == "new_article_creation"
 
@@ -97,7 +97,7 @@ class TestAgentIntegration:
         vault_path = vault_fixture("well_maintained_vault")
         orchestrator = get_container().get_graph_builder()
 
-        plan = orchestrator.analyze_vault(vault_path)
+        plan = orchestrator.determine_workflow_plan(vault_path)
         assert plan.strategy == "improvement"
         assert plan.agents[0] == "article_improvement"
 

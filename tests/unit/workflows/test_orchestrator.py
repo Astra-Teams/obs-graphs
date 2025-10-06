@@ -79,11 +79,11 @@ def orchestrator():
     return mock_container
 
 
-def test_analyze_vault_always_returns_new_article_strategy(
+def test_determine_workflow_plan_always_returns_new_article_strategy(
     orchestrator,
     tmp_path: Path,
 ):
-    """Test that analyze_vault returns new_article strategy when no prompt is provided."""
+    """Test that determine_workflow_plan returns new_article strategy when no prompt is provided."""
 
     # Arrange - create a vault
     tmp_path.mkdir(exist_ok=True)
@@ -160,10 +160,10 @@ def test_execute_workflow(orchestrator, tmp_path: Path):
     assert "article_proposal" in result.node_results
 
 
-def test_analyze_vault_detects_research_proposal_strategy_with_prompt(
+def test_determine_workflow_plan_detects_research_proposal_strategy_with_prompt(
     orchestrator, tmp_path: Path
 ):
-    """Test that analyze_vault uses research_proposal strategy when prompt is provided."""
+    """Test that determine_workflow_plan uses research_proposal strategy when prompt is provided."""
     # Arrange
     tmp_path.mkdir(exist_ok=True)
     graph_builder = GraphBuilder()
@@ -187,10 +187,10 @@ def test_analyze_vault_detects_research_proposal_strategy_with_prompt(
     ]
 
 
-def test_analyze_vault_uses_new_article_strategy_without_prompt(
+def test_determine_workflow_plan_uses_new_article_strategy_without_prompt(
     orchestrator, tmp_path: Path
 ):
-    """Test that analyze_vault uses new_article strategy when prompt is empty."""
+    """Test that determine_workflow_plan uses new_article strategy when prompt is empty."""
     # Arrange
     tmp_path.mkdir(exist_ok=True)
     graph_builder = GraphBuilder()
@@ -212,7 +212,7 @@ def test_analyze_vault_uses_new_article_strategy_without_prompt(
     ]
 
 
-def test_analyze_vault_uses_new_article_strategy_with_whitespace_prompt(
+def test_determine_workflow_plan_uses_new_article_strategy_with_whitespace_prompt(
     orchestrator, tmp_path: Path
 ):
     """Test that whitespace-only prompt raises validation error."""
