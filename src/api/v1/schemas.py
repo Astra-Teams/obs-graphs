@@ -11,6 +11,11 @@ from src.state import WorkflowStrategy
 class WorkflowRunRequest(BaseModel):
     """Request body for running a new workflow."""
 
+    prompt: str = Field(
+        ...,
+        min_length=1,
+        description="Research prompt or keywords to investigate. Required for initiating research workflows.",
+    )
     strategy: Optional[WorkflowStrategy] = Field(
         None,
         description="Optional strategy to force specific workflow type",

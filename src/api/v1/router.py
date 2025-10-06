@@ -23,7 +23,7 @@ router = APIRouter()
 # Endpoints
 @router.post("/workflows/run", response_model=WorkflowRunResponse, status_code=201)
 async def run_workflow(
-    request: WorkflowRunRequest = WorkflowRunRequest(),
+    request: WorkflowRunRequest,
     db: Session = Depends(get_db),
 ) -> WorkflowRunResponse:
     """
@@ -34,7 +34,7 @@ async def run_workflow(
     If async_execution is False, executes synchronously.
 
     Args:
-        request: Workflow run request with strategy and execution mode
+        request: Workflow run request with prompt, strategy, and execution mode
         db: Database session dependency
 
     Returns:
@@ -46,6 +46,7 @@ async def run_workflow(
     try:
         # Create new workflow record with PENDING status
         workflow = Workflow(
+            prompt=request.prompt.strip(),
             status=WorkflowStatus.PENDING,
             strategy=request.strategy,
         )

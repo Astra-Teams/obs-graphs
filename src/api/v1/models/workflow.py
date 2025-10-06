@@ -35,6 +35,7 @@ class Workflow(Base):
     __tablename__ = "workflows"
 
     id = Column(Integer, primary_key=True, index=True)
+    prompt = Column(Text, nullable=True)
     status = Column(
         Enum(WorkflowStatus),
         nullable=False,
@@ -53,4 +54,5 @@ class Workflow(Base):
     )
 
     def __repr__(self):
-        return f"<Workflow(id={self.id}, status={self.status.value}, strategy={self.strategy})>"
+        prompt_preview = f"{self.prompt[:50]}..." if self.prompt and len(self.prompt) > 50 else self.prompt
+        return f"<Workflow(id={self.id}, status={self.status.value}, strategy={self.strategy}, prompt={prompt_preview!r})>"
