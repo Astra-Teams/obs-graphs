@@ -33,7 +33,7 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
-        GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN: ${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}
+        OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}
     ports:
       - "${HOST_BIND_IP}:${HOST_PORT}:8000"
     depends_on:
@@ -62,7 +62,7 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
-        GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN: ${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}
+        OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}
     command: celery -A src.tasks.celery_app worker --loglevel=info
     depends_on:
       redis:

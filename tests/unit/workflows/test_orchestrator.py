@@ -92,7 +92,7 @@ def test_analyze_vault_always_returns_new_article_strategy(
 
     # Act - test with empty prompt (empty vault)
     request_empty = WorkflowRunRequest(prompt="")
-    plan_empty = graph_builder.analyze_vault(
+    plan_empty = graph_builder.determine_workflow_plan(
         tmp_path, orchestrator.get_vault_service(), request_empty
     )
 
@@ -113,7 +113,7 @@ def test_analyze_vault_always_returns_new_article_strategy(
     )
 
     request_many = WorkflowRunRequest(prompt="")
-    plan_many = graph_builder.analyze_vault(
+    plan_many = graph_builder.determine_workflow_plan(
         tmp_path, orchestrator.get_vault_service(), request_many
     )
 
@@ -173,7 +173,7 @@ def test_analyze_vault_detects_research_proposal_strategy_with_prompt(
     )
 
     # Act
-    plan = graph_builder.analyze_vault(
+    plan = graph_builder.determine_workflow_plan(
         tmp_path, orchestrator.get_vault_service(), request
     )
 
@@ -198,7 +198,7 @@ def test_analyze_vault_uses_new_article_strategy_without_prompt(
     request = WorkflowRunRequest(prompt="")
 
     # Act
-    plan = graph_builder.analyze_vault(
+    plan = graph_builder.determine_workflow_plan(
         tmp_path, orchestrator.get_vault_service(), request
     )
 

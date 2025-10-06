@@ -93,7 +93,7 @@ class GraphBuilder:
             )
 
             # Analyze vault to create workflow plan
-            workflow_plan = self.analyze_vault(temp_path, vault_service, request)
+            workflow_plan = self.determine_workflow_plan(temp_path, vault_service, request)
 
             # Override strategy if specified in request
             if request.strategy:
@@ -141,7 +141,7 @@ class GraphBuilder:
                     # Log cleanup error but don't fail
                     pass
 
-    def analyze_vault(
+    def determine_workflow_plan(
         self,
         _vault_path: Path,
         _vault_service: VaultServiceProtocol,

@@ -29,9 +29,9 @@ def test_client_strips_trailing_slash():
 
 
 def test_client_default_timeout():
-    """Test that client uses default timeout when not specified."""
-    client = ResearchApiClient(base_url="http://test-api:8000")
-    assert client.timeout == 300.0
+    """Test that client requires timeout parameter."""
+    with pytest.raises(TypeError):
+        ResearchApiClient(base_url="http://test-api:8000")
 
 
 @patch("httpx.Client")

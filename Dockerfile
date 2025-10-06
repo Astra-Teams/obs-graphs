@@ -28,14 +28,14 @@ FROM base as dev-deps
 RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
 
 # Install all dependencies, including development ones
-# Use GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN for private git dependencies
-ARG GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN
+# Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
+ARG OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-    if [ -n "$GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN" ]; then \
-        git config --global url."https://${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
+        git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
     fi && \
     uv sync && \
-    git config --global --unset url."https://${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}@github.com/".insteadOf || true
+    git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
 
 
 # ==============================================================================
@@ -48,14 +48,14 @@ FROM base as prod-deps
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 # Install only production dependencies
-# Use GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN for private git dependencies
-ARG GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN
+# Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
+ARG OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-    if [ -n "$GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN" ]; then \
-        git config --global url."https://${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
+        git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
     fi && \
     uv sync --no-dev && \
-    git config --global --unset url."https://${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}@github.com/".insteadOf || true
+    git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
 
 
 

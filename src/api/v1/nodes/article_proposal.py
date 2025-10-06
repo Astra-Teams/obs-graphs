@@ -110,11 +110,13 @@ class ArticleProposalAgent(NodeProtocol):
         Returns:
             Dictionary with title, summary, tags, slug, or None if parsing fails
         """
-        # Try to extract JSON from the response
-        json_match = re.search(r"\{.*\}", llm_response, re.DOTALL)
-        if json_match:
+        # Try to extract JSON from the response by finding the first '{' and last '}'
+        start_index = llm_response.find('{')
+        end_index = llm_response.rfind('}')
+        if start_index != -1 and end_index > start_index:
+            json_str = llm_response[start_index : end_index + 1]
             try:
-                topic_data = json.loads(json_match.group())
+                topic_data = json.loads(json_str)
                 # Validate required fields
                 required_fields = ["title", "summary", "tags", "slug"]
                 if all(k in topic_data for k in required_fields):

@@ -28,7 +28,7 @@ class ObsGraphsSettings(BaseSettings):
     POSTGRES_DB: str = ""
 
     # GitHub Authentication
-    GITHUB_VAULT_TOKEN: str = ""
+    VAULT_GITHUB_TOKEN: str = ""
     OBSIDIAN_VAULT_REPO_FULL_NAME: str = ""
 
     # Celery Configuration

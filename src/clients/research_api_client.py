@@ -16,7 +16,7 @@ class ResearchApiClient:
     def __init__(
         self,
         base_url: str,
-        timeout: Optional[float] = None,
+        timeout: float,
     ):
         """
         Initialize research API client.
@@ -26,7 +26,7 @@ class ResearchApiClient:
             timeout: Request timeout in seconds
         """
         self.base_url = base_url.rstrip("/")
-        self.timeout = timeout or 300.0  # Default 5 minutes
+        self.timeout = timeout
 
     def run_research(self, topic: str) -> ResearchResult:
         """

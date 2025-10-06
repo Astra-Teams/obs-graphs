@@ -14,7 +14,7 @@ def github_client(monkeypatch):
     # Clear settings cache before setting env vars
     get_settings.cache_clear()
 
-    monkeypatch.setenv("GITHUB_PAT", "fake-pat")
+    monkeypatch.setenv("VAULT_GITHUB_TOKEN", "fake-pat")
     monkeypatch.setenv("OBSIDIAN_VAULT_REPO_FULL_NAME", "user/repo")
     settings = get_settings()
     return GithubClient(settings)

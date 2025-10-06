@@ -20,7 +20,7 @@ services:
     build:
       target: development
       args:
-        GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN: ${GITHUB_OLLAMA_DEEP_RESEARCHER_TOKEN}
+        OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}
     ports: !override
       - "${HOST_BIND_IP}:${TEST_PORT}:8000"
     environment:
