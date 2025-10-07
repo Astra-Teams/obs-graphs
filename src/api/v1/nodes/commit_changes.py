@@ -113,13 +113,8 @@ class CommitChangesAgent(NodeProtocol):
         updates = sum(1 for c in changes if c.action.value == "update")
         deletes = sum(1 for c in changes if c.action.value == "delete")
 
-        operations = []
-        if creates:
-            operations.append(f"{creates} created")
-        if updates:
-            operations.append(f"{updates} updated")
-        if deletes:
-            operations.append(f"{deletes} deleted")
+        op_counts = {"created": creates, "updated": updates, "deleted": deletes}
+        operations = [f"{count} {op}" for op, count in op_counts.items() if count]
 
         operations_str = ", ".join(operations) if operations else "no changes"
 

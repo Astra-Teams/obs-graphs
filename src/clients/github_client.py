@@ -285,21 +285,26 @@ class GithubClient(GithubClientProtocol):
             deleted_paths = {
                 change["path"] for change in changes if change["action"] == "delete"
             }
+            updated_paths = {
+                change["path"] for change in changes if change["action"] != "delete"
+            }
             if deleted_paths:
                 base_tree = repo.get_git_tree(base_tree_sha, recursive=True)
                 for element in base_tree.tree:
-                    if element.path not in deleted_paths and element.type == "blob":
-                        # Only include files (blobs) that aren't being deleted
-                        # Skip if this path is being updated (already in tree_elements)
-                        if not any(te["path"] == element.path for te in tree_elements):
-                            tree_elements.append(
-                                {
-                                    "path": element.path,
-                                    "mode": element.mode,
-                                    "type": element.type,
-                                    "sha": element.sha,
-                                }
-                            )
+                    if (
+                        element.path not in deleted_paths
+                        and element.path not in updated_paths
+                        and element.type == "blob"
+                    ):
+                        # Only include files (blobs) that aren't being deleted or updated
+                        tree_elements.append(
+                            {
+                                "path": element.path,
+                                "mode": element.mode,
+                                "type": element.type,
+                                "sha": element.sha,
+                            }
+                        )
 
             # 3. Create new tree
             new_tree = repo.create_git_tree(tree_elements)
