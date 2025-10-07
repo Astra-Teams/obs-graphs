@@ -47,7 +47,8 @@ class VaultService(VaultServiceProtocol):
         Raises:
             Exception: If file update fails.
         """
-        self.github_client.create_or_update_file(path, content, self.branch, message)
+        changes = [{"action": "update", "path": path, "content": content}]
+        self.github_client.bulk_commit_changes(self.branch, changes, message)
 
     def list_files(self, path: str = "") -> List[str]:
         """
