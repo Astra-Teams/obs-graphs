@@ -1,87 +1,112 @@
-"""Service for managing Obsidian Vault file operations."""
+"""Service for managing Obsidian Vault file operations via GitHub API."""
 
-from pathlib import Path
 from typing import List
 
-from src.protocols import VaultServiceProtocol
-from src.state import FileAction, FileChange, VaultSummary
+from src.protocols import GithubClientProtocol, VaultServiceProtocol
+from src.state import FileChange
 
 
 class VaultService(VaultServiceProtocol):
-    """Service for handling file operations within the Obsidian Vault."""
+    """Service for handling file operations within the Obsidian Vault via GitHub API."""
 
-    def apply_changes(self, vault_path: Path, changes: List[FileChange]) -> None:
+    def __init__(self, github_client: GithubClientProtocol, branch: str):
         """
-        Apply a list of file changes to the local vault clone.
+        Initialize the VaultService.
 
         Args:
-            vault_path: The absolute path to the local vault.
-            changes: A list of FileChange objects representing the modifications.
+            github_client: GitHub client for API operations.
+            branch: Branch name to operate on.
+        """
+        self.github_client = github_client
+        self.branch = branch
+
+    def get_file_content(self, path: str) -> str:
+        """
+        Get file content from the vault.
+
+        Args:
+            path: Path to the file in the repository.
+
+        Returns:
+            File content as string.
 
         Raises:
-            FileNotFoundError: If a file to be updated or deleted does not exist.
-            FileExistsError: If a file to be created already exists.
+            Exception: If file retrieval fails.
         """
-        for change in changes:
-            file_path = vault_path / change.path
+        return self.github_client.get_file_content(path, self.branch)
 
-            if change.action == FileAction.CREATE:
-                if file_path.exists():
-                    raise FileExistsError(f"File already exists at {file_path}")
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                file_path.write_text(change.content or "", encoding="utf-8")
-
-            elif change.action == FileAction.UPDATE:
-                if not file_path.exists():
-                    raise FileNotFoundError(f"File not found at {file_path}")
-                file_path.write_text(change.content or "", encoding="utf-8")
-
-            elif change.action == FileAction.DELETE:
-                if not file_path.exists():
-                    raise FileNotFoundError(f"File not found at {file_path}")
-                file_path.unlink()
-
-    def validate_vault_structure(self, vault_path: Path) -> bool:
+    def update_file(self, path: str, content: str, message: str) -> None:
         """
-        Ensure the vault is in a valid state before and after changes.
-
-        This can be extended to check for broken links, empty files, or other
-        inconsistencies.
+        Update or create a file in the vault.
 
         Args:
-            vault_path: The absolute path to the local vault.
+            path: Path to the file in the repository.
+            content: New file content.
+            message: Commit message.
 
-        Returns:
-            True if the vault structure is valid, False otherwise.
+        Raises:
+            Exception: If file update fails.
         """
-        # Placeholder validation: Check if .obsidian directory exists
-        return (vault_path / ".obsidian").is_dir()
+        self.github_client.create_or_update_file(path, content, self.branch, message)
 
-    def get_vault_summary(self, vault_path: Path) -> VaultSummary:
+    def list_files(self, path: str = "") -> List[str]:
         """
-        Return a summary of the vault including article count, categories, and metadata.
+        List files in the vault.
 
         Args:
-            vault_path: The absolute path to the local vault.
+            path: Optional path prefix to filter files (default: root).
 
         Returns:
-            A VaultSummary object with statistics about the vault.
-        """
-        all_files = list(vault_path.glob("**/*.md"))
-        total_articles = len(all_files)
+            List of file paths.
 
-        categories = [
-            d.name
-            for d in vault_path.iterdir()
-            if d.is_dir() and not d.name.startswith(".")
+        Raises:
+            Exception: If file listing fails.
+        """
+        tree = self.github_client.get_tree(self.branch, recursive=True)
+
+        # Filter for files (not trees/directories) and optionally by path prefix
+        files = [
+            element.path
+            for element in tree.tree
+            if element.type == "blob" and (not path or element.path.startswith(path))
         ]
 
-        # Get 5 most recently modified markdown files
-        sorted_files = sorted(all_files, key=lambda f: f.stat().st_mtime, reverse=True)
-        recent_updates = [str(f.relative_to(vault_path)) for f in sorted_files[:5]]
+        return files
 
-        return VaultSummary(
-            total_articles=total_articles,
-            categories=categories,
-            recent_updates=recent_updates,
+    def apply_changes(self, changes: List[FileChange], message: str) -> str:
+        """
+        Apply a list of file changes to the vault via GitHub API using bulk commit.
+
+        This method commits all changes atomically in a single commit, which is
+        much more efficient than individual file operations.
+
+        Args:
+            changes: A list of FileChange objects representing the modifications.
+            message: Commit message for all changes.
+
+        Returns:
+            SHA of the created commit.
+
+        Raises:
+            Exception: If applying changes fails.
+        """
+        if not changes:
+            return ""
+
+        # Convert FileChange objects to format expected by bulk_commit_changes
+        bulk_changes = []
+        for change in changes:
+            bulk_changes.append(
+                {
+                    "path": change.path,
+                    "content": change.content,
+                    "action": change.action.value,  # Convert enum to string
+                }
+            )
+
+        # Use bulk commit for atomic operation
+        commit_sha = self.github_client.bulk_commit_changes(
+            self.branch, bulk_changes, message
         )
+
+        return commit_sha

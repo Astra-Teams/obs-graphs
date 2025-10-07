@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Annotated, Dict, List, Optional, TypedDict
 
 from langgraph.graph.message import add_messages
@@ -88,7 +87,7 @@ class VaultSummary:
 class GraphState(TypedDict):
     """State passed between nodes in the workflow graph."""
 
-    vault_path: Path
+    branch_name: str
     vault_summary: Dict
     strategy: str
     prompt: str

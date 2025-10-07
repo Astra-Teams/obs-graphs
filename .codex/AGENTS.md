@@ -38,6 +38,7 @@ Control each service independently via `.env`:
 - `USE_MOCK_GITHUB` - Mock/Real GitHub
 - `USE_MOCK_LLM` - Mock/Real Ollama
 - `USE_MOCK_REDIS` - FakeRedis/Real Redis
+- `USE_MOCK_RESEARCH_API` - Mock/Real Research API
 
 ### Mock Definitions
 Define mocks in `dev/mock_vault/` with appropriate directory structure.
@@ -52,17 +53,6 @@ Define mocks in `dev/mock_vault/` with appropriate directory structure.
 **Important**:
 - Fetch with `git submodule update --init --recursive` after cloning.
 - Avoid editing the submodule directly here—contribute upstream instead.
-
-## 3. Coding Conventions
-
-- **Formatter**: `black` (Python 3.12), `ruff` (rules: E, F, I)
-    - Ignore `E501` (line too long)
-- **Type Hints**: Used throughout the code
-- **Naming Conventions**:
-    - **Classes**: `PascalCase`
-    - **Functions/Methods**: `snake_case`
-    - **Constants**: `UPPER_SNAKE_CASE`
-    - **Private Attributes**: Prefixed with underscore (e.g., `_github_client`)
 
 ### DB Changes
 1. Create models in `src/db/models/`

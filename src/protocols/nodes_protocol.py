@@ -1,6 +1,5 @@
 """Protocol definition for node/agent interface."""
 
-from pathlib import Path
 from typing import Protocol
 
 from src.state import AgentResult
@@ -9,13 +8,18 @@ from src.state import AgentResult
 class NodeProtocol(Protocol):
     """Protocol for node/agent operations."""
 
-    def execute(self, vault_path: Path, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> AgentResult:
         """
-        Execute the node's task on the vault.
+        Execute the node's task.
 
         Args:
-            vault_path: Path to the local clone of the Obsidian Vault
-            context: Dictionary containing execution context (e.g., vault summary, previous results)
+            context: Dictionary containing execution context including:
+                - branch_name: Branch to operate on
+                - vault_summary: Summary of vault state
+                - strategy: Workflow strategy
+                - prompt: User prompt (if any)
+                - previous_changes: FileChanges from previous nodes
+                - previous_results: Results from previous nodes
 
         Returns:
             AgentResult containing success status, file changes, and metadata
