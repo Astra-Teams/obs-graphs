@@ -81,6 +81,8 @@ def test_bulk_commit_changes_create_only(
     mock_branch_ref.object.sha = "base-commit-sha"
     mock_base_commit = MagicMock()
     mock_base_commit.tree.sha = "base-tree-sha"
+    mock_base_tree = MagicMock()
+    mock_base_tree.tree = []  # No existing files
     mock_new_tree = MagicMock()
     mock_new_tree.sha = "new-tree-sha"
     mock_new_commit = MagicMock()
@@ -90,6 +92,7 @@ def test_bulk_commit_changes_create_only(
 
     mock_repo.get_git_ref.return_value = mock_branch_ref
     mock_repo.get_git_commit.return_value = mock_base_commit
+    mock_repo.get_git_tree.return_value = mock_base_tree
     mock_repo.create_git_blob.return_value = mock_blob
     mock_repo.create_git_tree.return_value = mock_new_tree
     mock_repo.create_git_commit.return_value = mock_new_commit
@@ -103,6 +106,7 @@ def test_bulk_commit_changes_create_only(
 
     # Assert
     assert result == "new-commit-sha"
+    mock_repo.get_git_tree.assert_called_once_with("base-tree-sha", recursive=True)
     mock_repo.create_git_blob.assert_called_once_with("new content", "utf-8")
     mock_repo.create_git_tree.assert_called_once()
     mock_repo.create_git_commit.assert_called_once_with(
@@ -123,6 +127,13 @@ def test_bulk_commit_changes_update_only(
     mock_branch_ref.object.sha = "base-commit-sha"
     mock_base_commit = MagicMock()
     mock_base_commit.tree.sha = "base-tree-sha"
+    mock_base_tree = MagicMock()
+    mock_element = MagicMock()
+    mock_element.path = "other/file.md"
+    mock_element.type = "blob"
+    mock_element.mode = "100644"
+    mock_element.sha = "element-sha"
+    mock_base_tree.tree = [mock_element]
     mock_new_tree = MagicMock()
     mock_new_tree.sha = "new-tree-sha"
     mock_new_commit = MagicMock()
@@ -132,6 +143,7 @@ def test_bulk_commit_changes_update_only(
 
     mock_repo.get_git_ref.return_value = mock_branch_ref
     mock_repo.get_git_commit.return_value = mock_base_commit
+    mock_repo.get_git_tree.return_value = mock_base_tree
     mock_repo.create_git_blob.return_value = mock_blob
     mock_repo.create_git_tree.return_value = mock_new_tree
     mock_repo.create_git_commit.return_value = mock_new_commit
@@ -147,7 +159,14 @@ def test_bulk_commit_changes_update_only(
 
     # Assert
     assert result == "new-commit-sha"
+    mock_repo.get_git_tree.assert_called_once_with("base-tree-sha", recursive=True)
     mock_repo.create_git_blob.assert_called_once_with("updated content", "utf-8")
+    mock_repo.create_git_tree.assert_called_once()
+    created_tree_elements = mock_repo.create_git_tree.call_args[0][0]
+    # Check that the updated file is in the new tree
+    assert any(elem["path"] == "existing/file.md" for elem in created_tree_elements)
+    # Check that the other file is preserved
+    assert any(elem["path"] == "other/file.md" for elem in created_tree_elements)
 
 
 @patch("src.clients.github_client.GithubClient.authenticate")
@@ -163,12 +182,17 @@ def test_bulk_commit_changes_delete_only(
     mock_base_commit = MagicMock()
     mock_base_commit.tree.sha = "base-tree-sha"
     mock_base_tree = MagicMock()
-    mock_element = MagicMock()
-    mock_element.path = "other/file.md"
-    mock_element.type = "blob"
-    mock_element.mode = "100644"
-    mock_element.sha = "element-sha"
-    mock_base_tree.tree = [mock_element]
+    mock_element1 = MagicMock()
+    mock_element1.path = "other/file.md"
+    mock_element1.type = "blob"
+    mock_element1.mode = "100644"
+    mock_element1.sha = "element-sha"
+    mock_element2 = MagicMock()
+    mock_element2.path = "delete/file.md"
+    mock_element2.type = "blob"
+    mock_element2.mode = "100644"
+    mock_element2.sha = "delete-sha"
+    mock_base_tree.tree = [mock_element1, mock_element2]
     mock_new_tree = MagicMock()
     mock_new_tree.sha = "new-tree-sha"
     mock_new_commit = MagicMock()
@@ -190,6 +214,12 @@ def test_bulk_commit_changes_delete_only(
     # Assert
     assert result == "new-commit-sha"
     mock_repo.get_git_tree.assert_called_once_with("base-tree-sha", recursive=True)
+    mock_repo.create_git_tree.assert_called_once()
+    created_tree_elements = mock_repo.create_git_tree.call_args[0][0]
+    # Check that the preserved file is in the new tree
+    assert any(elem["path"] == "other/file.md" for elem in created_tree_elements)
+    # Check that the deleted file is NOT in the new tree
+    assert not any(elem["path"] == "delete/file.md" for elem in created_tree_elements)
 
 
 @patch("src.clients.github_client.GithubClient.authenticate")
@@ -240,6 +270,7 @@ def test_bulk_commit_changes_mixed_operations(
 
     # Assert
     assert result == "new-commit-sha"
+    mock_repo.get_git_tree.assert_called_once_with("base-tree-sha", recursive=True)
     assert mock_repo.create_git_blob.call_count == 2
 
 
@@ -251,17 +282,8 @@ def test_bulk_commit_changes_empty_list(mock_authenticate, github_client: Github
     mock_repo = MagicMock()
     mock_branch_ref = MagicMock()
     mock_branch_ref.object.sha = "base-commit-sha"
-    mock_base_commit = MagicMock()
-    mock_base_commit.tree.sha = "base-tree-sha"
-    mock_new_tree = MagicMock()
-    mock_new_tree.sha = "new-tree-sha"
-    mock_new_commit = MagicMock()
-    mock_new_commit.sha = "new-commit-sha"
 
     mock_repo.get_git_ref.return_value = mock_branch_ref
-    mock_repo.get_git_commit.return_value = mock_base_commit
-    mock_repo.create_git_tree.return_value = mock_new_tree
-    mock_repo.create_git_commit.return_value = mock_new_commit
     mock_github.get_repo.return_value = mock_repo
     mock_authenticate.return_value = mock_github
 
@@ -271,8 +293,11 @@ def test_bulk_commit_changes_empty_list(mock_authenticate, github_client: Github
     result = github_client.bulk_commit_changes("main", changes, "No changes")
 
     # Assert
-    assert result == "new-commit-sha"
+    assert result == "base-commit-sha"  # Should return base commit SHA
     mock_repo.create_git_blob.assert_not_called()
+    mock_repo.create_git_tree.assert_not_called()
+    mock_repo.create_git_commit.assert_not_called()
+    mock_branch_ref.edit.assert_not_called()
 
 
 @patch("src.clients.github_client.GithubClient.authenticate")

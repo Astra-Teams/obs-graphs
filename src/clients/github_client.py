@@ -189,6 +189,10 @@ class GithubClient(GithubClientProtocol):
             base_commit = repo.get_git_commit(base_commit_sha)
             base_tree_sha = base_commit.tree.sha
 
+            # If no changes, return the base commit SHA without creating a new commit
+            if not changes:
+                return base_commit_sha
+
             # 2. Prepare tree elements for the new tree
             tree_elements = []
             for change in changes:
@@ -215,30 +219,20 @@ class GithubClient(GithubClientProtocol):
                             }
                         )
 
-            # Handle deletions by getting base tree and filtering out deleted files
-            deleted_paths = {
-                change["path"] for change in changes if change["action"] == "delete"
-            }
-            updated_paths = {
-                change["path"] for change in changes if change["action"] != "delete"
-            }
-            if deleted_paths:
-                base_tree = repo.get_git_tree(base_tree_sha, recursive=True)
-                for element in base_tree.tree:
-                    if (
-                        element.path not in deleted_paths
-                        and element.path not in updated_paths
-                        and element.type == "blob"
-                    ):
-                        # Only include files (blobs) that aren't being deleted or updated
-                        tree_elements.append(
-                            {
-                                "path": element.path,
-                                "mode": element.mode,
-                                "type": element.type,
-                                "sha": element.sha,
-                            }
-                        )
+            # Get base tree to preserve existing files not in changes
+            base_tree = repo.get_git_tree(base_tree_sha, recursive=True)
+            changed_paths = {change["path"] for change in changes}
+            for element in base_tree.tree:
+                if element.path not in changed_paths and element.type == "blob":
+                    # Include files that aren't being changed
+                    tree_elements.append(
+                        {
+                            "path": element.path,
+                            "mode": element.mode,
+                            "type": element.type,
+                            "sha": element.sha,
+                        }
+                    )
 
             # 3. Create new tree
             new_tree = repo.create_git_tree(tree_elements)
