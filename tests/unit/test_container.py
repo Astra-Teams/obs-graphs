@@ -63,6 +63,7 @@ def test_get_vault_service_lazy_instantiation(
 ):
     """Test that vault service is lazily instantiated."""
     # Arrange
+    container.set_branch("test-branch")
     mock_instance = MagicMock()
     mock_vault_service.return_value = mock_instance
 

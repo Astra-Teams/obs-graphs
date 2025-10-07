@@ -1,10 +1,9 @@
-"""Client for GitHub Personal Access Token authentication and repository operations."""
+"""Client for GitHub API operations."""
 
-from pathlib import Path
 from typing import Optional
 
-from git import Repo
 from github import Github, GithubException
+from github.GitTree import GitTree
 from github.PullRequest import PullRequest
 
 from src.protocols import GithubClientProtocol
@@ -13,10 +12,10 @@ from src.settings import ObsGraphsSettings
 
 class GithubClient(GithubClientProtocol):
     """
-    Client for GitHub operations including authentication, cloning, and PR creation.
+    Client for GitHub API operations.
 
     This client handles GitHub Personal Access Token authentication and provides
-    methods for repository operations needed in the workflow automation system.
+    methods for repository operations via the GitHub API.
     """
 
     def __init__(self, settings: ObsGraphsSettings):
@@ -44,135 +43,141 @@ class GithubClient(GithubClientProtocol):
             )
 
         # Create authenticated client with PAT
-        self._github_client = Github(self.settings.VAULT_GITHUB_TOKEN)
+        self._github_client = Github(
+            self.settings.VAULT_GITHUB_TOKEN,
+            timeout=self.settings.GITHUB_API_TIMEOUT_SECONDS,
+        )
         return self._github_client
 
-    def clone_repository(self, target_path: Path, branch: str = "main") -> None:
+    def create_branch(self, branch_name: str, base_branch: str = "main") -> None:
         """
-        Clone repository to local path using git commands with authentication.
+        Create new branch from base branch via GitHub API.
 
         Args:
-            target_path: Local directory path where repository will be cloned.
-            branch: Branch name to checkout (default: "main").
-
-        Raises:
-            Exception: If cloning fails.
-        """
-        try:
-            # Ensure target directory doesn't exist
-            if target_path.exists():
-                raise FileExistsError(f"Target path already exists: {target_path}")
-
-            # Create parent directory if needed
-            target_path.parent.mkdir(parents=True, exist_ok=True)
-
-            # Get authenticated clone URL
-            repo_url = self.get_authenticated_clone_url(
-                self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME
-            )
-
-            # Clone the repository
-            repo = Repo.clone_from(
-                repo_url,
-                target_path,
-                branch=branch,
-                depth=1,  # Shallow clone for efficiency
-            )
-
-            # Ensure we're on the correct branch
-            if repo.active_branch.name != branch:
-                repo.git.checkout(branch)
-
-        except Exception as e:
-            raise Exception(f"Failed to clone repository: {e}")
-
-    def create_branch(self, repo_path: Path, branch_name: str) -> None:
-        """
-        Create new git branch from the current branch.
-
-        Args:
-            repo_path: Path to the local git repository.
             branch_name: Name of the new branch to create.
+            base_branch: Base branch to create from (default: "main").
 
         Raises:
-            FileNotFoundError: If repository path doesn't exist.
             Exception: If branch creation fails.
         """
-        if not repo_path.exists():
-            raise FileNotFoundError(f"Repository path not found: {repo_path}")
-
         try:
-            repo = Repo(repo_path)
+            github_client = self.authenticate()
+            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
 
-            # Ensure we're on the default branch before creating new branch
-            default_branch = self.settings.WORKFLOW_DEFAULT_BRANCH
-            if repo.active_branch.name != default_branch:
-                repo.git.checkout(default_branch)
+            # Get the base branch reference
+            base_ref = repo.get_git_ref(f"heads/{base_branch}")
+            base_sha = base_ref.object.sha
 
-            # Create and checkout new branch
-            repo.git.checkout("-b", branch_name)
+            # Create new branch reference
+            repo.create_git_ref(ref=f"refs/heads/{branch_name}", sha=base_sha)
 
-        except Exception as e:
+        except GithubException as e:
             raise Exception(f"Failed to create branch '{branch_name}': {e}")
 
-    def commit_and_push(self, repo_path: Path, branch_name: str, message: str) -> bool:
+    def get_file_content(self, path: str, branch: str) -> str:
         """
-        Stage all changes, commit, and push to remote branch.
+        Get file content from repository via GitHub API.
 
         Args:
-            repo_path: Path to the local git repository.
-            branch_name: Name of the branch to push.
-            message: Commit message.
+            path: Path to the file in the repository.
+            branch: Branch name to get the file from.
 
         Returns:
-            True if changes were committed and pushed, False if there were no changes.
+            File content as string.
 
         Raises:
-            FileNotFoundError: If repository path doesn't exist.
-            Exception: If commit or push fails.
+            Exception: If file retrieval fails.
         """
-        if not repo_path.exists():
-            raise FileNotFoundError(f"Repository path not found: {repo_path}")
-
         try:
-            repo = Repo(repo_path)
+            github_client = self.authenticate()
+            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
 
-            # Stage all changes (including untracked files)
-            repo.git.add(A=True)
+            # Get file content from specified branch
+            file_content = repo.get_contents(path, ref=branch)
 
-            # Check if there are changes to commit
-            if not repo.is_dirty() and not repo.untracked_files:
-                return False
+            # Decode content (GitHub API returns base64 encoded content)
+            return file_content.decoded_content.decode("utf-8")
 
-            # Commit changes
-            repo.index.commit(message)
+        except GithubException as e:
+            raise Exception(f"Failed to get file content for '{path}': {e}")
 
-            # Push to remote
-            origin = repo.remote(name="origin")
-            origin.push(refspec=f"{branch_name}:{branch_name}")
+    def create_or_update_file(
+        self, path: str, content: str, branch: str, message: str
+    ) -> None:
+        """
+        Create or update file in repository via GitHub API.
 
-            return True
+        Args:
+            path: Path to the file in the repository.
+            content: New file content.
+            branch: Branch name to commit to.
+            message: Commit message.
 
-        except Exception as e:
-            raise Exception(f"Failed to commit and push to branch '{branch_name}': {e}")
+        Raises:
+            Exception: If file creation/update fails.
+        """
+        try:
+            github_client = self.authenticate()
+            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+
+            try:
+                # Try to get existing file
+                existing_file = repo.get_contents(path, ref=branch)
+                # Update existing file
+                repo.update_file(
+                    path=path,
+                    message=message,
+                    content=content,
+                    sha=existing_file.sha,
+                    branch=branch,
+                )
+            except GithubException:
+                # File doesn't exist, create new one
+                repo.create_file(
+                    path=path, message=message, content=content, branch=branch
+                )
+
+        except GithubException as e:
+            raise Exception(f"Failed to create/update file '{path}': {e}")
+
+    def delete_file(self, path: str, branch: str, message: str) -> None:
+        """
+        Delete file from repository via GitHub API.
+
+        Args:
+            path: Path to the file in the repository.
+            branch: Branch name to delete from.
+            message: Commit message.
+
+        Raises:
+            Exception: If file deletion fails.
+        """
+        try:
+            github_client = self.authenticate()
+            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+
+            # Get file to obtain SHA (required for deletion)
+            file_content = repo.get_contents(path, ref=branch)
+
+            # Delete file
+            repo.delete_file(
+                path=path, message=message, sha=file_content.sha, branch=branch
+            )
+
+        except GithubException as e:
+            raise Exception(f"Failed to delete file '{path}': {e}")
 
     def create_pull_request(
-        self,
-        repo_full_name: str,
-        head_branch: str,
-        title: str,
-        body: str,
-        base_branch: Optional[str] = None,
+        self, head: str, base: str, title: str, body: str
     ) -> PullRequest:
         """
         Create pull request via GitHub API.
 
         Args:
-            repo_full_name: Full repository name (e.g., "owner/repo").
-            head_branch: Name of the branch containing changes.
+            head: Name of the branch containing changes.
+            base: Base branch to merge into.
             title: Title of the pull request.
             body: Description/body of the pull request.
-            base_branch: Base branch to merge into (default: from settings).
 
         Returns:
             PullRequest object with URL and other details.
@@ -182,31 +187,134 @@ class GithubClient(GithubClientProtocol):
         """
         try:
             github_client = self.authenticate()
-            repo = github_client.get_repo(repo_full_name)
-
-            # Use default branch if base_branch not specified
-            if base_branch is None:
-                base_branch = self.settings.WORKFLOW_DEFAULT_BRANCH
+            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
 
             # Create pull request
-            pr = repo.create_pull(
-                title=title, body=body, head=head_branch, base=base_branch
-            )
+            pr = repo.create_pull(title=title, body=body, head=head, base=base)
 
             return pr
 
         except GithubException as e:
             raise Exception(f"Failed to create pull request: {e}")
 
-    def get_authenticated_clone_url(self, repo_full_name: str) -> str:
+    def get_tree(self, branch: str, recursive: bool = False) -> GitTree:
         """
-        Get authenticated clone URL for the repository.
+        Get repository tree (file list) via GitHub API.
 
         Args:
-            repo_full_name: Full repository name (e.g., "owner/repo").
+            branch: Branch name to get the tree from.
+            recursive: Whether to get the tree recursively (default: False).
 
         Returns:
-            HTTPS clone URL with authentication token embedded.
+            GitTree object containing file information.
+
+        Raises:
+            Exception: If tree retrieval fails.
         """
-        # Construct authenticated URL with PAT
-        return f"https://x-access-token:{self.settings.VAULT_GITHUB_TOKEN}@github.com/{repo_full_name}.git"
+        try:
+            github_client = self.authenticate()
+            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+
+            # Get branch reference to get the tree SHA
+            branch_ref = repo.get_git_ref(f"heads/{branch}")
+            commit = repo.get_git_commit(branch_ref.object.sha)
+
+            # Get tree
+            tree = repo.get_git_tree(commit.tree.sha, recursive=recursive)
+
+            return tree
+
+        except GithubException as e:
+            raise Exception(f"Failed to get tree for branch '{branch}': {e}")
+
+    def bulk_commit_changes(self, branch: str, changes: list, message: str) -> str:
+        """
+        Commit multiple file changes atomically using Git Trees API.
+
+        This is the most efficient way to make multiple changes, requiring only
+        3-4 API calls regardless of the number of files changed.
+
+        Args:
+            branch: Branch name to commit to.
+            changes: List of dicts with 'path', 'content' (or None for delete), 'action'.
+            message: Commit message.
+
+        Returns:
+            SHA of the created commit.
+
+        Raises:
+            Exception: If bulk commit fails.
+        """
+        try:
+            github_client = self.authenticate()
+            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+
+            # 1. Get the latest commit SHA of the branch
+            branch_ref = repo.get_git_ref(f"heads/{branch}")
+            base_commit_sha = branch_ref.object.sha
+            base_commit = repo.get_git_commit(base_commit_sha)
+            base_tree_sha = base_commit.tree.sha
+
+            # 2. Prepare tree elements for the new tree
+            tree_elements = []
+            for change in changes:
+                path = change["path"]
+                action = change["action"]
+                content = change.get("content")
+
+                if action == "delete":
+                    # For deletion, we simply omit the file from the new tree
+                    # PyGithub doesn't support explicit deletion in tree creation,
+                    # so we need to get the base tree and exclude the deleted file
+                    continue
+                else:
+                    # For create/update, create a blob and add to tree
+                    if content is not None:
+                        # Create blob for file content
+                        blob = repo.create_git_blob(content, "utf-8")
+                        tree_elements.append(
+                            {
+                                "path": path,
+                                "mode": "100644",  # Regular file
+                                "type": "blob",
+                                "sha": blob.sha,
+                            }
+                        )
+
+            # Handle deletions by getting base tree and filtering out deleted files
+            deleted_paths = {
+                change["path"] for change in changes if change["action"] == "delete"
+            }
+            if deleted_paths:
+                base_tree = repo.get_git_tree(base_tree_sha, recursive=True)
+                for element in base_tree.tree:
+                    if element.path not in deleted_paths and element.type == "blob":
+                        # Only include files (blobs) that aren't being deleted
+                        # Skip if this path is being updated (already in tree_elements)
+                        if not any(te["path"] == element.path for te in tree_elements):
+                            tree_elements.append(
+                                {
+                                    "path": element.path,
+                                    "mode": element.mode,
+                                    "type": element.type,
+                                    "sha": element.sha,
+                                }
+                            )
+
+            # 3. Create new tree
+            new_tree = repo.create_git_tree(tree_elements)
+
+            # 4. Create new commit
+            new_commit = repo.create_git_commit(
+                message=message,
+                tree=new_tree,
+                parents=[base_commit],
+            )
+
+            # 5. Update branch reference
+            branch_ref.edit(sha=new_commit.sha, force=False)
+
+            return new_commit.sha
+
+        except GithubException as e:
+            raise Exception(f"Failed to bulk commit changes: {e}")

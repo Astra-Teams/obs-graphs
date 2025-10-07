@@ -16,105 +16,192 @@ def github_client(monkeypatch):
 
     monkeypatch.setenv("VAULT_GITHUB_TOKEN", "fake-pat")
     monkeypatch.setenv("OBSIDIAN_VAULT_REPO_FULL_NAME", "user/repo")
+    monkeypatch.setenv("GITHUB_API_TIMEOUT_SECONDS", "30")
     settings = get_settings()
     return GithubClient(settings)
 
 
-@patch("src.clients.github_client.Repo")
-@patch("src.clients.github_client.GithubClient.get_authenticated_clone_url")
-def test_clone_repository(
-    mock_get_url, mock_repo, github_client: GithubClient, tmp_path
-):
-    """Test that clone_repository executes the correct git command."""
+@patch("src.clients.github_client.GithubClient.authenticate")
+def test_create_branch(mock_authenticate, github_client: GithubClient):
+    """Test that create_branch calls the GitHub API with correct parameters."""
     # Arrange
-    mock_get_url.return_value = "https://x-access-token:token@github.com/user/repo.git"
-    mock_repo.clone_from.return_value = MagicMock()
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+    mock_base_ref = MagicMock()
+    mock_base_ref.object.sha = "abc123"
+
+    mock_github.get_repo.return_value = mock_repo
+    mock_repo.get_git_ref.return_value = mock_base_ref
+    mock_authenticate.return_value = mock_github
 
     # Act
-    clone_path = tmp_path / "test_clone"
-    github_client.clone_repository(clone_path)
+    github_client.create_branch("new-branch", "main")
 
     # Assert
-    mock_get_url.assert_called_once_with("user/repo")
-    mock_repo.clone_from.assert_called_once_with(
-        "https://x-access-token:token@github.com/user/repo.git",
-        clone_path,
-        branch="main",
-        depth=1,
+    mock_authenticate.assert_called_once()
+    mock_github.get_repo.assert_called_once_with("user/repo")
+    mock_repo.get_git_ref.assert_called_once_with("heads/main")
+    mock_repo.create_git_ref.assert_called_once_with(
+        ref="refs/heads/new-branch", sha="abc123"
     )
 
 
-@patch("src.clients.github_client.Repo")
-def test_create_branch(mock_repo, github_client: GithubClient, tmp_path):
-    """Test that create_branch creates a branch with the correct name."""
+@patch("src.clients.github_client.GithubClient.authenticate")
+def test_get_file_content(mock_authenticate, github_client: GithubClient):
+    """Test that get_file_content retrieves file content via API."""
     # Arrange
-    repo_instance = MagicMock()
-    # Simulate being on the default branch to skip the first checkout
-    repo_instance.active_branch.name = "main"
-    mock_repo.return_value = repo_instance
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+    mock_file = MagicMock()
+    mock_file.decoded_content = b"file content here"
+
+    mock_github.get_repo.return_value = mock_repo
+    mock_repo.get_contents.return_value = mock_file
+    mock_authenticate.return_value = mock_github
 
     # Act
-    github_client.create_branch(tmp_path, "new-branch")
+    content = github_client.get_file_content("path/to/file.md", "main")
 
     # Assert
-    repo_instance.git.checkout.assert_called_once_with("-b", "new-branch")
+    assert content == "file content here"
+    mock_authenticate.assert_called_once()
+    mock_github.get_repo.assert_called_once_with("user/repo")
+    mock_repo.get_contents.assert_called_once_with("path/to/file.md", ref="main")
 
 
-@patch("src.clients.github_client.Repo")
-def test_commit_and_push(mock_repo, github_client: GithubClient, tmp_path):
-    """Test that commit_and_push stages, commits, and pushes changes."""
+@patch("src.clients.github_client.GithubClient.authenticate")
+def test_create_or_update_file_create(mock_authenticate, github_client: GithubClient):
+    """Test that create_or_update_file creates a new file when it doesn't exist."""
     # Arrange
-    repo_instance = MagicMock()
-    repo_instance.is_dirty.return_value = True
-    repo_instance.untracked_files = []
-    mock_repo.return_value = repo_instance
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+
+    # Simulate file not found
+    from github import GithubException
+
+    mock_repo.get_contents.side_effect = GithubException(
+        404, {"message": "Not Found"}, None
+    )
+
+    mock_github.get_repo.return_value = mock_repo
+    mock_authenticate.return_value = mock_github
 
     # Act
-    result = github_client.commit_and_push(tmp_path, "new-branch", "test commit")
+    github_client.create_or_update_file(
+        "new/file.md", "new content", "main", "Create file"
+    )
 
     # Assert
-    assert result is True
-    repo_instance.git.add.assert_called_once_with(A=True)
-    repo_instance.index.commit.assert_called_once_with("test commit")
+    mock_authenticate.assert_called_once()
+    mock_repo.create_file.assert_called_once_with(
+        path="new/file.md", message="Create file", content="new content", branch="main"
+    )
 
 
-@patch("src.clients.github_client.Repo")
-def test_commit_and_push_no_changes(mock_repo, github_client: GithubClient, tmp_path):
-    """Test that commit_and_push returns False when there are no changes."""
+@patch("src.clients.github_client.GithubClient.authenticate")
+def test_create_or_update_file_update(mock_authenticate, github_client: GithubClient):
+    """Test that create_or_update_file updates an existing file."""
     # Arrange
-    repo_instance = MagicMock()
-    repo_instance.is_dirty.return_value = False
-    repo_instance.untracked_files = []
-    mock_repo.return_value = repo_instance
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+    mock_existing_file = MagicMock()
+    mock_existing_file.sha = "existing-sha"
+
+    mock_repo.get_contents.return_value = mock_existing_file
+    mock_github.get_repo.return_value = mock_repo
+    mock_authenticate.return_value = mock_github
 
     # Act
-    result = github_client.commit_and_push(tmp_path, "new-branch", "test commit")
+    github_client.create_or_update_file(
+        "existing/file.md", "updated content", "main", "Update file"
+    )
 
     # Assert
-    assert result is False
-    repo_instance.git.add.assert_called_once_with(A=True)
+    mock_authenticate.assert_called_once()
+    mock_repo.update_file.assert_called_once_with(
+        path="existing/file.md",
+        message="Update file",
+        content="updated content",
+        sha="existing-sha",
+        branch="main",
+    )
+
+
+@patch("src.clients.github_client.GithubClient.authenticate")
+def test_delete_file(mock_authenticate, github_client: GithubClient):
+    """Test that delete_file deletes a file via API."""
+    # Arrange
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+    mock_file = MagicMock()
+    mock_file.sha = "file-sha"
+
+    mock_repo.get_contents.return_value = mock_file
+    mock_github.get_repo.return_value = mock_repo
+    mock_authenticate.return_value = mock_github
+
+    # Act
+    github_client.delete_file("path/to/delete.md", "main", "Delete file")
+
+    # Assert
+    mock_authenticate.assert_called_once()
+    mock_repo.get_contents.assert_called_once_with("path/to/delete.md", ref="main")
+    mock_repo.delete_file.assert_called_once_with(
+        path="path/to/delete.md", message="Delete file", sha="file-sha", branch="main"
+    )
 
 
 @patch("src.clients.github_client.GithubClient.authenticate")
 def test_create_pull_request(mock_authenticate, github_client: GithubClient):
     """Test that create_pull_request calls the GitHub API with correct parameters."""
     # Arrange
-    mock_github_client = MagicMock()
-    mock_repo_obj = MagicMock()
-    mock_github_client.get_repo.return_value = mock_repo_obj
-    mock_authenticate.return_value = mock_github_client
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+    mock_pr = MagicMock()
+    mock_pr.html_url = "https://github.com/user/repo/pull/1"
+
+    mock_repo.create_pull.return_value = mock_pr
+    mock_github.get_repo.return_value = mock_repo
+    mock_authenticate.return_value = mock_github
 
     # Act
-    github_client.create_pull_request(
-        repo_full_name="user/repo",
-        head_branch="new-branch",
-        title="Test PR",
-        body="This is a test PR.",
+    pr = github_client.create_pull_request(
+        head="new-branch", base="main", title="Test PR", body="This is a test PR."
     )
 
     # Assert
+    assert pr.html_url == "https://github.com/user/repo/pull/1"
     mock_authenticate.assert_called_once()
-    mock_github_client.get_repo.assert_called_once_with("user/repo")
-    mock_repo_obj.create_pull.assert_called_once_with(
+    mock_github.get_repo.assert_called_once_with("user/repo")
+    mock_repo.create_pull.assert_called_once_with(
         title="Test PR", body="This is a test PR.", head="new-branch", base="main"
     )
+
+
+@patch("src.clients.github_client.GithubClient.authenticate")
+def test_get_tree(mock_authenticate, github_client: GithubClient):
+    """Test that get_tree retrieves repository tree via API."""
+    # Arrange
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+    mock_branch_ref = MagicMock()
+    mock_branch_ref.object.sha = "commit-sha"
+    mock_commit = MagicMock()
+    mock_commit.tree.sha = "tree-sha"
+    mock_tree = MagicMock()
+
+    mock_repo.get_git_ref.return_value = mock_branch_ref
+    mock_repo.get_git_commit.return_value = mock_commit
+    mock_repo.get_git_tree.return_value = mock_tree
+    mock_github.get_repo.return_value = mock_repo
+    mock_authenticate.return_value = mock_github
+
+    # Act
+    tree = github_client.get_tree("main", recursive=True)
+
+    # Assert
+    assert tree == mock_tree
+    mock_authenticate.assert_called_once()
+    mock_repo.get_git_ref.assert_called_once_with("heads/main")
+    mock_repo.get_git_commit.assert_called_once_with("commit-sha")
+    mock_repo.get_git_tree.assert_called_once_with("tree-sha", recursive=True)

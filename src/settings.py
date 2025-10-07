@@ -36,9 +36,9 @@ class ObsGraphsSettings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/0"
 
     # Workflow Configuration
-    WORKFLOW_CLONE_BASE_PATH: str = "/tmp/obsidian-workflows"
     WORKFLOW_DEFAULT_BRANCH: str = "main"
     WORKFLOW_TEMP_DIR_CLEANUP_SECONDS: int = 86400
+    GITHUB_API_TIMEOUT_SECONDS: int = 30
 
     # Agent Configuration
     CROSS_REFERENCE_MIN_SHARED_KEYWORDS: int = 2

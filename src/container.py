@@ -28,6 +28,7 @@ class DependencyContainer:
         self._nodes: Dict[str, NodeProtocol] = {}
         self._llm: Optional[BaseLLM] = None
         self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
+        self._current_branch: Optional[str] = None
 
         # Registry of node classes (module, class_name)
         self._node_classes = {
@@ -42,6 +43,10 @@ class DependencyContainer:
             "deep_research": (
                 "src.api.v1.nodes.deep_research",
                 "DeepResearchAgent",
+            ),
+            "commit_changes": (
+                "src.api.v1.nodes.commit_changes",
+                "CommitChangesAgent",
             ),
             "github_pr_creation": (
                 "src.api.v1.nodes.github_pr_creation",
@@ -65,10 +70,45 @@ class DependencyContainer:
                 self._github_client = GithubClient(settings)
         return self._github_client
 
-    def get_vault_service(self) -> VaultServiceProtocol:
-        """Get the vault service instance."""
+    def set_branch(self, branch: str) -> None:
+        """
+        Set the current branch for the workflow.
+
+        This must be called before get_vault_service().
+        """
+        self._current_branch = branch
+        # Clear cached vault service when branch changes
+        self._vault_service = None
+        # Clear cached nodes that depend on vault service
+        if "commit_changes" in self._nodes:
+            del self._nodes["commit_changes"]
+
+    def get_vault_service(self, branch: Optional[str] = None) -> VaultServiceProtocol:
+        """
+        Get the vault service instance for a specific branch.
+
+        Args:
+            branch: Branch name. If not provided, uses current branch set by set_branch().
+
+        Returns:
+            VaultService configured for the specified branch.
+
+        Raises:
+            ValueError: If no branch is specified and no current branch is set.
+        """
+        if branch:
+            # Direct branch specification (used by GraphBuilder)
+            return VaultService(self.get_github_client(), branch)
+
+        if self._current_branch is None:
+            raise ValueError(
+                "No branch specified. Call set_branch() or provide branch parameter."
+            )
+
         if self._vault_service is None:
-            self._vault_service = VaultService()
+            self._vault_service = VaultService(
+                self.get_github_client(), self._current_branch
+            )
         return self._vault_service
 
     def get_research_client(self) -> ResearchClientProtocol:
@@ -142,6 +182,8 @@ class DependencyContainer:
             # Instantiate with dependencies
             if name in ["article_proposal", "article_content_generation"]:
                 self._nodes[name] = node_class(self.get_llm())
+            elif name == "commit_changes":
+                self._nodes[name] = node_class(self.get_vault_service())
             elif name == "github_pr_creation":
                 self._nodes[name] = node_class(self.get_github_client())
             elif name == "deep_research":

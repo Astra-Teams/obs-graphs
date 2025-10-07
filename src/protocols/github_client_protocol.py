@@ -1,91 +1,98 @@
 """Protocol definition for GitHub client interface."""
 
-from pathlib import Path
-from typing import Optional, Protocol
+from typing import Protocol
 
 from github import Github
+from github.GitTree import GitTree
 from github.PullRequest import PullRequest
 
 
 class GithubClientProtocol(Protocol):
-    """Protocol for GitHub client operations."""
+    """Protocol for GitHub client operations via API."""
 
     def authenticate(self) -> Github:
         """
-        Authenticate as GitHub App using private key and app ID.
+        Authenticate using Personal Access Token.
 
         Returns:
             Authenticated GitHub API client.
 
         Raises:
-            ValueError: If GitHub App credentials are not configured.
-            FileNotFoundError: If private key file is not found.
-            Exception: If authentication fails.
+            ValueError: If GitHub PAT is not configured.
         """
         ...
 
-    def clone_repository(self, target_path: Path, branch: str = "main") -> None:
+    def create_branch(self, branch_name: str, base_branch: str = "main") -> None:
         """
-        Clone repository to local path using git commands with authentication.
+        Create new branch from base branch via GitHub API.
 
         Args:
-            target_path: Local directory path where repository will be cloned.
-            branch: Branch name to checkout (default: "main").
-
-        Raises:
-            Exception: If cloning fails.
-        """
-        ...
-
-    def create_branch(self, repo_path: Path, branch_name: str) -> None:
-        """
-        Create new git branch from the current branch.
-
-        Args:
-            repo_path: Path to the local git repository.
             branch_name: Name of the new branch to create.
+            base_branch: Base branch to create from (default: "main").
 
         Raises:
-            FileNotFoundError: If repository path doesn't exist.
             Exception: If branch creation fails.
         """
         ...
 
-    def commit_and_push(self, repo_path: Path, branch_name: str, message: str) -> bool:
+    def get_file_content(self, path: str, branch: str) -> str:
         """
-        Stage all changes, commit, and push to remote branch.
+        Get file content from repository via GitHub API.
 
         Args:
-            repo_path: Path to the local git repository.
-            branch_name: Name of the branch to push.
-            message: Commit message.
+            path: Path to the file in the repository.
+            branch: Branch name to get the file from.
 
         Returns:
-            True if changes were committed and pushed, False if there were no changes.
+            File content as string.
 
         Raises:
-            FileNotFoundError: If repository path doesn't exist.
-            Exception: If commit or push fails.
+            Exception: If file retrieval fails.
+        """
+        ...
+
+    def create_or_update_file(
+        self, path: str, content: str, branch: str, message: str
+    ) -> None:
+        """
+        Create or update file in repository via GitHub API.
+
+        Args:
+            path: Path to the file in the repository.
+            content: New file content.
+            branch: Branch name to commit to.
+            message: Commit message.
+
+        Raises:
+            Exception: If file creation/update fails.
+        """
+        ...
+
+    def delete_file(self, path: str, branch: str, message: str) -> None:
+        """
+        Delete file from repository via GitHub API.
+
+        Args:
+            path: Path to the file in the repository.
+            branch: Branch name to delete from.
+            message: Commit message.
+
+        Raises:
+            Exception: If file deletion fails.
         """
         ...
 
     def create_pull_request(
-        self,
-        repo_full_name: str,
-        head_branch: str,
-        title: str,
-        body: str,
-        base_branch: Optional[str] = None,
+        self, head: str, base: str, title: str, body: str
     ) -> PullRequest:
         """
         Create pull request via GitHub API.
 
         Args:
-            repo_full_name: Full repository name (e.g., "owner/repo").
-            head_branch: Name of the branch containing changes.
+            head: Name of the branch containing changes.
+            base: Base branch to merge into.
             title: Title of the pull request.
             body: Description/body of the pull request.
-            base_branch: Base branch to merge into (default: from settings).
 
         Returns:
             PullRequest object with URL and other details.
@@ -95,14 +102,18 @@ class GithubClientProtocol(Protocol):
         """
         ...
 
-    def get_authenticated_clone_url(self, repo_full_name: str) -> str:
+    def get_tree(self, branch: str, recursive: bool = False) -> GitTree:
         """
-        Get authenticated clone URL for the repository.
+        Get repository tree (file list) via GitHub API.
 
         Args:
-            repo_full_name: Full repository name (e.g., "owner/repo").
+            branch: Branch name to get the tree from.
+            recursive: Whether to get the tree recursively (default: False).
 
         Returns:
-            HTTPS clone URL with authentication token embedded.
+            GitTree object containing file information.
+
+        Raises:
+            Exception: If tree retrieval fails.
         """
         ...

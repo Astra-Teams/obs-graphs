@@ -1,8 +1,5 @@
 """Agent for creating GitHub pull requests from workflow results."""
 
-from datetime import datetime, timezone
-from pathlib import Path
-
 from src.protocols import GithubClientProtocol, NodeProtocol
 from src.settings import get_settings
 from src.state import AgentResult, FileChange
@@ -12,10 +9,8 @@ class GithubPRCreationAgent(NodeProtocol):
     """
     Agent responsible for creating GitHub pull requests.
 
-    This agent handles all GitHub operations including:
-    - Creating a new branch
-    - Committing and pushing changes
-    - Creating a pull request with formatted body
+    This agent only handles PR creation. Committing changes is handled by
+    CommitChangesAgent, which should run before this agent.
     """
 
     def __init__(self, github_client: GithubClientProtocol):
@@ -28,21 +23,25 @@ class GithubPRCreationAgent(NodeProtocol):
         Validate that the context contains required information.
 
         Args:
-            context: Must contain 'strategy', 'accumulated_changes', and 'node_results'
+            context: Must contain 'strategy', 'accumulated_changes', 'node_results', and 'branch_name'
 
         Returns:
             True if context is valid, False otherwise
         """
-        required_keys = ["strategy", "accumulated_changes", "node_results"]
+        required_keys = [
+            "strategy",
+            "accumulated_changes",
+            "node_results",
+            "branch_name",
+        ]
         return all(key in context for key in required_keys)
 
-    def execute(self, vault_path: Path, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> AgentResult:
         """
         Execute GitHub PR creation workflow.
 
         Args:
-            vault_path: Path to the local clone of the Obsidian Vault
-            context: Dictionary containing strategy, accumulated_changes, and node_results
+            context: Dictionary containing strategy, accumulated_changes, node_results, and branch_name
 
         Returns:
             AgentResult with PR URL in metadata
@@ -52,36 +51,22 @@ class GithubPRCreationAgent(NodeProtocol):
         """
         if not self.validate_input(context):
             raise ValueError(
-                "Invalid context: strategy, accumulated_changes, and node_results are required"
+                "Invalid context: strategy, accumulated_changes, node_results, and branch_name are required"
             )
 
         strategy = context["strategy"]
         accumulated_changes: list[FileChange] = context["accumulated_changes"]
         node_results: dict = context["node_results"]
+        branch_name: str = context["branch_name"]
 
         try:
-            # Create new branch for changes
-            branch_name = f"obsidian-agents/{strategy}-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
-            self.github_client.create_branch(
-                repo_path=vault_path, branch_name=branch_name
-            )
-
-            # Generate commit message
-            commit_message = self._generate_commit_message(
-                strategy, node_results, accumulated_changes
-            )
-
-            # Commit and push changes
-            pushed = self.github_client.commit_and_push(
-                repo_path=vault_path, branch_name=branch_name, message=commit_message
-            )
-
-            # If no changes were made, return success without PR
-            if not pushed:
+            # If no changes were committed, don't create PR
+            commit_result = node_results.get("commit_changes", {})
+            if not commit_result.get("success") or not accumulated_changes:
                 return AgentResult(
                     success=True,
                     changes=[],
-                    message="No changes to commit",
+                    message="No changes committed, skipping PR creation",
                     metadata={"branch_name": branch_name, "pr_url": ""},
                 )
 
@@ -91,8 +76,8 @@ class GithubPRCreationAgent(NodeProtocol):
             )
 
             pr = self.github_client.create_pull_request(
-                repo_full_name=self._settings.OBSIDIAN_VAULT_REPO_FULL_NAME,
-                head_branch=branch_name,
+                head=branch_name,
+                base=self._settings.WORKFLOW_DEFAULT_BRANCH,
                 title=pr_title,
                 body=pr_body,
             )
@@ -111,34 +96,6 @@ class GithubPRCreationAgent(NodeProtocol):
                 message=f"Failed to create pull request: {str(e)}",
                 metadata={"error": str(e)},
             )
-
-    def _generate_commit_message(
-        self, strategy: str, node_results: dict, changes: list[FileChange]
-    ) -> str:
-        """
-        Generate commit message from workflow results.
-
-        Args:
-            strategy: Workflow strategy name
-            node_results: Results from executed nodes
-            changes: List of file changes
-
-        Returns:
-            Formatted commit message
-        """
-        summary_parts = []
-        for node_name, result in node_results.items():
-            if result["success"]:
-                summary_parts.append(f"- {node_name}: {result['message']}")
-
-        summary = "\n".join(summary_parts)
-
-        return f"""Automated vault improvements via {strategy} strategy
-
-{summary}
-
-Changes made by Obsidian Agents workflow
-"""
 
     def _generate_pr_content(
         self, strategy: str, node_results: dict, changes: list[FileChange]
@@ -169,7 +126,10 @@ Changes made by Obsidian Agents workflow
         # Generate summary
         summary_parts = []
         for node_name, result in node_results.items():
-            if result["success"]:
+            if result["success"] and node_name not in [
+                "commit_changes",
+                "github_pr_creation",
+            ]:
                 summary_parts.append(f"- {node_name}: {result['message']}")
         summary = "\n".join(summary_parts)
 
@@ -205,7 +165,7 @@ Changes made by Obsidian Agents workflow
                     "\n### Details",
                     f"- **Proposal File**: {deep_metadata.get('proposal_path', 'N/A')}",
                     f"- **Total Changes**: {len(changes)} file operation(s)",
-                    f"- **Nodes Executed**: {len(node_results)}",
+                    f"- **Nodes Executed**: {len([n for n in node_results if n not in ['commit_changes', 'github_pr_creation']])}",
                 ]
             )
         else:
@@ -216,18 +176,25 @@ Changes made by Obsidian Agents workflow
                 summary,
                 "\n### Details",
                 f"- **Total Changes**: {len(changes)} file operations",
-                f"- **Nodes Executed**: {len(node_results)}",
+                f"- **Nodes Executed**: {len([n for n in node_results if n not in ['commit_changes', 'github_pr_creation']])}",
             ]
+
+        # Add commit info if available
+        commit_result = node_results.get("commit_changes", {})
+        if commit_result.get("metadata", {}).get("commit_sha"):
+            commit_sha = commit_result["metadata"]["commit_sha"]
+            body_parts.append(f"- **Commit**: `{commit_sha[:7]}`")
 
         body_parts.append("\n### Node Results")
 
         for node_name, result in node_results.items():
-            body_parts.append(f"\n#### {node_name}")
-            body_parts.append(
-                f"- Status: {'✅ Success' if result['success'] else '❌ Failed'}"
-            )
-            body_parts.append(f"- Message: {result['message']}")
-            body_parts.append(f"- Changes: {result['changes_count']}")
+            if node_name not in ["commit_changes", "github_pr_creation"]:
+                body_parts.append(f"\n#### {node_name}")
+                body_parts.append(
+                    f"- Status: {'✅ Success' if result['success'] else '❌ Failed'}"
+                )
+                body_parts.append(f"- Message: {result['message']}")
+                body_parts.append(f"- Changes: {result['changes_count']}")
 
         body_parts.append("\n---\n*Generated by Obsidian Nodes Workflow Automation*")
 
