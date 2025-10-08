@@ -36,13 +36,15 @@ def test_get_file_content(vault_service: VaultService, mock_github_client):
 
 
 def test_update_file(vault_service: VaultService, mock_github_client):
-    """Test that update_file calls github_client.create_or_update_file."""
+    """Test that update_file calls github_client.bulk_commit_changes."""
     # Act
     vault_service.update_file("path/to/file.md", "new content", "Update message")
 
     # Assert
-    mock_github_client.create_or_update_file.assert_called_once_with(
-        "path/to/file.md", "new content", "test-branch", "Update message"
+    mock_github_client.bulk_commit_changes.assert_called_once_with(
+        "test-branch",
+        [{"action": "update", "path": "path/to/file.md", "content": "new content"}],
+        "Update message",
     )
 
 

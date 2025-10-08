@@ -70,85 +70,234 @@ def test_get_file_content(mock_authenticate, github_client: GithubClient):
 
 
 @patch("src.clients.github_client.GithubClient.authenticate")
-def test_create_or_update_file_create(mock_authenticate, github_client: GithubClient):
-    """Test that create_or_update_file creates a new file when it doesn't exist."""
+def test_bulk_commit_changes_create_only(
+    mock_authenticate, github_client: GithubClient
+):
+    """Test bulk_commit_changes with create operations only."""
     # Arrange
     mock_github = MagicMock()
     mock_repo = MagicMock()
+    mock_branch_ref = MagicMock()
+    mock_branch_ref.object.sha = "base-commit-sha"
+    mock_base_commit = MagicMock()
+    mock_base_commit.tree.sha = "base-tree-sha"
+    mock_base_tree = MagicMock()
+    mock_base_tree.tree = []  # No existing files
+    mock_new_tree = MagicMock()
+    mock_new_tree.sha = "new-tree-sha"
+    mock_new_commit = MagicMock()
+    mock_new_commit.sha = "new-commit-sha"
+    mock_blob = MagicMock()
+    mock_blob.sha = "blob-sha"
 
-    # Simulate file not found
-    from github import GithubException
-
-    mock_repo.get_contents.side_effect = GithubException(
-        404, {"message": "Not Found"}, None
-    )
-
+    mock_repo.get_git_ref.return_value = mock_branch_ref
+    mock_repo.get_git_commit.return_value = mock_base_commit
+    mock_repo.get_git_tree.return_value = mock_base_tree
+    mock_repo.create_git_blob.return_value = mock_blob
+    mock_repo.create_git_tree.return_value = mock_new_tree
+    mock_repo.create_git_commit.return_value = mock_new_commit
     mock_github.get_repo.return_value = mock_repo
     mock_authenticate.return_value = mock_github
 
+    changes = [{"action": "create", "path": "new/file.md", "content": "new content"}]
+
     # Act
-    github_client.create_or_update_file(
-        "new/file.md", "new content", "main", "Create file"
-    )
+    result = github_client.bulk_commit_changes("main", changes, "Create file")
 
     # Assert
-    mock_authenticate.assert_called_once()
-    mock_repo.create_file.assert_called_once_with(
-        path="new/file.md", message="Create file", content="new content", branch="main"
+    assert result == "new-commit-sha"
+    mock_repo.get_git_tree.assert_called_once_with("base-tree-sha", recursive=True)
+    mock_repo.create_git_blob.assert_called_once_with("new content", "utf-8")
+    mock_repo.create_git_tree.assert_called_once()
+    mock_repo.create_git_commit.assert_called_once_with(
+        message="Create file", tree=mock_new_tree, parents=[mock_base_commit]
     )
+    mock_branch_ref.edit.assert_called_once_with(sha="new-commit-sha", force=False)
 
 
 @patch("src.clients.github_client.GithubClient.authenticate")
-def test_create_or_update_file_update(mock_authenticate, github_client: GithubClient):
-    """Test that create_or_update_file updates an existing file."""
+def test_bulk_commit_changes_update_only(
+    mock_authenticate, github_client: GithubClient
+):
+    """Test bulk_commit_changes with update operations only."""
     # Arrange
     mock_github = MagicMock()
     mock_repo = MagicMock()
-    mock_existing_file = MagicMock()
-    mock_existing_file.sha = "existing-sha"
+    mock_branch_ref = MagicMock()
+    mock_branch_ref.object.sha = "base-commit-sha"
+    mock_base_commit = MagicMock()
+    mock_base_commit.tree.sha = "base-tree-sha"
+    mock_base_tree = MagicMock()
+    mock_element = MagicMock()
+    mock_element.path = "other/file.md"
+    mock_element.type = "blob"
+    mock_element.mode = "100644"
+    mock_element.sha = "element-sha"
+    mock_base_tree.tree = [mock_element]
+    mock_new_tree = MagicMock()
+    mock_new_tree.sha = "new-tree-sha"
+    mock_new_commit = MagicMock()
+    mock_new_commit.sha = "new-commit-sha"
+    mock_blob = MagicMock()
+    mock_blob.sha = "blob-sha"
 
-    mock_repo.get_contents.return_value = mock_existing_file
+    mock_repo.get_git_ref.return_value = mock_branch_ref
+    mock_repo.get_git_commit.return_value = mock_base_commit
+    mock_repo.get_git_tree.return_value = mock_base_tree
+    mock_repo.create_git_blob.return_value = mock_blob
+    mock_repo.create_git_tree.return_value = mock_new_tree
+    mock_repo.create_git_commit.return_value = mock_new_commit
     mock_github.get_repo.return_value = mock_repo
     mock_authenticate.return_value = mock_github
 
+    changes = [
+        {"action": "update", "path": "existing/file.md", "content": "updated content"}
+    ]
+
     # Act
-    github_client.create_or_update_file(
-        "existing/file.md", "updated content", "main", "Update file"
-    )
+    result = github_client.bulk_commit_changes("main", changes, "Update file")
 
     # Assert
-    mock_authenticate.assert_called_once()
-    mock_repo.update_file.assert_called_once_with(
-        path="existing/file.md",
-        message="Update file",
-        content="updated content",
-        sha="existing-sha",
-        branch="main",
-    )
+    assert result == "new-commit-sha"
+    mock_repo.get_git_tree.assert_called_once_with("base-tree-sha", recursive=True)
+    mock_repo.create_git_blob.assert_called_once_with("updated content", "utf-8")
+    mock_repo.create_git_tree.assert_called_once()
+    created_tree_elements = mock_repo.create_git_tree.call_args[0][0]
+    # Check that the updated file is in the new tree
+    assert any(elem["path"] == "existing/file.md" for elem in created_tree_elements)
+    # Check that the other file is preserved
+    assert any(elem["path"] == "other/file.md" for elem in created_tree_elements)
 
 
 @patch("src.clients.github_client.GithubClient.authenticate")
-def test_delete_file(mock_authenticate, github_client: GithubClient):
-    """Test that delete_file deletes a file via API."""
+def test_bulk_commit_changes_delete_only(
+    mock_authenticate, github_client: GithubClient
+):
+    """Test bulk_commit_changes with delete operations only."""
     # Arrange
     mock_github = MagicMock()
     mock_repo = MagicMock()
-    mock_file = MagicMock()
-    mock_file.sha = "file-sha"
+    mock_branch_ref = MagicMock()
+    mock_branch_ref.object.sha = "base-commit-sha"
+    mock_base_commit = MagicMock()
+    mock_base_commit.tree.sha = "base-tree-sha"
+    mock_base_tree = MagicMock()
+    mock_element1 = MagicMock()
+    mock_element1.path = "other/file.md"
+    mock_element1.type = "blob"
+    mock_element1.mode = "100644"
+    mock_element1.sha = "element-sha"
+    mock_element2 = MagicMock()
+    mock_element2.path = "delete/file.md"
+    mock_element2.type = "blob"
+    mock_element2.mode = "100644"
+    mock_element2.sha = "delete-sha"
+    mock_base_tree.tree = [mock_element1, mock_element2]
+    mock_new_tree = MagicMock()
+    mock_new_tree.sha = "new-tree-sha"
+    mock_new_commit = MagicMock()
+    mock_new_commit.sha = "new-commit-sha"
 
-    mock_repo.get_contents.return_value = mock_file
+    mock_repo.get_git_ref.return_value = mock_branch_ref
+    mock_repo.get_git_commit.return_value = mock_base_commit
+    mock_repo.get_git_tree.return_value = mock_base_tree
+    mock_repo.create_git_tree.return_value = mock_new_tree
+    mock_repo.create_git_commit.return_value = mock_new_commit
     mock_github.get_repo.return_value = mock_repo
     mock_authenticate.return_value = mock_github
 
+    changes = [{"action": "delete", "path": "delete/file.md"}]
+
     # Act
-    github_client.delete_file("path/to/delete.md", "main", "Delete file")
+    result = github_client.bulk_commit_changes("main", changes, "Delete file")
 
     # Assert
-    mock_authenticate.assert_called_once()
-    mock_repo.get_contents.assert_called_once_with("path/to/delete.md", ref="main")
-    mock_repo.delete_file.assert_called_once_with(
-        path="path/to/delete.md", message="Delete file", sha="file-sha", branch="main"
-    )
+    assert result == "new-commit-sha"
+    mock_repo.get_git_tree.assert_called_once_with("base-tree-sha", recursive=True)
+    mock_repo.create_git_tree.assert_called_once()
+    created_tree_elements = mock_repo.create_git_tree.call_args[0][0]
+    # Check that the preserved file is in the new tree
+    assert any(elem["path"] == "other/file.md" for elem in created_tree_elements)
+    # Check that the deleted file is NOT in the new tree
+    assert not any(elem["path"] == "delete/file.md" for elem in created_tree_elements)
+
+
+@patch("src.clients.github_client.GithubClient.authenticate")
+def test_bulk_commit_changes_mixed_operations(
+    mock_authenticate, github_client: GithubClient
+):
+    """Test bulk_commit_changes with mixed create, update, and delete operations."""
+    # Arrange
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+    mock_branch_ref = MagicMock()
+    mock_branch_ref.object.sha = "base-commit-sha"
+    mock_base_commit = MagicMock()
+    mock_base_commit.tree.sha = "base-tree-sha"
+    mock_base_tree = MagicMock()
+    mock_element = MagicMock()
+    mock_element.path = "existing/file.md"
+    mock_element.type = "blob"
+    mock_element.mode = "100644"
+    mock_element.sha = "element-sha"
+    mock_base_tree.tree = [mock_element]
+    mock_new_tree = MagicMock()
+    mock_new_tree.sha = "new-tree-sha"
+    mock_new_commit = MagicMock()
+    mock_new_commit.sha = "new-commit-sha"
+    mock_blob1 = MagicMock()
+    mock_blob1.sha = "blob1-sha"
+    mock_blob2 = MagicMock()
+    mock_blob2.sha = "blob2-sha"
+
+    mock_repo.get_git_ref.return_value = mock_branch_ref
+    mock_repo.get_git_commit.return_value = mock_base_commit
+    mock_repo.get_git_tree.return_value = mock_base_tree
+    mock_repo.create_git_blob.side_effect = [mock_blob1, mock_blob2]
+    mock_repo.create_git_tree.return_value = mock_new_tree
+    mock_repo.create_git_commit.return_value = mock_new_commit
+    mock_github.get_repo.return_value = mock_repo
+    mock_authenticate.return_value = mock_github
+
+    changes = [
+        {"action": "create", "path": "new/file.md", "content": "new content"},
+        {"action": "update", "path": "existing/file.md", "content": "updated content"},
+        {"action": "delete", "path": "delete/file.md"},
+    ]
+
+    # Act
+    result = github_client.bulk_commit_changes("main", changes, "Mixed changes")
+
+    # Assert
+    assert result == "new-commit-sha"
+    mock_repo.get_git_tree.assert_called_once_with("base-tree-sha", recursive=True)
+    assert mock_repo.create_git_blob.call_count == 2
+
+
+@patch("src.clients.github_client.GithubClient.authenticate")
+def test_bulk_commit_changes_empty_list(mock_authenticate, github_client: GithubClient):
+    """Test bulk_commit_changes with empty changes list."""
+    # Arrange
+    mock_github = MagicMock()
+    mock_repo = MagicMock()
+    mock_branch_ref = MagicMock()
+    mock_branch_ref.object.sha = "base-commit-sha"
+
+    mock_repo.get_git_ref.return_value = mock_branch_ref
+    mock_github.get_repo.return_value = mock_repo
+    mock_authenticate.return_value = mock_github
+
+    changes = []
+
+    # Act
+    result = github_client.bulk_commit_changes("main", changes, "No changes")
+
+    # Assert
+    assert result == "base-commit-sha"  # Should return base commit SHA
+    mock_repo.create_git_blob.assert_not_called()
+    mock_repo.create_git_tree.assert_not_called()
+    mock_repo.create_git_commit.assert_not_called()
+    mock_branch_ref.edit.assert_not_called()
 
 
 @patch("src.clients.github_client.GithubClient.authenticate")

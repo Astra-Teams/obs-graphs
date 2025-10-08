@@ -101,72 +101,6 @@ class GithubClient(GithubClientProtocol):
         except GithubException as e:
             raise Exception(f"Failed to get file content for '{path}': {e}")
 
-    def create_or_update_file(
-        self, path: str, content: str, branch: str, message: str
-    ) -> None:
-        """
-        Create or update file in repository via GitHub API.
-
-        Args:
-            path: Path to the file in the repository.
-            content: New file content.
-            branch: Branch name to commit to.
-            message: Commit message.
-
-        Raises:
-            Exception: If file creation/update fails.
-        """
-        try:
-            github_client = self.authenticate()
-            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
-
-            try:
-                # Try to get existing file
-                existing_file = repo.get_contents(path, ref=branch)
-                # Update existing file
-                repo.update_file(
-                    path=path,
-                    message=message,
-                    content=content,
-                    sha=existing_file.sha,
-                    branch=branch,
-                )
-            except GithubException:
-                # File doesn't exist, create new one
-                repo.create_file(
-                    path=path, message=message, content=content, branch=branch
-                )
-
-        except GithubException as e:
-            raise Exception(f"Failed to create/update file '{path}': {e}")
-
-    def delete_file(self, path: str, branch: str, message: str) -> None:
-        """
-        Delete file from repository via GitHub API.
-
-        Args:
-            path: Path to the file in the repository.
-            branch: Branch name to delete from.
-            message: Commit message.
-
-        Raises:
-            Exception: If file deletion fails.
-        """
-        try:
-            github_client = self.authenticate()
-            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
-
-            # Get file to obtain SHA (required for deletion)
-            file_content = repo.get_contents(path, ref=branch)
-
-            # Delete file
-            repo.delete_file(
-                path=path, message=message, sha=file_content.sha, branch=branch
-            )
-
-        except GithubException as e:
-            raise Exception(f"Failed to delete file '{path}': {e}")
-
     def create_pull_request(
         self, head: str, base: str, title: str, body: str
     ) -> PullRequest:
@@ -255,6 +189,10 @@ class GithubClient(GithubClientProtocol):
             base_commit = repo.get_git_commit(base_commit_sha)
             base_tree_sha = base_commit.tree.sha
 
+            # If no changes, return the base commit SHA without creating a new commit
+            if not changes:
+                return base_commit_sha
+
             # 2. Prepare tree elements for the new tree
             tree_elements = []
             for change in changes:
@@ -281,25 +219,20 @@ class GithubClient(GithubClientProtocol):
                             }
                         )
 
-            # Handle deletions by getting base tree and filtering out deleted files
-            deleted_paths = {
-                change["path"] for change in changes if change["action"] == "delete"
-            }
-            if deleted_paths:
-                base_tree = repo.get_git_tree(base_tree_sha, recursive=True)
-                for element in base_tree.tree:
-                    if element.path not in deleted_paths and element.type == "blob":
-                        # Only include files (blobs) that aren't being deleted
-                        # Skip if this path is being updated (already in tree_elements)
-                        if not any(te["path"] == element.path for te in tree_elements):
-                            tree_elements.append(
-                                {
-                                    "path": element.path,
-                                    "mode": element.mode,
-                                    "type": element.type,
-                                    "sha": element.sha,
-                                }
-                            )
+            # Get base tree to preserve existing files not in changes
+            base_tree = repo.get_git_tree(base_tree_sha, recursive=True)
+            changed_paths = {change["path"] for change in changes}
+            for element in base_tree.tree:
+                if element.path not in changed_paths and element.type == "blob":
+                    # Include files that aren't being changed
+                    tree_elements.append(
+                        {
+                            "path": element.path,
+                            "mode": element.mode,
+                            "type": element.type,
+                            "sha": element.sha,
+                        }
+                    )
 
             # 3. Create new tree
             new_tree = repo.create_git_tree(tree_elements)
