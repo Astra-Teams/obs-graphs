@@ -5,19 +5,17 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.clients import GithubClient
-from src.settings import get_settings
+from src.settings import Settings
 
 
 @pytest.fixture
-def github_client(monkeypatch):
+def github_client():
     """Return a GithubClient instance with mocked credentials."""
-    # Clear settings cache before setting env vars
-    get_settings.cache_clear()
-
-    monkeypatch.setenv("VAULT_GITHUB_TOKEN", "fake-pat")
-    monkeypatch.setenv("OBSIDIAN_VAULT_REPO_FULL_NAME", "user/repo")
-    monkeypatch.setenv("GITHUB_API_TIMEOUT_SECONDS", "30")
-    settings = get_settings()
+    settings = Settings(
+        GITHUB_TOKEN="fake-pat",
+        GITHUB_REPOSITORY="user/repo",
+        GITHUB_API_TIMEOUT_SECONDS=30,
+    )
     return GithubClient(settings)
 
 

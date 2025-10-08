@@ -42,7 +42,7 @@ setup:
         echo ".env already exists. Skipping creation."; \
     fi
     @echo "💡 You can customize .env for your specific needs:"
-    @echo "   📝 Change OLLAMA_BASE_URL to switch between container/host Ollama"
+    @echo "   📝 Change OLLAMA_HOST to switch between container/host Ollama"
     @echo "   📝 Adjust other settings as needed"
     @echo ""
     @echo "Pulling PostgreSQL image for tests..."

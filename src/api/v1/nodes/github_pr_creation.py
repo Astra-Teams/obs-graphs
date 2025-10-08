@@ -77,7 +77,7 @@ class GithubPRCreationAgent(NodeProtocol):
 
             pr = self.github_client.create_pull_request(
                 head=branch_name,
-                base=self._settings.WORKFLOW_DEFAULT_BRANCH,
+                base=self._settings.workflow_default_branch,
                 title=pr_title,
                 body=pr_body,
             )

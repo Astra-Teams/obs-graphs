@@ -14,7 +14,7 @@ from src.protocols import (
     VaultServiceProtocol,
 )
 from src.services import VaultService
-from src.settings import get_settings
+from src.settings import settings
 
 
 class DependencyContainer:
@@ -61,8 +61,7 @@ class DependencyContainer:
         Returns MockGithubClient if USE_MOCK_GITHUB=True, otherwise GithubClient.
         """
         if self._github_client is None:
-            settings = get_settings()
-            if settings.USE_MOCK_GITHUB:
+            if settings.use_mock_github:
                 from dev.mocks_clients import MockGithubClient
 
                 self._github_client = MockGithubClient()
@@ -118,15 +117,14 @@ class DependencyContainer:
         Returns MockResearchApiClient if USE_MOCK_RESEARCH_API=True, otherwise ResearchApiClient.
         """
         if self._research_client is None:
-            settings = get_settings()
-            if settings.USE_MOCK_RESEARCH_API:
+            if settings.use_mock_research_api:
                 from dev.mocks_clients import MockResearchApiClient
 
                 self._research_client = MockResearchApiClient()
             else:
                 self._research_client = ResearchApiClient(
-                    base_url=settings.RESEARCH_API_BASE_URL,
-                    timeout=settings.RESEARCH_API_TIMEOUT_SECONDS,
+                    base_url=settings.research_api_url,
+                    timeout=settings.research_api_timeout_seconds,
                 )
         return self._research_client
 
@@ -137,14 +135,13 @@ class DependencyContainer:
         Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise Ollama.
         """
         if self._llm is None:
-            settings = get_settings()
-            if settings.USE_MOCK_LLM:
+            if settings.use_mock_llm:
                 from dev.mocks_clients import MockOllamaClient
 
                 self._llm = MockOllamaClient()
             else:
                 self._llm = Ollama(
-                    model=settings.OLLAMA_MODEL, base_url=settings.OLLAMA_BASE_URL
+                    model=settings.llm_model, base_url=settings.ollama_host
                 )
         return self._llm
 
@@ -155,14 +152,13 @@ class DependencyContainer:
         Returns FakeRedis if USE_MOCK_REDIS=True, otherwise redis.Redis.
         """
         if self._redis_client is None:
-            settings = get_settings()
-            if settings.USE_MOCK_REDIS:
+            if settings.use_mock_redis:
                 from dev.mocks_clients import MockRedisClient
 
                 self._redis_client = MockRedisClient.get_client()
             else:
                 self._redis_client = redis.Redis.from_url(
-                    settings.CELERY_BROKER_URL, decode_responses=True
+                    settings.celery_broker_url, decode_responses=True
                 )
         return self._redis_client
 

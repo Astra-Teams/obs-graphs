@@ -207,7 +207,7 @@ def test_run_workflow_creates_branch_and_executes(
     """Test that run_workflow creates a branch and executes the workflow."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.WORKFLOW_DEFAULT_BRANCH = "main"
+    mock_settings.workflow_default_branch = "main"
     mock_get_settings.return_value = mock_settings
 
     mock_container = MagicMock()
@@ -241,7 +241,7 @@ def test_run_workflow_handles_failure(mock_get_settings, mock_container_class):
     """Test that run_workflow handles failures gracefully."""
     # Arrange
     mock_settings = MagicMock()
-    mock_settings.WORKFLOW_DEFAULT_BRANCH = "main"
+    mock_settings.workflow_default_branch = "main"
     mock_get_settings.return_value = mock_settings
 
     mock_container = MagicMock()

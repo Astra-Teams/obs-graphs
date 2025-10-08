@@ -106,7 +106,7 @@ def cleanup_old_workflows() -> None:
     This task should be scheduled to run periodically (e.g., daily) to
     ensure that any orphaned temporary directories are cleaned up.
     """
-    clone_base_path = Path(settings.WORKFLOW_CLONE_BASE_PATH)
+    clone_base_path = Path(settings.workflow_clone_base_path)
 
     if not clone_base_path.exists():
         return
@@ -117,7 +117,7 @@ def cleanup_old_workflows() -> None:
         if temp_dir.is_dir():
             # Check if directory is older than configured time
             dir_age = current_time - temp_dir.stat().st_mtime
-            if dir_age > settings.WORKFLOW_TEMP_DIR_CLEANUP_SECONDS:
+            if dir_age > settings.workflow_temp_dir_cleanup_seconds:
                 try:
                     shutil.rmtree(temp_dir)
                     logger.info(f"Cleaned up old workflow directory: {temp_dir}")

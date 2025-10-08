@@ -42,9 +42,13 @@ class ResearchApiClient:
             ValueError: If API response is invalid
         """
         try:
+            endpoint = self.base_url
+            if not endpoint.endswith("/research"):
+                endpoint = f"{endpoint}/research"
+
             with httpx.Client(timeout=self.timeout) as client:
                 response = client.post(
-                    f"{self.base_url}/research",
+                    endpoint,
                     json={"topic": topic},
                 )
                 response.raise_for_status()

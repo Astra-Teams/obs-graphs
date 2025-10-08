@@ -6,18 +6,36 @@ from pathlib import Path
 from typing import AsyncGenerator, Generator
 
 import pytest
-from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.db.database import Base, create_db_session, get_engine
 from src.main import app
-from src.settings import get_settings
+from src.settings import Settings, settings
 
-# Load .env and determine settings
-load_dotenv()
-settings = get_settings()
+
+@pytest.fixture
+def default_settings() -> Settings:
+    """Provide a default Settings instance for tests using mock services."""
+
+    return Settings(
+        DEBUG=True,
+        GITHUB_REPOSITORY="test-user/test-repo",
+    )
+
+
+@pytest.fixture
+def prod_settings() -> Settings:
+    """Provide a production-like Settings instance for integration tests."""
+
+    base = Settings()
+    return base.model_copy(
+        update={
+            "DEBUG": False,
+            "database_url": "postgresql://user:password@test-db:5432/obs_graphs_test_db",
+        }
+    )
 
 # Fixture paths
 MOCKS_ROOT = Path("dev/mocks")
@@ -44,7 +62,7 @@ def db_engine():
     """
     engine = get_engine()
 
-    if settings.USE_SQLITE:
+    if settings.use_sqlite:
         # For SQLite mode, create all tables from models before tests
         Base.metadata.create_all(bind=engine)
     else:
@@ -61,7 +79,7 @@ def db_engine():
 
     yield engine
 
-    if settings.USE_SQLITE:
+    if settings.use_sqlite:
         # For SQLite mode, drop all tables after tests
         Base.metadata.drop_all(bind=engine)
         # Remove the SQLite file

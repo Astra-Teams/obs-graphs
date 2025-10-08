@@ -78,7 +78,7 @@ class GraphBuilder:
             branch_name = f"obsidian-agents/workflow-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
             github_client.create_branch(
                 branch_name=branch_name,
-                base_branch=settings.WORKFLOW_DEFAULT_BRANCH,
+                base_branch=settings.workflow_default_branch,
             )
 
             # Set the branch in the container for workflow execution
