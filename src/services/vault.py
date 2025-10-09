@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from src.protocols import GithubClientProtocol, VaultServiceProtocol
-from src.state import FileChange
+from src.state import FileChange, VaultSummary
 
 
 class VaultService(VaultServiceProtocol):
@@ -61,7 +61,7 @@ class VaultService(VaultServiceProtocol):
             self.branch, bulk_changes, message
         )
 
-    def get_vault_summary(self) -> dict:
+    def get_vault_summary(self) -> VaultSummary:
         """Compute a summary of the vault using the local copy."""
         markdown_files = list(self._vault_path.rglob("*.md"))
         total_articles = len(markdown_files)
@@ -83,8 +83,8 @@ class VaultService(VaultServiceProtocol):
             for file_path in recent_files
         ]
 
-        return {
-            "total_articles": total_articles,
-            "categories": sorted(categories),
-            "recent_updates": recent_updates,
-        }
+        return VaultSummary(
+            total_articles=total_articles,
+            categories=sorted(categories),
+            recent_updates=recent_updates,
+        )

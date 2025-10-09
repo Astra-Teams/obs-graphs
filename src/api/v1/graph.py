@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 from langgraph.graph import END, StateGraph
 
@@ -71,6 +72,12 @@ class GraphBuilder:
         try:
             # Instantiate DependencyContainer
             container = DependencyContainer()
+
+            # Set vault path to submodule for summary access
+            project_root = Path(__file__).resolve().parents[3]
+            raw_path = Path(settings.vault_submodule_path)
+            vault_path = raw_path if raw_path.is_absolute() else project_root / raw_path
+            container.set_vault_path(vault_path)
 
             # Get required services and clients
             github_client = container.get_github_client()

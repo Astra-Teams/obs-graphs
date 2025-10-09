@@ -124,9 +124,9 @@ class ArticleProposalAgent(NodeProtocol):
         # Generate new article proposals
         proposal_prompt = render_prompt(
             "new_article_creation",
-            total_articles=vault_summary.get("total_articles", 0),
-            categories=vault_summary.get("categories", []),
-            recent_updates=vault_summary.get("recent_updates", []),
+            total_articles=vault_summary.total_articles,
+            categories=vault_summary.categories,
+            recent_updates=vault_summary.recent_updates,
         )
 
         try:
