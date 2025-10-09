@@ -2,6 +2,9 @@ name: Run Docker Tests
 
 on:
   workflow_call:
+    secrets:
+      OLLAMA_HOST:
+        required: true
 
 permissions:
   contents: read
