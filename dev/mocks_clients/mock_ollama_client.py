@@ -28,22 +28,46 @@ class MockOllamaClient(BaseLLM):
         **kwargs: Any,
     ) -> str:
         """
-        Mock LLM call - returns fixed test JSON response.
+        Mock LLM call - returns context-aware test JSON response.
 
         Args:
-            prompt: Input prompt (logged but not used).
+            prompt: Input prompt (used to determine response type).
             stop: Stop sequences (ignored in mock).
             run_manager: Callback manager (ignored in mock).
             **kwargs: Additional arguments (ignored in mock).
 
         Returns:
-            Fixed test JSON string.
+            Context-appropriate test JSON string.
         """
         print(f"[MockOllamaClient] _call() invoked with prompt length: {len(prompt)}")
+        print(f"[MockOllamaClient] Prompt preview: {prompt[:200]}...")
         print("[MockOllamaClient] Returning mock LLM response")
 
-        # Return a fixed test JSON response suitable for workflow testing
-        return """{
+        # Detect prompt type and return appropriate JSON
+        if "research topic" in prompt.lower() or "topic proposal" in prompt.lower():
+            print("[MockOllamaClient] Detected: research topic proposal")
+            # Return topic metadata for article_proposal node
+            return """{
+  "title": "Test Article Title",
+  "summary": "This is a test article summary for E2E testing purposes.",
+  "tags": ["testing", "e2e", "mock"],
+  "slug": "test-article-title"
+}"""
+        elif "new article" in prompt.lower() or "article proposal" in prompt.lower():
+            print("[MockOllamaClient] Detected: new article proposal")
+            # Return article proposals for vault analysis
+            return """[
+  {
+    "title": "Test Article 1",
+    "category": "Testing",
+    "description": "A test article for E2E testing",
+    "filename": "test-article-1.md"
+  }
+]"""
+        else:
+            print("[MockOllamaClient] Detected: default fallback")
+            # Default fallback response
+            return """{
   "status": "success",
   "message": "Mock LLM response for testing",
   "suggestions": [

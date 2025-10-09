@@ -40,16 +40,16 @@ class MockGithubClient(GithubClientProtocol):
             f"[MockGithubClient] clone_repository(target_path={target_path}, branch={branch}) called - no actual cloning performed"
         )
 
-    def create_branch(self, repo_path: Path, branch_name: str) -> None:
+    def create_branch(self, branch_name: str, base_branch: str = "main") -> None:
         """
         Mock branch creation - logs operation without actual branch creation.
 
         Args:
-            repo_path: Path to the local git repository.
             branch_name: Name of the new branch to create.
+            base_branch: Base branch to create from (default: "main").
         """
         print(
-            f"[MockGithubClient] create_branch(repo_path={repo_path}, branch_name={branch_name}) called - no actual branch created"
+            f"[MockGithubClient] create_branch(branch_name={branch_name}, base_branch={base_branch}) called - no actual branch created"
         )
 
     def commit_and_push(self, repo_path: Path, branch_name: str, message: str) -> bool:

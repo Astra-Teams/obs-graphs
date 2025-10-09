@@ -15,14 +15,14 @@ FastAPI + LangGraph + Ollama + PostgreSQL/SQLite + Celery + Redis. Docker orches
   - `docker-compose.research.override.yml`: adds research-api with health check
   - `docker-compose.{dev,test}.override.yml`: environment-specific tweaks
 - Dev/test compose commands auto-include research overlay; production excludes it
-- Always run integration tests inside containers (`just e2e-test-{mock,real}`)
 
 ## Testing
-- **Mock E2E** (`just e2e-test-mock`): `USE_MOCK_RESEARCH_API=true`, PostgreSQL, fast
-- **Real E2E** (`just e2e-test-real`): `USE_MOCK_RESEARCH_API=false`, PostgreSQL, full integration
-- E2E tests poll `/api/v1/workflows/{id}` until terminal status (no DB manipulation)
+- **Unit Tests (`just unit-test`)**: Single component tests with all dependencies mocked. Fast (<3s). Tests individual classes/functions in isolation.
+- **Integration Tests (`just intg-test`)**: Multiple real components working together (workflows, tasks, services). External dependencies mocked. Very fast (~0.2s).
+- **E2E Tests (`just e2e-test`)**: Full system in containers (PostgreSQL, Research API, Celery). Slow (~40s+). Tests entire workflow lifecycle via HTTP.
+- E2E tests poll `/api/v1/workflows/{id}` until terminal status
 - Fixtures wait for container health via `docker compose ps --format json`
-- GitHub always mocked; workflows use mock GraphBuilder results
+- GitHub interactions always mocked in all test types
 
 ## DB Migrations
 1. Add models in `src/db/models/`

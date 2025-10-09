@@ -75,8 +75,9 @@ class ArticleProposalAgent(NodeProtocol):
 
         try:
             # Get LLM response with JSON topic proposal
+            # BaseLLM.invoke() returns a string directly, not an AIMessage
             response = self.llm.invoke(topic_prompt)
-            topic_data = self._parse_topic_proposal(response.content)
+            topic_data = self._parse_topic_proposal(response)
 
             if topic_data is None:
                 return AgentResult(
@@ -131,8 +132,9 @@ class ArticleProposalAgent(NodeProtocol):
 
         try:
             # Get LLM response with JSON article proposals
+            # BaseLLM.invoke() returns a string directly, not an AIMessage
             response = self.llm.invoke(proposal_prompt)
-            proposals = self._parse_article_proposals(response.content)
+            proposals = self._parse_article_proposals(response)
 
             if proposals is None:
                 return AgentResult(

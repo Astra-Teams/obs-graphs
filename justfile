@@ -106,21 +106,26 @@ test:
   @just local-test 
   @just docker-test
 
-# Run lightweight local test suite (unit + SQLite DB tests)
-local-test: unit-test sqlt-test
+# Run lightweight local test suite (unit + integration + SQLite DB tests)
+local-test: unit-test intg-test sqlt-test
 
-# Run unit tests locally
+# Run unit tests locally (fastest, single component tests)
 unit-test:
-    @echo "🚀 Running unit tests (local)..."
+    @echo "🚀 Running unit tests (single component, no dependencies)..."
     @uv run pytest tests/unit
+
+# Run integration tests locally (fast, all mocks, no containers)
+intg-test:
+    @echo "🚀 Running integration tests (local, all dependencies mocked)..."
+    @uv run pytest tests/intg
 
 # Run database tests with SQLite (fast, lightweight, no docker)
 sqlt-test:
     @echo "🚀 Running database tests with SQLite..."
     @USE_SQLITE=true uv run pytest tests/db
 
-# Run all Docker-based tests (uses mock for E2E by default)
-docker-test: build-test pstg-test e2e-test-mock
+# Run all Docker-based tests
+docker-test: build-test pstg-test e2e-test
 
 # Build Docker image for testing without leaving artifacts
 build-test:
@@ -141,24 +146,14 @@ pstg-test:
     {{TEST_COMPOSE}} down --remove-orphans; \
     exit $EXIT_CODE
 
-# Run e2e tests with mocked services (fast, lightweight)
-e2e-test-mock:
-	@echo "🚀 Running e2e tests with MOCK research service..."
+# Run e2e tests inside containers against real services (PostgreSQL, Research API)
+e2e-test:
+	@echo "🚀 Running e2e tests with containers (PostgreSQL + Research API)..."
 	@trap '{{TEST_COMPOSE}} down --remove-orphans' EXIT; \
 	{{TEST_COMPOSE}} up -d --build; \
 	{{TEST_COMPOSE}} exec \
 	-e USE_SQLITE=false \
 	-e USE_MOCK_RESEARCH_API=true \
-	obs-api pytest tests/e2e
-
-# Run e2e tests with real research service (full integration test)
-e2e-test-real:
-	@echo "🚀 Running e2e tests with REAL research service..."
-	@trap '{{TEST_COMPOSE}} down --remove-orphans' EXIT; \
-	{{TEST_COMPOSE}} up -d --build; \
-	{{TEST_COMPOSE}} exec \
-	-e USE_SQLITE=false \
-	-e USE_MOCK_RESEARCH_API=false \
 	obs-api pytest tests/e2e
 
 # ==============================================================================

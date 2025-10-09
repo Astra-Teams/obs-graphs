@@ -68,8 +68,13 @@ class TestWorkflowE2E:
             )
             assert response.status_code == 201
             payload = response.json()
+            print(f"\n=== DEBUG: Initial workflow response ===")
+            print(f"Payload: {payload}")
             workflow_id = payload["id"]
             assert "id" in payload
+            print(f"Status: {payload['status']}")
+            print(f"Error message: {payload.get('error_message')}")
+            print(f"===================================\n")
             assert payload["status"] in {"PENDING", "RUNNING"}
 
             # Poll until terminal state
