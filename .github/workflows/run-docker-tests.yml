@@ -17,7 +17,7 @@ jobs:
       matrix:
         test_target: [build-test, pstg-test, e2e-test]
     env:
-      VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
+      OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
       OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${{ secrets.OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN }}
     steps:
       - name: Checkout

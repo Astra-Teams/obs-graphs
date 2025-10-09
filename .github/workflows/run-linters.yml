@@ -10,7 +10,7 @@ jobs:
   run-linters:
     runs-on: ubuntu-latest
     env:
-      VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
+      OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
       OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${{ secrets.OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN }}
     steps:
       - name: Checkout code

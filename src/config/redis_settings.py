@@ -32,13 +32,13 @@ class RedisSettings(BaseSettings):
     @property
     def redis_host(self) -> str:
         """Get Redis host from environment or use default."""
-        return os.getenv("REDIS_HOST", self.redis_host_default)
+        return os.getenv("OBS_GRAPHS_REDIS_HOST", self.redis_host_default)
 
     @computed_field
     @property
     def redis_port(self) -> int:
         """Get Redis port from environment or use default."""
-        return int(os.getenv("REDIS_PORT", str(self.redis_port_default)))
+        return int(os.getenv("OBS_GRAPHS_REDIS_PORT", str(self.redis_port_default)))
 
     @computed_field
     @property

@@ -51,8 +51,8 @@ class DBSettings(BaseSettings):
     @computed_field
     @property
     def database_url(self) -> str:
-        """Assemble the database URL from individual components or use DATABASE_URL env var."""
-        env_url = os.getenv("DATABASE_URL")
+        """Assemble the database URL from individual components or use OBS_GRAPHS_DATABASE_URL env var."""
+        env_url = os.getenv("OBS_GRAPHS_DATABASE_URL")
         if env_url:
             return env_url
         db_name = os.getenv("POSTGRES_DB", self.db_name)

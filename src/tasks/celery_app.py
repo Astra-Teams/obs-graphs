@@ -8,8 +8,8 @@ from celery import Celery
 # This avoids importing settings during module load, which allows tests to mock
 celery_app = Celery(
     "obsidian_agents",
-    broker=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0"),
-    backend=os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
+    broker=os.getenv("OBS_GRAPHS_CELERY_BROKER_URL", "redis://localhost:6379/0"),
+    backend=os.getenv("OBS_GRAPHS_CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
     include=["src.api.v1.tasks.workflow_tasks"],
 )
 

@@ -12,9 +12,9 @@ from src.settings import Settings
 def github_client():
     """Return a GithubClient instance with mocked credentials."""
     settings = Settings(
-        GITHUB_TOKEN="fake-pat",
-        GITHUB_REPOSITORY="user/repo",
-        GITHUB_API_TIMEOUT_SECONDS=30,
+        OBSIDIAN_VAULT_GITHUB_TOKEN="fake-pat",
+        OBSIDIAN_VAULT_REPOSITORY="user/repo",
+        VAULT_GITHUB_API_TIMEOUT_SECONDS=30,
     )
     return GithubClient(settings)
 

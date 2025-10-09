@@ -39,7 +39,7 @@ class GithubClient(GithubClientProtocol):
         # Validate required settings
         if not self.settings.github_token:
             raise ValueError(
-                "GitHub Personal Access Token not configured. Set GITHUB_TOKEN."
+                "GitHub Personal Access Token not configured. Set OBSIDIAN_VAULT_GITHUB_TOKEN."
             )
 
         # Create authenticated client with PAT

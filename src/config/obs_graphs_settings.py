@@ -24,13 +24,13 @@ class ObsGraphsSettings(BaseSettings):
         default=False,
         title="Debug Mode",
         description="Enable mock client mode for development and testing.",
-        alias="DEBUG",
+        alias="OBS_GRAPHS_DEBUG_MODE",
     )
     secret_key: str = Field(
         default="your-secret-key",
         title="Secret Key",
         description="A secret key for signing session data.",
-        alias="SECRET_KEY",
+        alias="OBS_GRAPHS_API_SECRET_KEY",
     )
 
     # --- Service Toggles ---
@@ -89,19 +89,19 @@ class ObsGraphsSettings(BaseSettings):
         default="",
         title="GitHub Token",
         description="Personal Access Token for GitHub API.",
-        alias="GITHUB_TOKEN",
+        alias="OBSIDIAN_VAULT_GITHUB_TOKEN",
     )
     github_repository: str = Field(
         default="your-username/your-repo",
         title="GitHub Repository",
         description="The target repository for creating pull requests.",
-        alias="GITHUB_REPOSITORY",
+        alias="OBSIDIAN_VAULT_REPOSITORY",
     )
     github_api_timeout_seconds: int = Field(
         default=30,
         title="GitHub API Timeout",
         description="Timeout in seconds for GitHub API requests.",
-        alias="GITHUB_API_TIMEOUT_SECONDS",
+        alias="VAULT_GITHUB_API_TIMEOUT_SECONDS",
     )
 
     # --- Workflow Settings ---

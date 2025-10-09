@@ -20,8 +20,8 @@ def default_settings() -> Settings:
     """Provide a default Settings instance for tests using mock services."""
 
     return Settings(
-        DEBUG=True,
-        GITHUB_REPOSITORY="test-user/test-repo",
+        OBS_GRAPHS_DEBUG_MODE=True,
+        OBSIDIAN_VAULT_REPOSITORY="test-user/test-repo",
     )
 
 
@@ -32,7 +32,7 @@ def prod_settings() -> Settings:
     base = Settings()
     return base.model_copy(
         update={
-            "DEBUG": False,
+            "OBS_GRAPHS_DEBUG_MODE": False,
             "database_url": "postgresql://user:password@test-db:5432/obs_graphs_test_db",
         }
     )
