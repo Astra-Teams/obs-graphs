@@ -7,9 +7,10 @@ FROM python:3.12-slim as base
 
 WORKDIR /app
 
-# Install uv
+# Install uv and git (needed for dependencies and submodules)
 RUN --mount=type=cache,target=/root/.cache \
-  pip install uv
+  pip install uv && \
+  apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency definition files  
 COPY pyproject.toml uv.lock README.md ./
@@ -24,8 +25,7 @@ FROM base as dev-deps
 
 # Install system dependencies required for the application
 # - curl: used for debugging in the development container
-# - git: required for git dependencies
-RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Install all dependencies, including development ones
 # Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
@@ -44,8 +44,7 @@ RUN --mount=type=cache,target=/root/.cache \
 # ==============================================================================
 FROM base as prod-deps
 
-# Install git for git dependencies
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+# No additional system dependencies needed for production
 
 # Install only production dependencies
 # Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
@@ -63,10 +62,7 @@ RUN --mount=type=cache,target=/root/.cache \
 # Stage 4: Application Code
 # - Copies application code and initializes submodules
 # ==============================================================================
-FROM python:3.12-slim AS app-code
-
-# Install git for submodules
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+FROM base AS app-code
 
 # Create a non-root user
 RUN groupadd -r appgroup && useradd -r -g appgroup -d /home/appuser -m appuser
@@ -82,7 +78,7 @@ COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
 
 # Initialize submodules if .git exists
-RUN if [ -d .git ]; then git submodule update --init --recursive; fi
+RUN if [ -d .git ]; then git submodule update --init --recursive && chown -R appuser:appgroup .; fi
 
 RUN chmod +x entrypoint.sh
 
@@ -94,10 +90,10 @@ USER appuser
 # - Development environment with all dependencies and debugging tools
 # - Includes curl and other development utilities
 # ==============================================================================
-FROM python:3.12-slim AS development
+FROM base AS development
 
 # Install PostgreSQL client and development tools
-RUN apt-get update && apt-get install -y postgresql-client curl git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client curl && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for development
 RUN groupadd -r appgroup && useradd -r -g appgroup -d /home/appuser -m appuser
@@ -114,8 +110,9 @@ ENV PATH="/app/.venv/bin:${PATH}"
 # Copy application code from app-code stage
 COPY --from=app-code --chown=appuser:appgroup /app ./
 
-# Copy tests for development
+# Copy tests and dev directories for development
 COPY --chown=appuser:appgroup tests/ ./tests
+COPY --chown=appuser:appgroup dev/ ./dev
 
 # Switch to non-root user
 USER appuser
@@ -135,10 +132,10 @@ ENTRYPOINT ["/app/entrypoint.sh"]
 # - Creates the final, lightweight production image.
 # - Copies the lean venv and only necessary application files.
 # ==============================================================================
-FROM python:3.12-slim AS production
+FROM base AS production
 
 # Install PostgreSQL client for database operations
-RUN apt-get update && apt-get install -y postgresql-client git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
 
 
