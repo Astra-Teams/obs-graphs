@@ -120,7 +120,7 @@ async def client(db_session: Session) -> AsyncGenerator[AsyncClient, None]:
 def vault_fixture(tmp_path: Path, default_settings: Settings):
     """Copy the configured vault submodule (or a subpath) into a temp directory."""
 
-    project_root = Path(__file__).resolve().parents[2]
+    project_root = Path(__file__).resolve().parents[1]
     configured_path = Path(default_settings.vault_submodule_path)
     source_root = (
         configured_path
@@ -129,7 +129,9 @@ def vault_fixture(tmp_path: Path, default_settings: Settings):
     )
 
     if not source_root.exists():
-        pytest.skip(f"Vault submodule not available at {source_root}")
+        raise FileNotFoundError(
+            f"Vault submodule not available at {source_root}. Please run 'git submodule update --init --recursive' to initialize submodules."
+        )
 
     def _copy_vault(subpath: str | None = None) -> Path:
         source = source_root if subpath is None else source_root / subpath

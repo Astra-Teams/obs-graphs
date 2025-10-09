@@ -104,4 +104,3 @@ This design keeps runtime execution deterministic and avoids invoking Git operat
 - **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `submodules/obsidian-vault` and `submodules/ollama-deep-researcher`.
 - **Using a different vault?** Update the `submodules/obsidian-vault` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
 - **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. For integration tests, `just e2e-test-mock` keeps PostgreSQL but stubs research responses.
-- **Running tests against an existing stack?** Export `E2E_SKIP_COMPOSE=true` so the E2E fixtures skip container lifecycle management and only perform health checks.

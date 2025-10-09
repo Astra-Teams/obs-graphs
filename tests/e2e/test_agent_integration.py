@@ -15,12 +15,12 @@ class TestAgentIntegration:
     ) -> None:
         """An empty vault should trigger the new article agent via the orchestrator."""
         monkeypatch.setenv("USE_MOCK_LLM", "false")
-        monkeypatch.setenv("OLLAMA_HOST", "http://host.docker.internal:11434/")
         from src.container import get_container
 
         vault_path = vault_fixture("empty_vault")
         container = get_container()
         container.set_branch("test-branch")
+        container.set_vault_path(vault_path)
         orchestrator = container.get_graph_builder()
 
         # Create vault service and request
@@ -31,7 +31,7 @@ class TestAgentIntegration:
         assert plan.strategy == "new_article"
         assert plan.nodes[0] == "article_proposal"
 
-        result = orchestrator.execute_workflow(vault_path, plan)
+        result = orchestrator.execute_workflow(plan, container, "")
         assert result.success is True
         # The important assertion is that we got CREATE changes, not the internal prompts
 
@@ -57,12 +57,12 @@ class TestAgentIntegration:
     ) -> None:
         """A populated vault should trigger the improvement strategy and execute all agents."""
         monkeypatch.setenv("USE_MOCK_LLM", "false")
-        monkeypatch.setenv("OLLAMA_HOST", "http://host.docker.internal:11434/")
         from src.container import get_container
 
         vault_path = vault_fixture("well_maintained_vault")
         container = get_container()
         container.set_branch("test-branch")
+        container.set_vault_path(vault_path)
         orchestrator = container.get_graph_builder()
 
         # Create vault service and request
@@ -73,7 +73,7 @@ class TestAgentIntegration:
         assert plan.strategy == "research_proposal"
         assert plan.nodes[0] == "article_proposal"
 
-        result = orchestrator.execute_workflow(vault_path, plan)
+        result = orchestrator.execute_workflow(plan, container, "test research")
         assert result.success is True
         assert set(result.agent_results.keys()) == set(plan.agents)
         assert result.summary.startswith("Workflow completed with 'improvement'")

@@ -110,39 +110,13 @@ def test_execute_workflow(mock_container):
     graph_builder = GraphBuilder()
 
     # Act
-    result = graph_builder.execute_workflow("test-branch", plan, mock_container)
+    result = graph_builder.execute_workflow(plan, mock_container)
 
     # Assert
     assert isinstance(result, WorkflowResult)
     assert result.success
     assert len(result.node_results) == 1
     assert "article_proposal" in result.node_results
-
-
-def test_execute_workflow_propagates_branch_name_to_initial_state(mock_container):
-    """Test that execute_workflow includes branch_name in initial state."""
-    # Arrange
-    plan = WorkflowPlan(
-        strategy="research_proposal",
-        nodes=["article_proposal"],
-    )
-
-    graph_builder = GraphBuilder()
-
-    # Act
-    result = graph_builder.execute_workflow(
-        "feature-branch",
-        plan,
-        mock_container,
-        prompt="Test research prompt",
-    )
-
-    # Assert
-    assert isinstance(result, WorkflowResult)
-    assert result.success
-
-    # Verify node was called
-    mock_container.get_node.assert_called()
 
 
 def test_execute_workflow_with_research_proposal_strategy(mock_container):
@@ -162,7 +136,6 @@ def test_execute_workflow_with_research_proposal_strategy(mock_container):
 
     # Act
     result = graph_builder.execute_workflow(
-        "research-branch",
         plan,
         mock_container,
         prompt="Research quantum computing",
@@ -195,7 +168,7 @@ def test_execute_workflow_with_multiple_nodes(mock_container):
     graph_builder = GraphBuilder()
 
     # Act
-    result = graph_builder.execute_workflow("test-branch", plan, mock_container)
+    result = graph_builder.execute_workflow(plan, mock_container)
 
     # Assert
     assert isinstance(result, WorkflowResult)

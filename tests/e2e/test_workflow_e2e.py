@@ -64,10 +64,13 @@ class TestWorkflowE2E:
             # Submit workflow
             response = client.post(
                 "/api/v1/workflows/run",
-                json={"prompt": "Create a new article about testing"},
+                json={
+                    "prompt": "Create a new article about testing",
+                    "async_execution": True,
+                },
             )
             if response.status_code != 201:
-                print(f"\n=== DEBUG: Error Response ===")
+                print("\n=== DEBUG: Error Response ===")
                 print(f"Status: {response.status_code}")
                 print(f"Content: {response.text}")
                 print("=============================\n")
@@ -113,7 +116,10 @@ class TestWorkflowE2E:
             # Submit workflow with invalid configuration to trigger failure
             response = client.post(
                 "/api/v1/workflows/run",
-                json={"prompt": "Invalid workflow that should fail"},
+                json={
+                    "prompt": "Invalid workflow that should fail",
+                    "async_execution": True,
+                },
             )
             assert response.status_code == 201
             workflow_id = response.json()["id"]

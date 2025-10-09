@@ -12,16 +12,8 @@ from unittest.mock import Mock, patch
 
 import httpx
 import pytest
-from dotenv import load_dotenv
 
 from src.container import DependencyContainer
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Set environment variables for Docker Compose
-os.environ["HOST_BIND_IP"] = os.getenv("HOST_BIND_IP", "127.0.0.1")
-os.environ["TEST_PORT"] = os.getenv("TEST_PORT", "8002")
 
 
 @pytest.fixture(scope="session")

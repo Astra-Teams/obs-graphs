@@ -95,7 +95,7 @@ class GraphBuilder:
 
             # Execute workflow
             workflow_result = self.execute_workflow(
-                branch_name, workflow_plan, container, request.prompt
+                workflow_plan, container, request.prompt
             )
 
             if not workflow_result.success:
@@ -159,7 +159,6 @@ class GraphBuilder:
 
     def execute_workflow(
         self,
-        branch_name: str,
         workflow_plan: WorkflowPlan,
         container: DependencyContainer,
         prompt: str = "",
@@ -168,7 +167,6 @@ class GraphBuilder:
         Execute workflow using LangGraph state graph.
 
         Args:
-            branch_name: Branch name for this workflow
             workflow_plan: Plan specifying which nodes to run
             container: Dependency container
             prompt: User prompt for research workflows
