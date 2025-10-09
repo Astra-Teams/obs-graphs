@@ -175,9 +175,12 @@ class GraphBuilder:
             WorkflowResult with aggregated changes and results
         """
         # Initialize workflow state
+        vault_service = container.get_vault_service()
+        vault_summary = vault_service.get_vault_summary()
+        
         initial_state: GraphState = {
             "branch_name": branch_name,
-            "vault_summary": {},  # Nodes can fetch what they need via VaultService
+            "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
             "prompt": prompt,
             "accumulated_changes": [],

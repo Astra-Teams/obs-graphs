@@ -7,67 +7,38 @@ from types import SimpleNamespace
 
 import pytest
 
+from src.api.v1.graph import GraphBuilder
+from src.api.v1.schemas import WorkflowRunRequest
 from src.services import VaultService
 from src.state import FileAction
-
-
-@pytest.fixture()
-def mock_llm(monkeypatch: pytest.MonkeyPatch, llm_responses: dict):
-    """Patch Ollama so the new article agent produces deterministic output."""
-    responses = llm_responses
-
-    analysis_payload = json.dumps(
-        [
-            {
-                "title": "Docker Fundamentals",
-                "category": "Technology",
-                "description": "Introduction to containerization with Docker",
-                "filename": "Technology/docker-intro.md",
-            }
-        ]
-    )
-    article_content = responses["article_content_detailed"]["content"]
-
-    class FakeLLM:
-        def __init__(self, *args, **kwargs):
-            self.prompts: list[str] = []
-
-        def invoke(self, prompt: str) -> SimpleNamespace:
-            self.prompts.append(prompt)
-            if "Analyze this Obsidian Vault" in prompt:
-                return SimpleNamespace(content=analysis_payload)
-            if "Create a comprehensive Obsidian markdown article" in prompt:
-                return SimpleNamespace(content=article_content)
-            # Fallback content is rarely used but keeps the agent defensive
-            return SimpleNamespace(
-                content=responses["article_generation_new"]["content"]
-            )
-
-    fake_llm = FakeLLM()
-    monkeypatch.setattr("src.api.v1.nodes.new_article_creation.Ollama", FakeLLM)
-    return fake_llm
 
 
 class TestAgentIntegration:
     """Run the orchestrator end-to-end against vault fixtures."""
 
-    @pytest.mark.skip(reason="Mock LLM integration needs fixing after Ollama migration")
     def test_new_article_agent_creates_content_in_empty_vault(
-        self, vault_fixture, mock_llm
+        self, vault_fixture, monkeypatch
     ) -> None:
         """An empty vault should trigger the new article agent via the orchestrator."""
+        monkeypatch.setenv("USE_MOCK_LLM", "false")
+        monkeypatch.setenv("OLLAMA_HOST", "http://host.docker.internal:11434/")
         from src.container import get_container
 
         vault_path = vault_fixture("empty_vault")
-        orchestrator = get_container().get_graph_builder()
+        container = get_container()
+        container.set_branch("test-branch")
+        orchestrator = container.get_graph_builder()
 
-        plan = orchestrator.determine_workflow_plan(vault_path)
+        # Create vault service and request
+        vault_service = container.get_vault_service()
+        request = WorkflowRunRequest(prompt="")
+
+        plan = orchestrator.determine_workflow_plan(vault_service, request)
         assert plan.strategy == "new_article"
-        assert plan.agents[0] == "new_article_creation"
+        assert plan.nodes[0] == "article_proposal"
 
         result = orchestrator.execute_workflow(vault_path, plan)
         assert result.success is True
-        # Note: mock_llm.prompts may be empty if the agent is called through container
         # The important assertion is that we got CREATE changes, not the internal prompts
 
         create_changes = [
@@ -87,19 +58,26 @@ class TestAgentIntegration:
             content = created_file.read_text(encoding="utf-8")
             assert "Docker Fundamentals" in content or "REST API" in content
 
-    @pytest.mark.skip(reason="Mock LLM integration needs fixing after Ollama migration")
     def test_improvement_strategy_runs_all_agents(
-        self, vault_fixture, mock_llm
+        self, vault_fixture, monkeypatch
     ) -> None:
         """A populated vault should trigger the improvement strategy and execute all agents."""
+        monkeypatch.setenv("USE_MOCK_LLM", "false")
+        monkeypatch.setenv("OLLAMA_HOST", "http://host.docker.internal:11434/")
         from src.container import get_container
 
         vault_path = vault_fixture("well_maintained_vault")
-        orchestrator = get_container().get_graph_builder()
+        container = get_container()
+        container.set_branch("test-branch")
+        orchestrator = container.get_graph_builder()
 
-        plan = orchestrator.determine_workflow_plan(vault_path)
-        assert plan.strategy == "improvement"
-        assert plan.agents[0] == "article_improvement"
+        # Create vault service and request
+        vault_service = container.get_vault_service()
+        request = WorkflowRunRequest(prompt="test research")
+
+        plan = orchestrator.determine_workflow_plan(vault_service, request)
+        assert plan.strategy == "research_proposal"
+        assert plan.nodes[0] == "article_proposal"
 
         result = orchestrator.execute_workflow(vault_path, plan)
         assert result.success is True

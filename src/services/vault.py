@@ -111,3 +111,30 @@ class VaultService(VaultServiceProtocol):
         )
 
         return commit_sha
+
+    def get_vault_summary(self) -> dict:
+        """
+        Get a summary of the vault including article count, categories, and recent updates.
+
+        Returns:
+            Dictionary with total_articles, categories, recent_updates.
+        """
+        files = self.list_files()
+        md_files = [f for f in files if f.endswith('.md')]
+        total_articles = len(md_files)
+        
+        # Categories are top-level directories
+        categories = set()
+        for f in md_files:
+            if '/' in f:
+                category = f.split('/')[0]
+                categories.add(category)
+        
+        # Recent updates - for simplicity, return some files
+        recent_updates = md_files[:5]  # Just first 5 as example
+        
+        return {
+            "total_articles": total_articles,
+            "categories": list(categories),
+            "recent_updates": recent_updates,
+        }

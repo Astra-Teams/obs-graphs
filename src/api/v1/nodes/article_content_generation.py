@@ -78,7 +78,7 @@ class ArticleContentGenerationAgent(NodeProtocol):
                 article_content = self._generate_article_content(proposal, timestamp)
                 changes.append(
                     FileChange(
-                        path=proposal["path"],
+                        path=proposal["filename"],
                         action=FileAction.CREATE,
                         content=article_content,
                     )
