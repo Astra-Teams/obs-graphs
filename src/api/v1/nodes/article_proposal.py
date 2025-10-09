@@ -1,7 +1,6 @@
 """Agent for proposing new articles based on vault analysis."""
 
 import json
-from pathlib import Path
 
 from langchain_community.llms import Ollama
 
@@ -30,34 +29,45 @@ class ArticleProposalAgent(NodeProtocol):
         Validate that the context contains required information.
 
         Args:
-            context: Must contain 'prompt' for research topic generation
+            context: Must contain 'prompt' for research topic generation or 'vault_summary' for new article
 
         Returns:
             True if context is valid, False otherwise
         """
-        return (
-            "prompt" in context
-            and isinstance(context["prompt"], str)
-            and len(context["prompt"].strip()) > 0
-        )
+        strategy = context.get("strategy", "research_proposal")
+        if strategy == "new_article":
+            return "vault_summary" in context
+        else:
+            return (
+                "prompt" in context
+                and isinstance(context["prompt"], str)
+                and len(context["prompt"].strip()) > 0
+            )
 
-    def execute(self, vault_path: Path, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> AgentResult:
+        """
+        Execute research topic proposal or new article proposal based on strategy.
+        """
+        if not self.validate_input(context):
+            raise ValueError("Invalid context: required fields missing")
+
+        strategy = context.get("strategy", "research_proposal")
+
+        if strategy == "new_article":
+            return self._execute_new_article_proposal(context)
+        else:
+            return self._execute_research_topic_proposal(context)
+
+    def _execute_research_topic_proposal(self, context: dict) -> AgentResult:
         """
         Execute research topic proposal based on user prompt.
 
         Args:
-            vault_path: Path to the local clone of the Obsidian Vault
             context: Dictionary containing 'prompt' with user's research request
 
         Returns:
             AgentResult with topic metadata (title, summary, tags, slug)
-
-        Raises:
-            ValueError: If input validation fails
         """
-        if not self.validate_input(context):
-            raise ValueError("Invalid context: prompt is required")
-
         prompt = context["prompt"].strip()
 
         # Generate research topic from prompt
@@ -99,6 +109,91 @@ class ArticleProposalAgent(NodeProtocol):
                 metadata={"error": str(e)},
             )
 
+    def _execute_new_article_proposal(self, context: dict) -> AgentResult:
+        """
+        Execute new article proposal based on vault analysis.
+
+        Args:
+            context: Dictionary containing 'vault_summary'
+
+        Returns:
+            AgentResult with article proposals
+        """
+        vault_summary = context["vault_summary"]
+
+        # Generate new article proposals
+        proposal_prompt = render_prompt(
+            "new_article_creation",
+            total_articles=vault_summary.get("total_articles", 0),
+            categories=vault_summary.get("categories", []),
+            recent_updates=vault_summary.get("recent_updates", []),
+        )
+
+        try:
+            # Get LLM response with JSON article proposals
+            response = self.llm.invoke(proposal_prompt)
+            proposals = self._parse_article_proposals(response.content)
+
+            if proposals is None:
+                return AgentResult(
+                    success=False,
+                    changes=[],
+                    message="Failed to parse LLM response: malformed JSON",
+                    metadata={"error": "malformed_json"},
+                )
+
+            # Store article proposals for downstream nodes
+            metadata = {
+                "article_proposals": proposals,
+            }
+
+            message = f"Generated {len(proposals)} new article proposals"
+
+            return AgentResult(
+                success=True, changes=[], message=message, metadata=metadata
+            )
+
+        except Exception as e:
+            return AgentResult(
+                success=False,
+                changes=[],
+                message=f"Failed to generate article proposals: {str(e)}",
+                metadata={"error": str(e)},
+            )
+
+    def _parse_article_proposals(self, llm_response: str) -> list | None:
+        """
+        Parse LLM response to extract article proposals JSON array.
+
+        Args:
+            llm_response: Raw response from LLM
+
+        Returns:
+            List of proposal dictionaries, or None if parsing fails
+        """
+        # Try to extract JSON from the response by finding the first '[' and last ']'
+        start_index = llm_response.find("[")
+        end_index = llm_response.rfind("]")
+        if start_index != -1 and end_index > start_index:
+            json_str = llm_response[start_index : end_index + 1]
+            try:
+                proposals = json.loads(json_str)
+                if isinstance(proposals, list):
+                    # Validate each proposal
+                    for proposal in proposals:
+                        required_fields = [
+                            "title",
+                            "category",
+                            "description",
+                            "filename",
+                        ]
+                        if not all(k in proposal for k in required_fields):
+                            return None
+                    return proposals
+            except json.JSONDecodeError:
+                pass
+        return None
+
     def _parse_topic_proposal(self, llm_response: str) -> dict | None:
         """
         Parse LLM response to extract topic proposal JSON.
@@ -107,7 +202,7 @@ class ArticleProposalAgent(NodeProtocol):
             llm_response: Raw response from LLM
 
         Returns:
-            Dictionary with title, summary, tags, slug, or None if parsing fails
+            Topic proposal dictionary, or None if parsing fails
         """
         # Try to extract JSON from the response by finding the first '{' and last '}'
         start_index = llm_response.find("{")
@@ -116,17 +211,15 @@ class ArticleProposalAgent(NodeProtocol):
             json_str = llm_response[start_index : end_index + 1]
             try:
                 topic_data = json.loads(json_str)
-                # Validate required fields
-                required_fields = ["title", "summary", "tags", "slug"]
-                if all(k in topic_data for k in required_fields):
-                    # Validate tags format
-                    if (
-                        isinstance(topic_data["tags"], list)
-                        and 3 <= len(topic_data["tags"]) <= 6
-                    ):
-                        # Ensure lowercase tags
-                        topic_data["tags"] = [tag.lower() for tag in topic_data["tags"]]
-                        return topic_data
+                if isinstance(topic_data, dict):
+                    # Validate required fields
+                    required_fields = ["title", "summary", "tags", "slug"]
+                    if not all(k in topic_data for k in required_fields):
+                        return None
+                    # Ensure tags is a list
+                    if not isinstance(topic_data["tags"], list):
+                        return None
+                    return topic_data
             except json.JSONDecodeError:
                 pass
         return None

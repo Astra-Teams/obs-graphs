@@ -66,6 +66,7 @@ class GraphBuilder:
             WorkflowResult with execution results
         """
         settings = get_settings()
+        branch_name = ""
 
         try:
             # Instantiate DependencyContainer
@@ -78,7 +79,7 @@ class GraphBuilder:
             branch_name = f"obsidian-agents/workflow-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
             github_client.create_branch(
                 branch_name=branch_name,
-                base_branch=settings.WORKFLOW_DEFAULT_BRANCH,
+                base_branch=settings.workflow_default_branch,
             )
 
             # Set the branch in the container for workflow execution
@@ -114,6 +115,7 @@ class GraphBuilder:
                 changes=[],
                 summary=f"Workflow failed: {str(e)}",
                 node_results={},
+                branch_name=branch_name,
             )
 
     def determine_workflow_plan(
@@ -175,9 +177,11 @@ class GraphBuilder:
             WorkflowResult with aggregated changes and results
         """
         # Initialize workflow state
+        vault_service = container.get_vault_service()
+        vault_summary = vault_service.get_vault_summary()
+
         initial_state: GraphState = {
-            "branch_name": branch_name,
-            "vault_summary": {},  # Nodes can fetch what they need via VaultService
+            "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
             "prompt": prompt,
             "accumulated_changes": [],
@@ -270,7 +274,6 @@ class GraphBuilder:
                 "prompt": state["prompt"],
                 "previous_changes": state["accumulated_changes"],
                 "previous_results": state["node_results"],
-                "branch_name": state["branch_name"],
             }
 
             # Add metadata from previous nodes to context

@@ -13,9 +13,10 @@ class GithubPRCreationAgent(NodeProtocol):
     CommitChangesAgent, which should run before this agent.
     """
 
-    def __init__(self, github_client: GithubClientProtocol):
+    def __init__(self, github_client: GithubClientProtocol, vault_service):
         """Initialize the GitHub PR creation agent."""
         self.github_client = github_client
+        self.vault_service = vault_service
         self._settings = get_settings()
 
     def validate_input(self, context: dict) -> bool:
@@ -23,7 +24,7 @@ class GithubPRCreationAgent(NodeProtocol):
         Validate that the context contains required information.
 
         Args:
-            context: Must contain 'strategy', 'accumulated_changes', 'node_results', and 'branch_name'
+            context: Must contain 'strategy', 'accumulated_changes', and 'node_results'
 
         Returns:
             True if context is valid, False otherwise
@@ -32,7 +33,6 @@ class GithubPRCreationAgent(NodeProtocol):
             "strategy",
             "accumulated_changes",
             "node_results",
-            "branch_name",
         ]
         return all(key in context for key in required_keys)
 
@@ -41,7 +41,7 @@ class GithubPRCreationAgent(NodeProtocol):
         Execute GitHub PR creation workflow.
 
         Args:
-            context: Dictionary containing strategy, accumulated_changes, node_results, and branch_name
+            context: Dictionary containing strategy, accumulated_changes, and node_results
 
         Returns:
             AgentResult with PR URL in metadata
@@ -51,13 +51,13 @@ class GithubPRCreationAgent(NodeProtocol):
         """
         if not self.validate_input(context):
             raise ValueError(
-                "Invalid context: strategy, accumulated_changes, node_results, and branch_name are required"
+                "Invalid context: strategy, accumulated_changes, and node_results are required"
             )
 
         strategy = context["strategy"]
         accumulated_changes: list[FileChange] = context["accumulated_changes"]
         node_results: dict = context["node_results"]
-        branch_name: str = context["branch_name"]
+        branch_name: str = self.vault_service.branch
 
         try:
             # If no changes were committed, don't create PR
@@ -77,7 +77,7 @@ class GithubPRCreationAgent(NodeProtocol):
 
             pr = self.github_client.create_pull_request(
                 head=branch_name,
-                base=self._settings.WORKFLOW_DEFAULT_BRANCH,
+                base=self._settings.workflow_default_branch,
                 title=pr_title,
                 body=pr_body,
             )

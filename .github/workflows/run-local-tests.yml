@@ -2,6 +2,9 @@ name: Run Local Tests
 
 on:
   workflow_call:
+    secrets:
+      OLLAMA_HOST:
+        required: true
 
 permissions:
   contents: read
@@ -14,7 +17,7 @@ jobs:
       matrix:
         test_target: [unit, sqlt]
     env:
-      VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
+      OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
       OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${{ secrets.OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN }}
     steps:
       - name: Checkout

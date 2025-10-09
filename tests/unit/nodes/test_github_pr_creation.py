@@ -23,9 +23,17 @@ def mock_github_client():
 
 
 @pytest.fixture
-def agent(mock_github_client):
+def mock_vault_service():
+    """Create a mock vault service instance."""
+    service = MagicMock()
+    service.branch = "test-branch"
+    return service
+
+
+@pytest.fixture
+def agent(mock_github_client, mock_vault_service):
     """Create GithubPRCreationAgent instance."""
-    return GithubPRCreationAgent(mock_github_client)
+    return GithubPRCreationAgent(mock_github_client, mock_vault_service)
 
 
 def test_validate_input_valid(agent):
@@ -34,7 +42,6 @@ def test_validate_input_valid(agent):
         "strategy": "new_article",
         "accumulated_changes": [],
         "node_results": {},
-        "branch_name": "test-branch",
     }
     assert agent.validate_input(context) is True
 
@@ -44,17 +51,15 @@ def test_validate_input_missing_strategy(agent):
     context = {
         "accumulated_changes": [],
         "node_results": {},
-        "branch_name": "test-branch",
     }
     assert agent.validate_input(context) is False
 
 
-def test_validate_input_missing_branch_name(agent):
-    """Test that validate_input rejects missing branch_name."""
+def test_validate_input_missing_node_results(agent):
+    """Test that validate_input rejects missing node_results."""
     context = {
         "strategy": "new_article",
         "accumulated_changes": [],
-        "node_results": {},
     }
     assert agent.validate_input(context) is False
 
@@ -63,7 +68,6 @@ def test_execute_creates_pr_successfully(agent, mock_github_client):
     """Test successful PR creation after commit."""
     context = {
         "strategy": "new_article",
-        "branch_name": "feature-branch",
         "accumulated_changes": [
             FileChange(path="test.md", action=FileAction.CREATE, content="# Test")
         ],
@@ -83,7 +87,7 @@ def test_execute_creates_pr_successfully(agent, mock_github_client):
     assert result.success is True
     assert "Pull request created successfully" in result.message
     assert result.metadata["pr_url"] == "https://github.com/test/repo/pull/1"
-    assert result.metadata["branch_name"] == "feature-branch"
+    assert result.metadata["branch_name"] == "test-branch"
 
     mock_github_client.create_pull_request.assert_called_once()
 
@@ -92,7 +96,6 @@ def test_execute_no_changes_committed(agent, mock_github_client):
     """Test when no changes were committed."""
     context = {
         "strategy": "new_article",
-        "branch_name": "feature-branch",
         "accumulated_changes": [],
         "node_results": {
             "commit_changes": {
@@ -120,7 +123,6 @@ def test_execute_handles_pr_creation_error(agent, mock_github_client):
 
     context = {
         "strategy": "new_article",
-        "branch_name": "feature-branch",
         "accumulated_changes": [
             FileChange(path="test.md", action=FileAction.CREATE, content="# Test")
         ],
@@ -215,7 +217,6 @@ def test_execute_with_research_proposal_strategy(agent, mock_github_client):
     """Test PR creation with research_proposal strategy."""
     context = {
         "strategy": "research_proposal",
-        "branch_name": "research-branch",
         "accumulated_changes": [
             FileChange(
                 path="proposals/quantum-computing.md",

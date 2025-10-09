@@ -24,10 +24,10 @@ def _initialize_factory():
         if _engine is None:
             settings = get_settings()
 
-            # Use USE_SQLITE flag to determine database type
-            # USE_SQLITE=True -> SQLite (offline development/testing)
-            # USE_SQLITE=False -> PostgreSQL (production)
-            if settings.USE_SQLITE:
+            # Use configuration flag to determine database type
+            # use_sqlite=True -> SQLite (offline development/testing)
+            # use_sqlite=False -> PostgreSQL (production)
+            if settings.use_sqlite:
                 # Use SQLite (for DEBUG mode or local testing)
                 # test_db.sqlite3 file will be created in project root
                 sqlite_file_path = "test_db.sqlite3"
@@ -40,9 +40,11 @@ def _initialize_factory():
 
             else:
                 # Use PostgreSQL (for production/dev containers)
-                if not settings.DATABASE_URL:
-                    raise ValueError("DATABASE_URL must be set when USE_SQLITE=False.")
-                db_url = settings.DATABASE_URL
+                if not settings.db_settings.database_url:
+                    raise ValueError(
+                        "OBS_GRAPHS_DATABASE_URL must be set when USE_SQLITE is False."
+                    )
+                db_url = settings.db_settings.database_url
                 _engine = create_engine(db_url, pool_pre_ping=True)
 
             _SessionLocal = sessionmaker(

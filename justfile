@@ -42,7 +42,7 @@ setup:
         echo ".env already exists. Skipping creation."; \
     fi
     @echo "💡 You can customize .env for your specific needs:"
-    @echo "   📝 Change OLLAMA_BASE_URL to switch between container/host Ollama"
+    @echo "   📝 Change OLLAMA_HOST to switch between container/host Ollama"
     @echo "   📝 Adjust other settings as needed"
     @echo ""
     @echo "Pulling PostgreSQL image for tests..."
@@ -77,24 +77,7 @@ down-prod:
 rebuild:
     @echo "Rebuilding and restarting API service..."
     @{{DEV_COMPOSE}} down --remove-orphans
-    @{{DEV_COMPOSE}} build --no-cache api
-    @{{DEV_COMPOSE}} up -d
-
-# ==============================================================================
-# CODE QUALITY
-# ==============================================================================
-
-# Format code with black and ruff --fix
-format:
-    @echo "Formatting code with black and ruff..."
-    @uv run black .
-    @uv run ruff check . --fix
-
-# Lint code with black check and ruff
-lint:
-    @echo "Linting code with black check and ruff..."
-    @uv run black --check .
-    @uv run ruff check .
+    @{{DEV_COMPOSE}} build --no-cache obs-api
 
 # ==============================================================================
 # TESTING
@@ -132,9 +115,9 @@ build-test:
 # Run database tests with PostgreSQL (robust, production-like)
 pstg-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build api db
+    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build obs-api db
     @echo "Running database tests inside api container (against PostgreSQL)..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} exec api pytest tests/db; \
+    @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-api pytest tests/db; \
     EXIT_CODE=$?; \
     echo "🔴 Stopping TEST containers..."; \
     {{TEST_COMPOSE}} down --remove-orphans; \
@@ -145,6 +128,22 @@ e2e-test:
     @echo "🚀 Running e2e tests..."
     @USE_SQLITE=true POSTGRES_DB=obs-graph-test uv run pytest tests/e2e
 
+# ==============================================================================
+# CODE QUALITY
+# ==============================================================================
+
+# Format code with black and ruff --fix
+format:
+    @echo "Formatting code with black and ruff..."
+    @uv run black .
+    @uv run ruff check . --fix
+
+# Lint code with black check and ruff
+lint:
+    @echo "Linting code with black check and ruff..."
+    @uv run black --check .
+    @uv run ruff check .
+    
 # ==============================================================================
 # CLEANUP
 # ==============================================================================

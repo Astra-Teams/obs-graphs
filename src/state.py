@@ -87,7 +87,6 @@ class VaultSummary:
 class GraphState(TypedDict):
     """State passed between nodes in the workflow graph."""
 
-    branch_name: str
     vault_summary: Dict
     strategy: str
     prompt: str
@@ -118,7 +117,6 @@ class AgentResultModel(BaseModel):
 class GraphStateModel(BaseModel):
     """Pydantic model for validating and serializing graph state."""
 
-    vault_path: str  # Path as string for serialization
     vault_summary: VaultSummaryModel
     strategy: WorkflowStrategy
     prompt: str

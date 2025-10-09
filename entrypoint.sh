@@ -4,11 +4,16 @@
 # or if an unset variable is used ('u').
 set -eu
 
+# Ensure git submodules are initialized when repository metadata is available
+if [ -d ".git" ]; then
+    git submodule update --init --recursive
+fi
+
 # --- Wait for DB and run migrations ---
 # This section is skipped if the command is not the default uvicorn server
 # (e.g., if a user runs 'shell' or another command).
 case "${1:-}" in
-    "" | uvicorn | celery)
+    "" | uvicorn | celery | pytest)
         count=0
         echo "Waiting for database to be ready..."
         

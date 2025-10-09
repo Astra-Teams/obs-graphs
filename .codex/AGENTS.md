@@ -45,14 +45,18 @@ Define mocks in `dev/mock_vault/` with appropriate directory structure.
 
 ### Git Submodules
 
+- **obsidian-vault** (`submodules/obsidian-vault`)
+  - Local checkout of the Obsidian content processed during workflows.
+  - Workflows copy this directory into a temp workspace; keep it in sync with the vault repository you want agents to modify.
+  - Do not commit repo-level configuration changes inside the submodule—those should happen upstream in the vault repository.
 - **ollama-deep-researcher** (`submodules/ollama-deep-researcher`)
   - Source for the external research service consumed via HTTP (`RESEARCH_API_BASE_URL`, default `http://ollama-deep-researcher:8000`).
   - Run the service separately (e.g. build the submodule's Dockerfile or `uv run uvicorn ollama_deep_researcher.api.main:app`) whenever `USE_MOCK_RESEARCH_API=false`.
   - CI/local installs no longer pull a Python package; the submodule is the reference implementation.
 
 **Important**:
-- Fetch with `git submodule update --init --recursive` after cloning.
-- Avoid editing the submodule directly here—contribute upstream instead.
+- Fetch with `git submodule update --init --recursive` after cloning so both submodules are available.
+- Avoid editing submodules directly here—contribute upstream instead.
 
 ### DB Changes
 1. Create models in `src/db/models/`

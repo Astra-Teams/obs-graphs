@@ -2,26 +2,29 @@
 
 import os
 import shutil
+import uuid
 from pathlib import Path
 from typing import AsyncGenerator, Generator
 
 import pytest
-from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.db.database import Base, create_db_session, get_engine
 from src.main import app
-from src.settings import get_settings
+from src.settings import Settings
 
-# Load .env and determine settings
-load_dotenv()
-settings = get_settings()
+
+@pytest.fixture(scope="session")
+def default_settings() -> Settings:
+    """Provide a default Settings instance for tests."""
+
+    return Settings()
+
 
 # Fixture paths
 MOCKS_ROOT = Path("dev/mocks")
-VAULTS_ROOT = MOCKS_ROOT / "vault"
 
 
 # =============================================================================
@@ -30,7 +33,7 @@ VAULTS_ROOT = MOCKS_ROOT / "vault"
 
 
 @pytest.fixture(scope="session")
-def db_engine():
+def db_engine(default_settings: Settings):
     """
     Fixture that provides DB engine for the entire test session.
 
@@ -44,7 +47,7 @@ def db_engine():
     """
     engine = get_engine()
 
-    if settings.USE_SQLITE:
+    if default_settings.use_sqlite:
         # For SQLite mode, create all tables from models before tests
         Base.metadata.create_all(bind=engine)
     else:
@@ -61,7 +64,7 @@ def db_engine():
 
     yield engine
 
-    if settings.USE_SQLITE:
+    if default_settings.use_sqlite:
         # For SQLite mode, drop all tables after tests
         Base.metadata.drop_all(bind=engine)
         # Remove the SQLite file
@@ -114,20 +117,30 @@ async def client(db_session: Session) -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest.fixture
-def vault_fixture(tmp_path: Path):
-    """
-    Provides a function to copy vault fixtures to tmp_path.
+def vault_fixture(tmp_path: Path, default_settings: Settings):
+    """Copy the configured vault submodule (or a subpath) into a temp directory."""
 
-    Usage:
-        def test_something(vault_fixture):
-            vault_path = vault_fixture("empty_vault")
-            # ... test code ...
-    """
+    project_root = Path(__file__).resolve().parents[2]
+    configured_path = Path(default_settings.vault_submodule_path)
+    source_root = (
+        configured_path
+        if configured_path.is_absolute()
+        else project_root / configured_path
+    )
 
-    def _copy_vault(fixture_name: str) -> Path:
-        """Copy a vault fixture to tmp_path and return its path."""
-        source = VAULTS_ROOT / fixture_name
-        destination = tmp_path / fixture_name
+    if not source_root.exists():
+        pytest.skip(f"Vault submodule not available at {source_root}")
+
+    def _copy_vault(subpath: str | None = None) -> Path:
+        source = source_root if subpath is None else source_root / subpath
+        if not source.exists():
+            if subpath is not None:
+                source = source_root
+            else:
+                raise FileNotFoundError(f"Vault source path does not exist: {source}")
+
+        destination_name = (subpath or "obsidian_vault").replace("/", "_")
+        destination = tmp_path / f"{destination_name}_{uuid.uuid4().hex[:8]}"
         shutil.copytree(source, destination)
         return destination
 

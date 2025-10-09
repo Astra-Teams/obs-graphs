@@ -1,6 +1,6 @@
 """Unit tests for Celery workflow tasks."""
 
-import shutil
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -37,20 +37,10 @@ def celery_eager_mode():
     celery_app.conf.update(task_always_eager=False, task_eager_propagates=False)
 
 
-@pytest.fixture
-def temp_vault_path(tmp_path):
-    """Create a temporary directory for vault clones."""
-    vault_path = tmp_path / "test_vault"
-    vault_path.mkdir()
-    yield vault_path
-    # Cleanup
-    if vault_path.exists():
-        shutil.rmtree(vault_path)
-
-
 class TestRunWorkflowTask:
     """Tests for run_workflow_task Celery task."""
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_github_client")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_vault_service")
@@ -61,9 +51,11 @@ class TestRunWorkflowTask:
         mock_vault_service,
         mock_github_client,
         mock_get_db,
+        mock_prepare_dir,
         test_db,
     ):
         """Test that task retrieves workflow record from database."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         # Setup
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
@@ -93,12 +85,14 @@ class TestRunWorkflowTask:
         assert updated_workflow.status == WorkflowStatus.COMPLETED
         assert updated_workflow.pr_url == "https://github.com/test/repo/pull/1"
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_updates_status_to_running(
-        self, mock_graph_builder, mock_get_db, test_db
+        self, mock_graph_builder, mock_get_db, mock_prepare_dir, test_db
     ):
         """Test that task updates workflow status to RUNNING at start."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         workflow_id = workflow.id
         mock_get_db.return_value = iter([test_db])
@@ -116,15 +110,18 @@ class TestRunWorkflowTask:
         assert workflow.status == WorkflowStatus.FAILED
         assert workflow.started_at is not None
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_calls_run_workflow_and_updates_db(
         self,
         mock_graph_builder,
         mock_get_db,
+        mock_prepare_dir,
         test_db,
     ):
         """Test that task calls run_workflow successfully."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
 
@@ -152,15 +149,18 @@ class TestRunWorkflowTask:
         )
         assert updated_workflow.status == WorkflowStatus.COMPLETED
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_creates_pull_request(
         self,
         mock_graph_builder,
         mock_get_db,
+        mock_prepare_dir,
         test_db,
     ):
         """Test that task stores PR URL in database."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
 
@@ -185,15 +185,18 @@ class TestRunWorkflowTask:
         )
         assert updated_workflow.pr_url == "https://github.com/test/repo/pull/42"
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_updates_workflow_to_completed(
         self,
         mock_graph_builder,
         mock_get_db,
+        mock_prepare_dir,
         test_db,
     ):
         """Test that task updates workflow to COMPLETED on success."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
 
@@ -219,15 +222,18 @@ class TestRunWorkflowTask:
         assert updated_workflow.status == WorkflowStatus.COMPLETED
         assert updated_workflow.completed_at is not None
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_updates_workflow_to_failed_on_error(
         self,
         mock_graph_builder,
         mock_get_db,
+        mock_prepare_dir,
         test_db,
     ):
         """Test that task updates workflow to FAILED and stores error message on failure."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
 
@@ -249,9 +255,13 @@ class TestRunWorkflowTask:
         assert updated_workflow.error_message == "Workflow error"
         assert updated_workflow.completed_at is not None
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    def test_task_raises_error_for_nonexistent_workflow(self, mock_get_db, test_db):
+    def test_task_raises_error_for_nonexistent_workflow(
+        self, mock_get_db, mock_prepare_dir, test_db
+    ):
         """Test that task raises error if workflow ID doesn't exist."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         mock_get_db.return_value = iter([test_db])
 
         with pytest.raises(Exception) as exc_info:
@@ -259,15 +269,18 @@ class TestRunWorkflowTask:
 
         assert "not found" in str(exc_info.value).lower()
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_propagates_prompt_to_workflow_request(
         self,
         mock_graph_builder,
         mock_get_db,
+        mock_prepare_dir,
         test_db,
     ):
         """Test that task propagates prompt from workflow record to WorkflowRunRequest."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         # Create workflow with prompt
         workflow = Workflow(
             prompt="Test research prompt for propagation",
@@ -303,15 +316,18 @@ class TestRunWorkflowTask:
         assert hasattr(request, "prompt")
         assert request.prompt == "Test research prompt for propagation"
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_propagates_empty_prompt_when_null(
         self,
         mock_graph_builder,
         mock_get_db,
+        mock_prepare_dir,
         test_db,
     ):
         """Test that task propagates empty string when workflow prompt is NULL."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         # Create workflow with NULL prompt (old records)
         workflow = Workflow(
             prompt=None,
@@ -347,15 +363,18 @@ class TestRunWorkflowTask:
         assert hasattr(request, "prompt")
         assert request.prompt == ""
 
+    @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
     @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
     def test_task_propagates_prompt_with_strategy(
         self,
         mock_graph_builder,
         mock_get_db,
+        mock_prepare_dir,
         test_db,
     ):
         """Test that task propagates both prompt and strategy to WorkflowRunRequest."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
         from src.state import WorkflowStrategy
 
         # Create workflow with prompt and strategy

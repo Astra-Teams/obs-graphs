@@ -1,20 +1,9 @@
 services:
-  ollama:
-    build:
-      context: ./ollama
-      dockerfile: Dockerfile
-      args:
-        BUILT_IN_OLLAMA_MODELS: ${CONTAINER_OLLAMA_MODEL}
-    volumes:
-      - ollama:/root/.ollama
-    networks:
-      - backend
-
   db:
     environment:
       - POSTGRES_DB=${POSTGRES_DEV_DB}
 
-  api:
+  obs-api:
     build:
       target: development
     ports: !override
@@ -34,9 +23,3 @@ services:
     volumes:
       - .:/app
       - /app/.venv
-
-volumes:
-  ollama:
-    driver: local
-    name: ${PROJECT_NAME}-ollama
-    external: false

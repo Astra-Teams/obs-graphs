@@ -27,7 +27,7 @@ services:
     networks:
       - backend
 
-  api:
+  obs-api:
     build:
       context: .
       dockerfile: Dockerfile
@@ -46,6 +46,7 @@ services:
     environment:
       - USE_SQLITE=false
       - POSTGRES_DB=${POSTGRES_HOST_DB}
+      - OLLAMA_HOST=${OLLAMA_HOST}
     healthcheck:
       test: [ "CMD", "python", "-c", "import sys, urllib.request; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/health').getcode() == 200 else sys.exit(1)" ]
       interval: 30s
@@ -74,6 +75,7 @@ services:
     environment:
       - USE_SQLITE=false
       - POSTGRES_DB=${POSTGRES_HOST_DB}
+      - OLLAMA_HOST=${OLLAMA_HOST}
     volumes:
       - /tmp/obsidian-workflows:/tmp/obsidian-workflows
     networks:

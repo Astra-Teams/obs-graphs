@@ -7,7 +7,7 @@ from github.GitTree import GitTree
 from github.PullRequest import PullRequest
 
 from src.protocols import GithubClientProtocol
-from src.settings import ObsGraphsSettings
+from src.settings import Settings
 
 
 class GithubClient(GithubClientProtocol):
@@ -18,7 +18,7 @@ class GithubClient(GithubClientProtocol):
     methods for repository operations via the GitHub API.
     """
 
-    def __init__(self, settings: ObsGraphsSettings):
+    def __init__(self, settings: Settings):
         """Initialize the GitHub client with settings."""
         self.settings = settings
         self._github_client: Optional[Github] = None
@@ -37,15 +37,15 @@ class GithubClient(GithubClientProtocol):
             return self._github_client
 
         # Validate required settings
-        if not self.settings.VAULT_GITHUB_TOKEN:
+        if not self.settings.github_token:
             raise ValueError(
-                "GitHub Personal Access Token not configured. Set VAULT_GITHUB_TOKEN."
+                "GitHub Personal Access Token not configured. Set OBSIDIAN_VAULT_GITHUB_TOKEN."
             )
 
         # Create authenticated client with PAT
         self._github_client = Github(
-            self.settings.VAULT_GITHUB_TOKEN,
-            timeout=self.settings.GITHUB_API_TIMEOUT_SECONDS,
+            self.settings.github_token,
+            timeout=self.settings.github_api_timeout_seconds,
         )
         return self._github_client
 
@@ -62,7 +62,7 @@ class GithubClient(GithubClientProtocol):
         """
         try:
             github_client = self.authenticate()
-            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+            repo = github_client.get_repo(self.settings.github_repository)
 
             # Get the base branch reference
             base_ref = repo.get_git_ref(f"heads/{base_branch}")
@@ -90,7 +90,7 @@ class GithubClient(GithubClientProtocol):
         """
         try:
             github_client = self.authenticate()
-            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+            repo = github_client.get_repo(self.settings.github_repository)
 
             # Get file content from specified branch
             file_content = repo.get_contents(path, ref=branch)
@@ -121,7 +121,7 @@ class GithubClient(GithubClientProtocol):
         """
         try:
             github_client = self.authenticate()
-            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+            repo = github_client.get_repo(self.settings.github_repository)
 
             # Create pull request
             pr = repo.create_pull(title=title, body=body, head=head, base=base)
@@ -147,7 +147,7 @@ class GithubClient(GithubClientProtocol):
         """
         try:
             github_client = self.authenticate()
-            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+            repo = github_client.get_repo(self.settings.github_repository)
 
             # Get branch reference to get the tree SHA
             branch_ref = repo.get_git_ref(f"heads/{branch}")
@@ -181,7 +181,7 @@ class GithubClient(GithubClientProtocol):
         """
         try:
             github_client = self.authenticate()
-            repo = github_client.get_repo(self.settings.OBSIDIAN_VAULT_REPO_FULL_NAME)
+            repo = github_client.get_repo(self.settings.github_repository)
 
             # 1. Get the latest commit SHA of the branch
             branch_ref = repo.get_git_ref(f"heads/{branch}")

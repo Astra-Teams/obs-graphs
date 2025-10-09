@@ -1,5 +1,6 @@
 """Dependency injection container for the Obsidian Vault workflow application."""
 
+from pathlib import Path
 from typing import Dict, Optional, Union
 
 import redis
@@ -14,7 +15,7 @@ from src.protocols import (
     VaultServiceProtocol,
 )
 from src.services import VaultService
-from src.settings import get_settings
+from src.settings import settings
 
 
 class DependencyContainer:
@@ -29,6 +30,7 @@ class DependencyContainer:
         self._llm: Optional[BaseLLM] = None
         self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
         self._current_branch: Optional[str] = None
+        self._vault_path: Optional[Path] = None
 
         # Registry of node classes (module, class_name)
         self._node_classes = {
@@ -61,8 +63,7 @@ class DependencyContainer:
         Returns MockGithubClient if USE_MOCK_GITHUB=True, otherwise GithubClient.
         """
         if self._github_client is None:
-            settings = get_settings()
-            if settings.USE_MOCK_GITHUB:
+            if settings.use_mock_github:
                 from dev.mocks_clients import MockGithubClient
 
                 self._github_client = MockGithubClient()
@@ -83,6 +84,14 @@ class DependencyContainer:
         if "commit_changes" in self._nodes:
             del self._nodes["commit_changes"]
 
+    def set_vault_path(self, vault_path: Path) -> None:
+        """Set the local vault path used during workflow execution."""
+        self._vault_path = vault_path
+        if self._vault_service is not None and hasattr(
+            self._vault_service, "set_vault_path"
+        ):
+            self._vault_service.set_vault_path(vault_path)
+
     def get_vault_service(self, branch: Optional[str] = None) -> VaultServiceProtocol:
         """
         Get the vault service instance for a specific branch.
@@ -98,7 +107,8 @@ class DependencyContainer:
         """
         if branch:
             # Direct branch specification (used by GraphBuilder)
-            return VaultService(self.get_github_client(), branch)
+            service = VaultService(self.get_github_client(), branch, self._vault_path)
+            return service
 
         if self._current_branch is None:
             raise ValueError(
@@ -107,7 +117,7 @@ class DependencyContainer:
 
         if self._vault_service is None:
             self._vault_service = VaultService(
-                self.get_github_client(), self._current_branch
+                self.get_github_client(), self._current_branch, self._vault_path
             )
         return self._vault_service
 
@@ -118,15 +128,14 @@ class DependencyContainer:
         Returns MockResearchApiClient if USE_MOCK_RESEARCH_API=True, otherwise ResearchApiClient.
         """
         if self._research_client is None:
-            settings = get_settings()
-            if settings.USE_MOCK_RESEARCH_API:
+            if settings.use_mock_research_api:
                 from dev.mocks_clients import MockResearchApiClient
 
                 self._research_client = MockResearchApiClient()
             else:
                 self._research_client = ResearchApiClient(
-                    base_url=settings.RESEARCH_API_BASE_URL,
-                    timeout=settings.RESEARCH_API_TIMEOUT_SECONDS,
+                    base_url=settings.research_api_settings.research_api_url,
+                    timeout=settings.research_api_settings.research_api_timeout_seconds,
                 )
         return self._research_client
 
@@ -137,14 +146,13 @@ class DependencyContainer:
         Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise Ollama.
         """
         if self._llm is None:
-            settings = get_settings()
-            if settings.USE_MOCK_LLM:
+            if settings.use_mock_llm:
                 from dev.mocks_clients import MockOllamaClient
 
                 self._llm = MockOllamaClient()
             else:
                 self._llm = Ollama(
-                    model=settings.OLLAMA_MODEL, base_url=settings.OLLAMA_BASE_URL
+                    model=settings.llm_model, base_url=settings.ollama_host
                 )
         return self._llm
 
@@ -155,14 +163,13 @@ class DependencyContainer:
         Returns FakeRedis if USE_MOCK_REDIS=True, otherwise redis.Redis.
         """
         if self._redis_client is None:
-            settings = get_settings()
-            if settings.USE_MOCK_REDIS:
+            if settings.use_mock_redis:
                 from dev.mocks_clients import MockRedisClient
 
                 self._redis_client = MockRedisClient.get_client()
             else:
                 self._redis_client = redis.Redis.from_url(
-                    settings.CELERY_BROKER_URL, decode_responses=True
+                    settings.redis_settings.celery_broker_url, decode_responses=True
                 )
         return self._redis_client
 
@@ -185,7 +192,9 @@ class DependencyContainer:
             elif name == "commit_changes":
                 self._nodes[name] = node_class(self.get_vault_service())
             elif name == "github_pr_creation":
-                self._nodes[name] = node_class(self.get_github_client())
+                self._nodes[name] = node_class(
+                    self.get_github_client(), self.get_vault_service()
+                )
             elif name == "deep_research":
                 self._nodes[name] = node_class(self.get_research_client())
             else:
