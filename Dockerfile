@@ -114,6 +114,9 @@ ENV PATH="/app/.venv/bin:${PATH}"
 # Copy application code from app-code stage
 COPY --from=app-code --chown=appuser:appgroup /app ./
 
+# Copy tests for development
+COPY --chown=appuser:appgroup tests/ ./tests
+
 # Switch to non-root user
 USER appuser
 
