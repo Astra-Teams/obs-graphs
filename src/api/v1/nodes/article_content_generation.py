@@ -39,7 +39,7 @@ class ArticleContentGenerationAgent(NodeProtocol):
         proposals = context["article_proposals"]
         return isinstance(proposals, list)
 
-    def execute(self, vault_path: Path, context: dict) -> AgentResult:  # noqa: ARG002
+    def execute(self, context: dict) -> AgentResult:
         """
         Execute article content generation based on proposals.
 
@@ -76,9 +76,12 @@ class ArticleContentGenerationAgent(NodeProtocol):
             changes = []
             for proposal in article_proposals:
                 article_content = self._generate_article_content(proposal, timestamp)
+                target_path = Path("drafts/obs-graphs/create-new-article") / proposal[
+                    "filename"
+                ].lstrip("/")
                 changes.append(
                     FileChange(
-                        path=proposal["filename"],
+                        path=str(target_path.as_posix()),
                         action=FileAction.CREATE,
                         content=article_content,
                     )

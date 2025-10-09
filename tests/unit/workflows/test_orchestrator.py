@@ -131,7 +131,10 @@ def test_execute_workflow_propagates_branch_name_to_initial_state(mock_container
 
     # Act
     result = graph_builder.execute_workflow(
-        "feature-branch", plan, mock_container, prompt="Test research prompt"
+        "feature-branch",
+        plan,
+        mock_container,
+        prompt="Test research prompt",
     )
 
     # Assert
@@ -159,7 +162,10 @@ def test_execute_workflow_with_research_proposal_strategy(mock_container):
 
     # Act
     result = graph_builder.execute_workflow(
-        "research-branch", plan, mock_container, prompt="Research quantum computing"
+        "research-branch",
+        plan,
+        mock_container,
+        prompt="Research quantum computing",
     )
 
     # Assert
@@ -217,6 +223,7 @@ def test_run_workflow_creates_branch_and_executes(
     mock_container.get_github_client.return_value = mock_github_client
     mock_container.get_vault_service.return_value = mock_vault_service
     mock_container.get_node.return_value = MockAgent()
+    mock_container.set_vault_path = MagicMock()
 
     mock_container_class.return_value = mock_container
 
@@ -233,6 +240,8 @@ def test_run_workflow_creates_branch_and_executes(
     call_args = mock_github_client.create_branch.call_args
     assert call_args[1]["base_branch"] == "main"
     assert call_args[1]["branch_name"].startswith("obsidian-agents/workflow-")
+    # Note: set_vault_path is no longer called in run_workflow, it's called in workflow_tasks.py
+    mock_container.set_vault_path.assert_not_called()
 
 
 @patch("src.api.v1.graph.DependencyContainer")
@@ -249,6 +258,7 @@ def test_run_workflow_handles_failure(mock_get_settings, mock_container_class):
     mock_github_client.create_branch.side_effect = Exception("Branch creation failed")
 
     mock_container.get_github_client.return_value = mock_github_client
+    mock_container.set_vault_path = MagicMock()
     mock_container_class.return_value = mock_container
 
     graph_builder = GraphBuilder()

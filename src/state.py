@@ -118,7 +118,6 @@ class AgentResultModel(BaseModel):
 class GraphStateModel(BaseModel):
     """Pydantic model for validating and serializing graph state."""
 
-    vault_path: str  # Path as string for serialization
     vault_summary: VaultSummaryModel
     strategy: WorkflowStrategy
     prompt: str

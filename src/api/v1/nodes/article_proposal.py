@@ -1,7 +1,6 @@
 """Agent for proposing new articles based on vault analysis."""
 
 import json
-from pathlib import Path
 
 from langchain_community.llms import Ollama
 
@@ -45,19 +44,9 @@ class ArticleProposalAgent(NodeProtocol):
                 and len(context["prompt"].strip()) > 0
             )
 
-    def execute(self, vault_path: Path, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> AgentResult:
         """
         Execute research topic proposal or new article proposal based on strategy.
-
-        Args:
-            vault_path: Path to the local clone of the Obsidian Vault
-            context: Dictionary containing 'prompt' for research or 'vault_summary' for new articles
-
-        Returns:
-            AgentResult with topic metadata or article proposals
-
-        Raises:
-            ValueError: If input validation fails
         """
         if not self.validate_input(context):
             raise ValueError("Invalid context: required fields missing")
@@ -192,10 +181,50 @@ class ArticleProposalAgent(NodeProtocol):
                 if isinstance(proposals, list):
                     # Validate each proposal
                     for proposal in proposals:
-                        required_fields = ["title", "category", "description", "filename"]
+                        required_fields = [
+                            "title",
+                            "category",
+                            "description",
+                            "filename",
+                        ]
                         if not all(k in proposal for k in required_fields):
                             return None
                     return proposals
+            except json.JSONDecodeError:
+                pass
+        return None
+
+    def _parse_topic_proposal(self, llm_response: str) -> dict | None:
+        """
+        Parse LLM response to extract topic proposal JSON.
+
+        Args:
+            llm_response: Raw response from LLM
+
+        Returns:
+            Topic proposal dictionary, or None if parsing fails
+        """
+        # Try to extract JSON from the response by finding the first '{' and last '}'
+        start_index = llm_response.find("{")
+        end_index = llm_response.rfind("}")
+        if start_index != -1 and end_index > start_index:
+            json_str = llm_response[start_index : end_index + 1]
+            try:
+                topic_data = json.loads(json_str)
+                if isinstance(topic_data, dict):
+                    # Validate required fields
+                    required_fields = ["title", "summary", "tags", "slug"]
+                    if not all(k in topic_data for k in required_fields):
+                        return None
+                    # Ensure tags is a list
+                    if not isinstance(topic_data["tags"], list):
+                        return None
+                    # Ensure at least 3 tags
+                    if len(topic_data["tags"]) < 3:
+                        return None
+                    # Convert tags to lowercase
+                    topic_data["tags"] = [tag.lower() for tag in topic_data["tags"]]
+                    return topic_data
             except json.JSONDecodeError:
                 pass
         return None

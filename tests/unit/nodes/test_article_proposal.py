@@ -62,7 +62,7 @@ def test_execute_with_valid_prompt(agent, vault_path):
     """Test that execute returns topic proposal successfully."""
     context = {"prompt": "Research the impact of transformers on NLP"}
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is True
@@ -84,7 +84,7 @@ def test_execute_with_malformed_json(agent, vault_path, mock_llm):
 
     context = {"prompt": "Test prompt"}
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is False
@@ -107,7 +107,7 @@ def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
 
     context = {"prompt": "Test prompt"}
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is False
@@ -118,8 +118,8 @@ def test_execute_with_invalid_context(agent, vault_path):
     """Test that execute raises error with invalid context."""
     context = {}
 
-    with pytest.raises(ValueError, match="prompt"):
-        agent.execute(vault_path, context)
+    with pytest.raises(ValueError, match="required fields missing"):
+        agent.execute(context)
 
 
 def test_execute_tags_lowercase(agent, vault_path, mock_llm):
@@ -137,7 +137,7 @@ def test_execute_tags_lowercase(agent, vault_path, mock_llm):
 
     context = {"prompt": "Test prompt"}
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is True

@@ -66,6 +66,7 @@ class GraphBuilder:
             WorkflowResult with execution results
         """
         settings = get_settings()
+        branch_name = ""
 
         try:
             # Instantiate DependencyContainer
@@ -114,6 +115,7 @@ class GraphBuilder:
                 changes=[],
                 summary=f"Workflow failed: {str(e)}",
                 node_results={},
+                branch_name=branch_name,
             )
 
     def determine_workflow_plan(
@@ -177,7 +179,7 @@ class GraphBuilder:
         # Initialize workflow state
         vault_service = container.get_vault_service()
         vault_summary = vault_service.get_vault_summary()
-        
+
         initial_state: GraphState = {
             "branch_name": branch_name,
             "vault_summary": vault_summary,

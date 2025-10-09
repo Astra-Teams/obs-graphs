@@ -69,26 +69,29 @@ def test_execute_with_proposals(agent, vault_path):
         {
             "title": "Introduction to Python",
             "category": "Programming",
-            "path": "programming/intro-python.md",
+            "filename": "programming/intro-python.md",
             "description": "A comprehensive guide to Python basics",
         },
         {
             "title": "Data Structures",
             "category": "Computer Science",
-            "path": "cs/data-structures.md",
+            "filename": "cs/data-structures.md",
             "description": "Understanding fundamental data structures",
         },
     ]
 
     context = {"article_proposals": proposals, "vault_summary": {}}
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is True
     assert len(result.changes) == 2
     assert result.changes[0].action == FileAction.CREATE
-    assert result.changes[0].path == "programming/intro-python.md"
+    assert (
+        result.changes[0].path
+        == "drafts/obs-graphs/create-new-article/programming/intro-python.md"
+    )
     assert "---" in result.changes[0].content
     assert result.metadata["articles_created"] == 2
 
@@ -97,7 +100,7 @@ def test_execute_with_no_proposals(agent, vault_path):
     """Test that execute handles empty proposals list."""
     context = {"article_proposals": [], "vault_summary": {}}
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is True
@@ -113,14 +116,14 @@ def test_execute_with_llm_error(agent, vault_path, mock_llm):
         {
             "title": "Test Article",
             "category": "Test",
-            "path": "test.md",
+            "filename": "test.md",
             "description": "Test description",
         }
     ]
 
     context = {"article_proposals": proposals, "vault_summary": {}}
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is True
@@ -134,7 +137,7 @@ def test_execute_with_invalid_context(agent, vault_path):
     context = {}
 
     with pytest.raises(ValueError, match="article_proposals"):
-        agent.execute(vault_path, context)
+        agent.execute(context)
 
 
 def test_generate_article_content_adds_frontmatter(agent, vault_path, mock_llm):
@@ -147,14 +150,14 @@ def test_generate_article_content_adds_frontmatter(agent, vault_path, mock_llm):
         {
             "title": "Test",
             "category": "Test",
-            "path": "test.md",
+            "filename": "test.md",
             "description": "Test",
         }
     ]
 
     context = {"article_proposals": proposals, "vault_summary": {}}
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert result.success is True
     assert result.changes[0].content.startswith("---")

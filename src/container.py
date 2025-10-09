@@ -1,5 +1,6 @@
 """Dependency injection container for the Obsidian Vault workflow application."""
 
+from pathlib import Path
 from typing import Dict, Optional, Union
 
 import redis
@@ -29,6 +30,7 @@ class DependencyContainer:
         self._llm: Optional[BaseLLM] = None
         self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
         self._current_branch: Optional[str] = None
+        self._vault_path: Optional[Path] = None
 
         # Registry of node classes (module, class_name)
         self._node_classes = {
@@ -82,6 +84,14 @@ class DependencyContainer:
         if "commit_changes" in self._nodes:
             del self._nodes["commit_changes"]
 
+    def set_vault_path(self, vault_path: Path) -> None:
+        """Set the local vault path used during workflow execution."""
+        self._vault_path = vault_path
+        if self._vault_service is not None and hasattr(
+            self._vault_service, "set_vault_path"
+        ):
+            self._vault_service.set_vault_path(vault_path)
+
     def get_vault_service(self, branch: Optional[str] = None) -> VaultServiceProtocol:
         """
         Get the vault service instance for a specific branch.
@@ -97,7 +107,8 @@ class DependencyContainer:
         """
         if branch:
             # Direct branch specification (used by GraphBuilder)
-            return VaultService(self.get_github_client(), branch)
+            service = VaultService(self.get_github_client(), branch, self._vault_path)
+            return service
 
         if self._current_branch is None:
             raise ValueError(
@@ -106,7 +117,7 @@ class DependencyContainer:
 
         if self._vault_service is None:
             self._vault_service = VaultService(
-                self.get_github_client(), self._current_branch
+                self.get_github_client(), self._current_branch, self._vault_path
             )
         return self._vault_service
 

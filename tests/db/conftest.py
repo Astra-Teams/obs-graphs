@@ -1,67 +1,8 @@
 """Database test specific fixtures and factory functions."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Generator
-
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
 
 from src.api.v1.models.workflow import Workflow, WorkflowStatus
-from src.db.database import create_db_session
-from src.main import app
-
-
-@pytest.fixture(scope="module")
-def test_db_settings(default_settings):
-    """Provide settings for DB tests."""
-
-    updated_settings = default_settings.model_copy(
-        update={
-            "use_sqlite": False,
-            "db_settings": default_settings.db_settings.model_copy(
-                update={"db_host": "localhost", "db_port": 5433, "db_name": "test_db"}
-            ),
-        }
-    )
-
-    from src import settings as settings_module
-
-    original_settings = settings_module.settings
-    settings_module.settings = updated_settings
-
-    try:
-        yield updated_settings
-    finally:
-        settings_module.settings = original_settings
-
-
-@pytest.fixture(scope="module")
-def test_engine(test_db_settings):
-    return create_engine(test_db_settings.db_settings.database_url)
-
-
-@pytest.fixture(scope="function")
-def db_session(test_engine) -> Generator[Session, None, None]:
-    """
-    Provides a transaction-scoped session for each test function.
-
-    Tests run within transactions and are rolled back on completion,
-    ensuring DB state independence between tests.
-    """
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-    db = SessionLocal()
-
-    # Override FastAPI app's DI (get_db) with this test session
-    app.dependency_overrides[create_db_session] = lambda: db
-
-    try:
-        yield db
-    finally:
-        db.rollback()  # Rollback all changes
-        db.close()
-        app.dependency_overrides.pop(create_db_session, None)
-
 
 # Existing factory functions...
 

@@ -19,7 +19,7 @@ class ObsGraphsSettings(BaseSettings):
         extra="ignore",
         populate_by_name=True,
     )
-    
+
     DEBUG: bool = Field(
         default=False,
         title="Debug Mode",
@@ -82,7 +82,9 @@ class ObsGraphsSettings(BaseSettings):
     # --- Database and Redis Settings ---
     db_settings: DBSettings = Field(default_factory=DBSettings)
     redis_settings: RedisSettings = Field(default_factory=RedisSettings)
-    research_api_settings: ResearchAPISettings = Field(default_factory=ResearchAPISettings)
+    research_api_settings: ResearchAPISettings = Field(
+        default_factory=ResearchAPISettings
+    )
 
     # --- GitHub Integration ---
     github_token: str = Field(
@@ -103,6 +105,12 @@ class ObsGraphsSettings(BaseSettings):
         description="Timeout in seconds for GitHub API requests.",
         alias="VAULT_GITHUB_API_TIMEOUT_SECONDS",
     )
+    vault_submodule_path: str = Field(
+        default="submodules/obsidian-vault",
+        title="Vault Submodule Path",
+        description="Filesystem path to the locally checked out Obsidian vault submodule.",
+        alias="VAULT_SUBMODULE_PATH",
+    )
 
     # --- Workflow Settings ---
     workflow_default_branch: str = Field(
@@ -110,12 +118,6 @@ class ObsGraphsSettings(BaseSettings):
         title="Workflow Default Branch",
         description="Default branch used when creating pull requests.",
         alias="WORKFLOW_DEFAULT_BRANCH",
-    )
-    workflow_clone_base_path: str = Field(
-        default="/tmp/obs_graphs",
-        title="Workflow Clone Base Path",
-        description="Directory used to clone repositories during workflow execution.",
-        alias="WORKFLOW_CLONE_BASE_PATH",
     )
     workflow_temp_dir_cleanup_seconds: int = Field(
         default=86400,

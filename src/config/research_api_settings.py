@@ -38,7 +38,12 @@ class ResearchAPISettings(BaseSettings):
     @property
     def research_api_timeout_seconds(self) -> float:
         """Get research API timeout from environment or use default."""
-        return float(os.getenv("RESEARCH_API_TIMEOUT_SECONDS", str(self.research_api_timeout_seconds_default)))
+        return float(
+            os.getenv(
+                "RESEARCH_API_TIMEOUT_SECONDS",
+                str(self.research_api_timeout_seconds_default),
+            )
+        )
 
     @field_validator("research_api_timeout_seconds_default", mode="before")
     @classmethod

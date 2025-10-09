@@ -49,11 +49,15 @@ def _wait_for_health_check(url: str, timeout: int = 120, interval: int = 5) -> N
                 f"⚠️ Health check returned {response.status_code}; retrying in {interval}s..."
             )
         except httpx.RequestError as exc:
-            print(f"⏳ Waiting for service at {url} (error: {exc}); retrying in {interval}s...")
+            print(
+                f"⏳ Waiting for service at {url} (error: {exc}); retrying in {interval}s..."
+            )
 
         time.sleep(interval)
 
-    raise TimeoutError(f"Service at {url} did not become ready within {timeout} seconds")
+    raise TimeoutError(
+        f"Service at {url} did not become ready within {timeout} seconds"
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -76,7 +80,9 @@ def e2e_setup() -> Generator[None, None, None]:
         test_project_name,
     ]
     compose_up_command = docker_command + compose_common_args + ["up", "-d", "--build"]
-    compose_down_command = docker_command + compose_common_args + ["down", "-v", "--remove-orphans"]
+    compose_down_command = (
+        docker_command + compose_common_args + ["down", "-v", "--remove-orphans"]
+    )
 
     host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")
     host_port = os.getenv("TEST_PORT", "8002")

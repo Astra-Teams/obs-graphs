@@ -2,7 +2,6 @@
 
 import logging
 from datetime import datetime
-from pathlib import Path
 
 from src.protocols import NodeProtocol, ResearchClientProtocol
 from src.state import AgentResult, FileAction, FileChange
@@ -36,19 +35,9 @@ class DeepResearchAgent(NodeProtocol):
         required_fields = ["topic_title", "topic_summary", "tags", "proposal_slug"]
         return all(field in context for field in required_fields)
 
-    def execute(self, vault_path: Path, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> AgentResult:
         """
         Execute deep research and generate proposal document.
-
-        Args:
-            vault_path: Path to the local clone of the Obsidian Vault
-            context: Dictionary containing topic metadata from article_proposal
-
-        Returns:
-            AgentResult with proposal file change
-
-        Raises:
-            ValueError: If input validation fails
         """
         if not self.validate_input(context):
             raise ValueError(

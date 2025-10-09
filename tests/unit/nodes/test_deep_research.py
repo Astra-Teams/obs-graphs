@@ -80,7 +80,7 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
         "proposal_slug": "impact-of-transformers-on-nlp",
     }
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is True
@@ -112,7 +112,7 @@ def test_execute_markdown_format(agent, vault_path, mock_research_client):
         "proposal_slug": "test-topic",
     }
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert result.success is True
     content = result.changes[0].content
@@ -146,7 +146,7 @@ def test_execute_with_api_error(agent, vault_path, mock_research_client):
         "proposal_slug": "test-topic",
     }
 
-    result = agent.execute(vault_path, context)
+    result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
     assert result.success is False
@@ -160,7 +160,7 @@ def test_execute_with_invalid_context(agent, vault_path):
     context = {"topic_title": "Test"}  # Missing required fields
 
     with pytest.raises(ValueError, match="topic metadata"):
-        agent.execute(vault_path, context)
+        agent.execute(context)
 
 
 def test_execute_unique_filenames(agent, vault_path, mock_research_client):
@@ -175,9 +175,9 @@ def test_execute_unique_filenames(agent, vault_path, mock_research_client):
     }
 
     # Execute twice with delay to ensure different timestamps (format is YYYYmmdd_HHMMSS)
-    result1 = agent.execute(vault_path, context)
+    result1 = agent.execute(context)
     time.sleep(1.1)  # 1.1 second delay to ensure different timestamp
-    result2 = agent.execute(vault_path, context)
+    result2 = agent.execute(context)
 
     assert result1.success is True
     assert result2.success is True

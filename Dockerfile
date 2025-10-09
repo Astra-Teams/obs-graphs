@@ -86,8 +86,11 @@ COPY --chown=appuser:appgroup src/ ./src
 COPY --chown=appuser:appgroup alembic/ ./alembic
 COPY --chown=appuser:appgroup tests/ ./tests
 COPY --chown=appuser:appgroup dev/ ./dev
+COPY --chown=appuser:appgroup submodules/ ./submodules
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
+
+RUN if [ -d .git ]; then git submodule update --init --recursive; fi
 
 RUN chmod +x entrypoint.sh
 
@@ -134,8 +137,11 @@ ENV PATH="/app/.venv/bin:${PATH}"
 # Copy only the necessary application code and configuration, excluding tests
 COPY --chown=appuser:appgroup src/ ./src
 COPY --chown=appuser:appgroup alembic/ ./alembic
+COPY --chown=appuser:appgroup submodules/ ./submodules
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
+
+RUN if [ -d .git ]; then git submodule update --init --recursive; fi
 
 # Grant execute permissions to the entrypoint script
 RUN chmod +x entrypoint.sh

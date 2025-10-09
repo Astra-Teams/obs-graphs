@@ -2,6 +2,7 @@
 
 import logging
 import shutil
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,31 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 container = get_container()
 
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_graphs" / "workflows"
+
+
+def _resolve_submodule_path() -> Path:
+    """Resolve the configured vault submodule path to an absolute path."""
+    raw_path = Path(settings.vault_submodule_path)
+    return raw_path if raw_path.is_absolute() else PROJECT_ROOT / raw_path
+
+
+def _prepare_workflow_directory(workflow_id: int) -> Path:
+    """Copy the vault submodule into an isolated temporary directory."""
+    WORKFLOW_TEMP_BASE_PATH.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    temp_dir = WORKFLOW_TEMP_BASE_PATH / f"workflow_{workflow_id}_{timestamp}"
+
+    source = _resolve_submodule_path()
+    if not source.exists():
+        raise FileNotFoundError(
+            f"Configured vault submodule path does not exist: {source}"
+        )
+
+    shutil.copytree(source, temp_dir)
+    return temp_dir
+
 
 @celery_app.task(bind=True, name="run_workflow_task")
 def run_workflow_task(self, workflow_id: int) -> None:
@@ -26,9 +52,9 @@ def run_workflow_task(self, workflow_id: int) -> None:
 
     This task orchestrates the entire workflow lifecycle:
     1. Retrieve workflow from database
-    2. Clone repository to temporary directory
+    2. Copy vault submodule to a temporary working directory
     3. Analyze vault and execute agents via dependency container
-    4. Apply changes to local clone via VaultService
+    4. Apply changes through the VaultService/GitHub API
     5. Commit and push changes via GithubClient
     6. Create pull request on GitHub
     7. Update workflow status and store results
@@ -43,6 +69,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
     # Get database session
     db: Session = next(get_db())
     workflow = None
+    temp_vault_dir: Path | None = None
 
     try:
         # 1. Retrieve workflow from database
@@ -56,7 +83,13 @@ def run_workflow_task(self, workflow_id: int) -> None:
         workflow.celery_task_id = self.request.id
         db.commit()
 
-        # 3. Create GraphBuilder and run workflow
+        # 3. Prepare local workflow directory from vault submodule
+        temp_vault_dir = _prepare_workflow_directory(workflow_id)
+
+        # Set the path in the container
+        container.set_vault_path(temp_vault_dir)
+
+        # 4. Create GraphBuilder and run workflow
         from src.api.v1.schemas import WorkflowRunRequest
 
         request = WorkflowRunRequest(
@@ -97,6 +130,10 @@ def run_workflow_task(self, workflow_id: int) -> None:
         # Close database session
         db.close()
 
+        # Remove temporary workflow directory
+        if temp_vault_dir and temp_vault_dir.exists():
+            shutil.rmtree(temp_vault_dir, ignore_errors=True)
+
 
 @celery_app.task(name="cleanup_old_workflows")
 def cleanup_old_workflows() -> None:
@@ -106,7 +143,7 @@ def cleanup_old_workflows() -> None:
     This task should be scheduled to run periodically (e.g., daily) to
     ensure that any orphaned temporary directories are cleaned up.
     """
-    clone_base_path = Path(settings.workflow_clone_base_path)
+    clone_base_path = WORKFLOW_TEMP_BASE_PATH
 
     if not clone_base_path.exists():
         return
