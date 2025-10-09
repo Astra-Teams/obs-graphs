@@ -8,7 +8,7 @@ set -eu
 # This section is skipped if the command is not the default uvicorn server
 # (e.g., if a user runs 'shell' or another command).
 case "${1:-}" in
-    "" | uvicorn | celery)
+    "" | uvicorn | celery | pytest)
         count=0
         echo "Waiting for database to be ready..."
         

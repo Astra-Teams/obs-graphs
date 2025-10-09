@@ -14,7 +14,7 @@ target_metadata = Base.metadata
 
 def run_migrations_online() -> None:
     settings = get_settings()
-    database_url = settings.DATABASE_URL
+    database_url = settings.db_settings.database_url
 
     connectable = create_engine(
         database_url,

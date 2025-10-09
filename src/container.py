@@ -123,8 +123,8 @@ class DependencyContainer:
                 self._research_client = MockResearchApiClient()
             else:
                 self._research_client = ResearchApiClient(
-                    base_url=settings.research_api_url,
-                    timeout=settings.research_api_timeout_seconds,
+                    base_url=settings.research_api_settings.research_api_url,
+                    timeout=settings.research_api_settings.research_api_timeout_seconds,
                 )
         return self._research_client
 
@@ -158,7 +158,7 @@ class DependencyContainer:
                 self._redis_client = MockRedisClient.get_client()
             else:
                 self._redis_client = redis.Redis.from_url(
-                    settings.celery_broker_url, decode_responses=True
+                    settings.redis_settings.celery_broker_url, decode_responses=True
                 )
         return self._redis_client
 

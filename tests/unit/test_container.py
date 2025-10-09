@@ -190,7 +190,10 @@ def test_get_redis_client_production_mode(
     # Arrange
     mock_settings.configure_mock(**default_settings.model_dump())
     mock_settings.use_mock_redis = False  # Use real client
-    mock_settings.celery_broker_url = "redis://localhost:6379/0"
+    # Mock the redis_settings as an object with celery_broker_url attribute
+    mock_redis_settings = MagicMock()
+    mock_redis_settings.celery_broker_url = "redis://localhost:6379/0"
+    mock_settings.redis_settings = mock_redis_settings
     mock_instance = MagicMock()
     mock_redis.from_url.return_value = mock_instance
 

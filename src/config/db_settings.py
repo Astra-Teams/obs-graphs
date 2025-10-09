@@ -54,9 +54,7 @@ class DBSettings(BaseSettings):
         """Assemble the database URL from individual components or use DATABASE_URL env var."""
         env_url = os.getenv("DATABASE_URL")
         if env_url:
-            if env_url.startswith("postgresql://"):
-                return env_url.replace("postgresql://", "postgresql+psycopg://", 1)
             return env_url
         db_name = os.getenv("POSTGRES_DB", self.db_name)
         url = f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{db_name}"
-        return url.replace("postgresql://", "postgresql+psycopg://", 1)
+        return url

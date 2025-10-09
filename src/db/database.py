@@ -40,11 +40,11 @@ def _initialize_factory():
 
             else:
                 # Use PostgreSQL (for production/dev containers)
-                if not settings.database_url:
+                if not settings.db_settings.database_url:
                     raise ValueError(
                         "DATABASE_URL must be set when USE_SQLITE is False."
                     )
-                db_url = settings.database_url
+                db_url = settings.db_settings.database_url
                 _engine = create_engine(db_url, pool_pre_ping=True)
 
             _SessionLocal = sessionmaker(

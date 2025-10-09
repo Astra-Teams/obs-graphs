@@ -78,7 +78,6 @@ rebuild:
     @echo "Rebuilding and restarting API service..."
     @{{DEV_COMPOSE}} down --remove-orphans
     @{{DEV_COMPOSE}} build --no-cache obs-api
-    @{{DEV_COMPOSE}} up -d
 
 # ==============================================================================
 # TESTING
