@@ -11,9 +11,12 @@ DEV_PROJECT_NAME := PROJECT_NAME + "-dev"
 PROD_PROJECT_NAME := PROJECT_NAME + "-prod"
 TEST_PROJECT_NAME := PROJECT_NAME + "-test"
 
+# Production uses only base compose (no research service)
 PROD_COMPOSE := "docker compose -f docker-compose.yml --project-name " + PROD_PROJECT_NAME
-DEV_COMPOSE  := "docker compose -f docker-compose.yml -f docker-compose.dev.override.yml --project-name " + DEV_PROJECT_NAME
-TEST_COMPOSE := "docker compose -f docker-compose.yml -f docker-compose.test.override.yml --project-name " + TEST_PROJECT_NAME
+
+# Development and test include research service overlay
+DEV_COMPOSE  := "docker compose -f docker-compose.yml -f docker-compose.research.override.yml -f docker-compose.dev.override.yml --project-name " + DEV_PROJECT_NAME
+TEST_COMPOSE := "docker compose -f docker-compose.yml -f docker-compose.research.override.yml -f docker-compose.test.override.yml --project-name " + TEST_PROJECT_NAME
 
 # default target
 default: help
@@ -79,6 +82,21 @@ rebuild:
     @{{DEV_COMPOSE}} down --remove-orphans
     @{{DEV_COMPOSE}} build --no-cache obs-api
 
+# Tail logs from all development services
+logs:
+    @echo "Tailing logs from all development services..."
+    @{{DEV_COMPOSE}} logs -f
+
+# Tail logs from specific service (usage: just logs-service obs-api)
+logs-service SERVICE:
+    @echo "Tailing logs from {{SERVICE}}..."
+    @{{DEV_COMPOSE}} logs -f {{SERVICE}}
+
+# Show status of all development containers
+status:
+    @echo "Development services status:"
+    @{{DEV_COMPOSE}} ps
+
 # ==============================================================================
 # TESTING
 # ==============================================================================
@@ -101,8 +119,8 @@ sqlt-test:
     @echo "🚀 Running database tests with SQLite..."
     @USE_SQLITE=true uv run pytest tests/db
 
-# Run all Docker-based tests
-docker-test: build-test pstg-test e2e-test
+# Run all Docker-based tests (uses mock for E2E by default)
+docker-test: build-test pstg-test e2e-test-mock
 
 # Build Docker image for testing without leaving artifacts
 build-test:
@@ -123,10 +141,25 @@ pstg-test:
     {{TEST_COMPOSE}} down --remove-orphans; \
     exit $EXIT_CODE
 
-# Run e2e tests against containerized application stack (runs from host)
-e2e-test:
-    @echo "🚀 Running e2e tests..."
-    @USE_SQLITE=true POSTGRES_DB=obs-graph-test uv run pytest tests/e2e
+# Run e2e tests with mocked services (fast, lightweight)
+e2e-test-mock:
+	@echo "🚀 Running e2e tests with MOCK research service..."
+	@trap '{{TEST_COMPOSE}} down --remove-orphans' EXIT; \
+	{{TEST_COMPOSE}} up -d --build; \
+	{{TEST_COMPOSE}} exec \
+	-e USE_SQLITE=false \
+	-e USE_MOCK_RESEARCH_API=true \
+	obs-api pytest tests/e2e
+
+# Run e2e tests with real research service (full integration test)
+e2e-test-real:
+	@echo "🚀 Running e2e tests with REAL research service..."
+	@trap '{{TEST_COMPOSE}} down --remove-orphans' EXIT; \
+	{{TEST_COMPOSE}} up -d --build; \
+	{{TEST_COMPOSE}} exec \
+	-e USE_SQLITE=false \
+	-e USE_MOCK_RESEARCH_API=false \
+	obs-api pytest tests/e2e
 
 # ==============================================================================
 # CODE QUALITY

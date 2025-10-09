@@ -1,69 +1,36 @@
-# Obsidian Graphs
+# Obsidian Graphs - Agent Guide
 
-## 1. Project Overview
+## Stack
+FastAPI + LangGraph + Ollama + PostgreSQL/SQLite + Celery + Redis. Docker orchestration, uv package management, Python 3.12+.
 
-This project is an AI-powered workflow automation tool for Obsidian vaults, utilizing LangGraph and modular nodes. It provides automated workflows where intelligent agents analyze, organize, and enhance knowledge bases.
+## Architecture
+- **DI Container**: `src/container.py` (protocol-based, lazy instantiation)
+- **Service Flags**: `.env` controls DB/GitHub/LLM/Redis/ResearchAPI (mock vs real)
+- **Submodules**: `obsidian-vault` (content), `ollama-deep-researcher` (research service)
 
-### Key Features
-- Article improvement, classification, and cross-referencing
-- File organization and quality auditing
-- Automatic PR creation for changes
+## Configuration & Orchestration
+- `.env` = single source of truth for both obs-graphs and research-api
+- Compose files:
+  - `docker-compose.yml`: base (PostgreSQL, Redis, obs-api, celery-worker, backend network)
+  - `docker-compose.research.override.yml`: adds research-api with health check
+  - `docker-compose.{dev,test}.override.yml`: environment-specific tweaks
+- Dev/test compose commands auto-include research overlay; production excludes it
+- Always run integration tests inside containers (`just e2e-test-{mock,real}`)
 
-### Technology Stack
-- **Framework**: FastAPI
-- **Workflow Engine**: LangGraph
-- **LLM**: Ollama
-- **Database**: PostgreSQL (production), SQLite (testing)
-- **Task Queue**: Celery with Redis
-- **VCS**: GitPython
-- **GitHub API**: PyGithub
-- **Containerization**: Docker
-- **Package Management**: uv
-- **Python Version**: 3.12+
+## Testing
+- **Mock E2E** (`just e2e-test-mock`): `USE_MOCK_RESEARCH_API=true`, PostgreSQL, fast
+- **Real E2E** (`just e2e-test-real`): `USE_MOCK_RESEARCH_API=false`, PostgreSQL, full integration
+- E2E tests poll `/api/v1/workflows/{id}` until terminal status (no DB manipulation)
+- Fixtures wait for container health via `docker compose ps --format json`
+- GitHub always mocked; workflows use mock GraphBuilder results
 
-## 2. Architecture and Design
-
-- **Dependency Injection (DI)**: Protocol-based DI container (`src/container.py`)
-- **Modular Nodes**: Extensible agent system
-- **Service Switching**: Individual flags control each external service (database, GitHub, LLM, Redis)
-- **Design Patterns**:
-    - **Lazy Instantiation**: Dependencies are created on first access
-    - **Settings Pattern**: Configuration management using Pydantic BaseSettings
-    - **Repository Pattern**: File operations in vault services
-
-### Service Control Flags
-
-Control each service independently via `.env`:
-- `USE_SQLITE` - SQLite/PostgreSQL
-- `USE_MOCK_GITHUB` - Mock/Real GitHub
-- `USE_MOCK_LLM` - Mock/Real Ollama
-- `USE_MOCK_REDIS` - FakeRedis/Real Redis
-- `USE_MOCK_RESEARCH_API` - Mock/Real Research API
-
-### Mock Definitions
-Define mocks in `dev/mock_vault/` with appropriate directory structure.
-
-### Git Submodules
-
-- **obsidian-vault** (`submodules/obsidian-vault`)
-  - Local checkout of the Obsidian content processed during workflows.
-  - Workflows copy this directory into a temp workspace; keep it in sync with the vault repository you want agents to modify.
-  - Do not commit repo-level configuration changes inside the submodule—those should happen upstream in the vault repository.
-- **ollama-deep-researcher** (`submodules/ollama-deep-researcher`)
-  - Source for the external research service consumed via HTTP (`RESEARCH_API_BASE_URL`, default `http://ollama-deep-researcher:8000`).
-  - Run the service separately (e.g. build the submodule's Dockerfile or `uv run uvicorn ollama_deep_researcher.api.main:app`) whenever `USE_MOCK_RESEARCH_API=false`.
-  - CI/local installs no longer pull a Python package; the submodule is the reference implementation.
-
-**Important**:
-- Fetch with `git submodule update --init --recursive` after cloning so both submodules are available.
-- Avoid editing submodules directly here—contribute upstream instead.
-
-### DB Changes
-1. Create models in `src/db/models/`
-2. Generate migration file: `alembic revision --autogenerate -m "description"`
-3. Apply migration: `alembic upgrade head`
+## DB Migrations
+1. Add models in `src/db/models/`
+2. `alembic revision --autogenerate -m "description"`
+3. `alembic upgrade head`
 4. Test on both SQLite and PostgreSQL
 
-## 4. Common Mistakes
-
-- **State Objects**: Check `src/state.py` for correct parameter names and types (e.g., `FileChange` uses `action: FileAction`, not `operation: str`)
+## Common Pitfalls
+- Check `src/state.py` for correct types (e.g., `FileChange.action: FileAction`)
+- Use `git submodule update --init --recursive` after clone
+- Never edit submodules directly

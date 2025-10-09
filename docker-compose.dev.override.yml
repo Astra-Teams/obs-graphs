@@ -1,7 +1,7 @@
 services:
   db:
     environment:
-      - POSTGRES_DB=${POSTGRES_DEV_DB}
+      POSTGRES_DB: ${POSTGRES_DEV_DB}
 
   obs-api:
     build:
@@ -9,17 +9,28 @@ services:
     ports: !override
       - "${HOST_BIND_IP}:${DEV_PORT}:8000"
     environment:
-      - POSTGRES_DB=${POSTGRES_DEV_DB}
+      POSTGRES_DB: ${POSTGRES_DEV_DB}
     volumes:
       - .:/app
       - /app/.venv
+    depends_on:
+      research-api:
+        condition: service_healthy
 
   celery-worker:
     build:
       target: development
     command: celery -A src.tasks.celery_app worker --loglevel=info
     environment:
-      - POSTGRES_DB=${POSTGRES_DEV_DB}
+      POSTGRES_DB: ${POSTGRES_DEV_DB}
     volumes:
       - .:/app
+      - /app/.venv
+    depends_on:
+      research-api:
+        condition: service_healthy
+
+  research-api:
+    volumes:
+      - ./submodules/ollama-deep-researcher:/app
       - /app/.venv

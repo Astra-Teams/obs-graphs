@@ -3,7 +3,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=${POSTGRES_TEST_DB}
+      POSTGRES_DB: ${POSTGRES_TEST_DB}
 
   obs-api:
     build:
@@ -15,5 +15,13 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRES_DB=${POSTGRES_TEST_DB}
-      - OBS_GRAPHS_OLLAMA_MODEL=${OBS_GRAPHS_OLLAMA_MODEL}
+      POSTGRES_DB: ${POSTGRES_TEST_DB}
+      OBS_GRAPHS_OLLAMA_MODEL: ${OBS_GRAPHS_OLLAMA_MODEL}
+    depends_on:
+      research-api:
+        condition: service_healthy
+
+  celery-worker:
+    depends_on:
+      research-api:
+        condition: service_healthy
