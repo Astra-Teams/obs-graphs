@@ -181,7 +181,6 @@ class GraphBuilder:
         vault_summary = vault_service.get_vault_summary()
 
         initial_state: GraphState = {
-            "branch_name": branch_name,
             "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
             "prompt": prompt,
@@ -275,7 +274,6 @@ class GraphBuilder:
                 "prompt": state["prompt"],
                 "previous_changes": state["accumulated_changes"],
                 "previous_results": state["node_results"],
-                "branch_name": state["branch_name"],
             }
 
             # Add metadata from previous nodes to context

@@ -192,7 +192,9 @@ class DependencyContainer:
             elif name == "commit_changes":
                 self._nodes[name] = node_class(self.get_vault_service())
             elif name == "github_pr_creation":
-                self._nodes[name] = node_class(self.get_github_client())
+                self._nodes[name] = node_class(
+                    self.get_github_client(), self.get_vault_service()
+                )
             elif name == "deep_research":
                 self._nodes[name] = node_class(self.get_research_client())
             else:

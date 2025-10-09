@@ -87,7 +87,6 @@ class VaultSummary:
 class GraphState(TypedDict):
     """State passed between nodes in the workflow graph."""
 
-    branch_name: str
     vault_summary: Dict
     strategy: str
     prompt: str

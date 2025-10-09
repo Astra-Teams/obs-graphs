@@ -92,9 +92,9 @@ def test_execute_with_malformed_json(agent, vault_path, mock_llm):
 
 
 def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
-    """Test that execute handles invalid tags in response."""
+    """Test that execute accepts any number of tags."""
     mock_response = MagicMock()
-    # Only 2 tags (less than minimum of 3)
+    # Only 2 tags - should be accepted now
     mock_response.content = """
     {
         "title": "Test Topic",
@@ -110,8 +110,8 @@ def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
     result = agent.execute(context)
 
     assert isinstance(result, AgentResult)
-    assert result.success is False
-    assert "malformed_json" in result.metadata.get("error", "")
+    assert result.success is True
+    assert result.metadata["tags"] == ["tag1", "tag2"]
 
 
 def test_execute_with_invalid_context(agent, vault_path):
@@ -123,7 +123,7 @@ def test_execute_with_invalid_context(agent, vault_path):
 
 
 def test_execute_tags_lowercase(agent, vault_path, mock_llm):
-    """Test that tags are converted to lowercase."""
+    """Test that tags are preserved as-is without lowercase conversion."""
     mock_response = MagicMock()
     mock_response.content = """
     {
@@ -141,5 +141,4 @@ def test_execute_tags_lowercase(agent, vault_path, mock_llm):
 
     assert isinstance(result, AgentResult)
     assert result.success is True
-    assert all(tag.islower() or "-" in tag for tag in result.metadata["tags"])
-    assert result.metadata["tags"][0] == "machine-learning"
+    assert result.metadata["tags"] == ["Machine-Learning", "NLP", "Deep-Learning"]

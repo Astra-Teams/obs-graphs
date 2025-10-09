@@ -62,44 +62,29 @@ class VaultService(VaultServiceProtocol):
         )
 
     def get_vault_summary(self) -> dict:
-        """Compute a summary of the vault using the local copy when available."""
-        if self._vault_path and self._vault_path.exists():
-            markdown_files = list(self._vault_path.rglob("*.md"))
-            total_articles = len(markdown_files)
+        """Compute a summary of the vault using the local copy."""
+        markdown_files = list(self._vault_path.rglob("*.md"))
+        total_articles = len(markdown_files)
 
-            categories = {
-                path.relative_to(self._vault_path).parts[0]
-                for path in markdown_files
-                if path.relative_to(self._vault_path).parts
-            }
+        categories = {
+            path.relative_to(self._vault_path).parts[0]
+            for path in markdown_files
+            if path.relative_to(self._vault_path).parts
+        }
 
-            recent_files = sorted(
-                markdown_files,
-                key=lambda file_path: file_path.stat().st_mtime,
-                reverse=True,
-            )[:5]
+        recent_files = sorted(
+            markdown_files,
+            key=lambda file_path: file_path.stat().st_mtime,
+            reverse=True,
+        )[:5]
 
-            recent_updates = [
-                str(file_path.relative_to(self._vault_path).as_posix())
-                for file_path in recent_files
-            ]
-
-            return {
-                "total_articles": total_articles,
-                "categories": sorted(categories),
-                "recent_updates": recent_updates,
-            }
-
-        files = self.list_files()
-        markdown_files = [file for file in files if file.endswith(".md")]
-
-        categories = set()
-        for file in markdown_files:
-            if "/" in file:
-                categories.add(file.split("/")[0])
+        recent_updates = [
+            str(file_path.relative_to(self._vault_path).as_posix())
+            for file_path in recent_files
+        ]
 
         return {
-            "total_articles": len(markdown_files),
-            "categories": list(categories),
-            "recent_updates": markdown_files[:5],
+            "total_articles": total_articles,
+            "categories": sorted(categories),
+            "recent_updates": recent_updates,
         }

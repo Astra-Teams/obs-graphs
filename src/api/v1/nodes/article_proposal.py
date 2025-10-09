@@ -219,11 +219,6 @@ class ArticleProposalAgent(NodeProtocol):
                     # Ensure tags is a list
                     if not isinstance(topic_data["tags"], list):
                         return None
-                    # Ensure at least 3 tags
-                    if len(topic_data["tags"]) < 3:
-                        return None
-                    # Convert tags to lowercase
-                    topic_data["tags"] = [tag.lower() for tag in topic_data["tags"]]
                     return topic_data
             except json.JSONDecodeError:
                 pass
