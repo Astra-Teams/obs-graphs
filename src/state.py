@@ -87,7 +87,7 @@ class VaultSummary:
 class GraphState(TypedDict):
     """State passed between nodes in the workflow graph."""
 
-    vault_summary: Dict
+    vault_summary: VaultSummary
     strategy: str
     prompt: str
     accumulated_changes: List[FileChange]

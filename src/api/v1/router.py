@@ -1,6 +1,7 @@
 """API endpoints for workflow management."""
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -14,6 +15,7 @@ from src.api.v1.schemas import (
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
+from src.container import get_container
 from src.db.database import get_db
 from src.settings import get_settings
 
@@ -77,6 +79,22 @@ async def run_workflow(
             workflow.status = WorkflowStatus.RUNNING
             workflow.started_at = datetime.now(timezone.utc)
             db.commit()
+
+            # Set vault path for synchronous execution
+            container = get_container()
+            settings = get_settings()
+
+            # Find project root by searching for pyproject.toml
+            current_path = Path(__file__).resolve().parent
+            project_root = current_path
+            while project_root.parent != project_root:  # Stop at filesystem root
+                if (project_root / "pyproject.toml").exists():
+                    break
+                project_root = project_root.parent
+
+            raw_path = Path(settings.vault_submodule_path)
+            vault_path = raw_path if raw_path.is_absolute() else project_root / raw_path
+            container.set_vault_path(vault_path)
 
             # Create GraphBuilder and run workflow
             graph_builder = GraphBuilder()

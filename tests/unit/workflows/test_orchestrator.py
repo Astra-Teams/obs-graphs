@@ -205,10 +205,10 @@ def test_execute_workflow_with_multiple_nodes(mock_container):
     assert mock_container.get_node.call_count == 4
 
 
-@patch("src.api.v1.graph.DependencyContainer")
+@patch("src.api.v1.graph.get_container")
 @patch("src.api.v1.graph.get_settings")
 def test_run_workflow_creates_branch_and_executes(
-    mock_get_settings, mock_container_class
+    mock_get_settings, mock_get_container
 ):
     """Test that run_workflow creates a branch and executes the workflow."""
     # Arrange
@@ -225,7 +225,7 @@ def test_run_workflow_creates_branch_and_executes(
     mock_container.get_node.return_value = MockAgent()
     mock_container.set_vault_path = MagicMock()
 
-    mock_container_class.return_value = mock_container
+    mock_get_container.return_value = mock_container
 
     graph_builder = GraphBuilder()
     request = WorkflowRunRequest(prompt="Test research")
@@ -244,9 +244,9 @@ def test_run_workflow_creates_branch_and_executes(
     mock_container.set_vault_path.assert_not_called()
 
 
-@patch("src.api.v1.graph.DependencyContainer")
+@patch("src.api.v1.graph.get_container")
 @patch("src.api.v1.graph.get_settings")
-def test_run_workflow_handles_failure(mock_get_settings, mock_container_class):
+def test_run_workflow_handles_failure(mock_get_settings, mock_get_container):
     """Test that run_workflow handles failures gracefully."""
     # Arrange
     mock_settings = MagicMock()
@@ -259,7 +259,7 @@ def test_run_workflow_handles_failure(mock_get_settings, mock_container_class):
 
     mock_container.get_github_client.return_value = mock_github_client
     mock_container.set_vault_path = MagicMock()
-    mock_container_class.return_value = mock_container
+    mock_get_container.return_value = mock_container
 
     graph_builder = GraphBuilder()
     request = WorkflowRunRequest(prompt="")

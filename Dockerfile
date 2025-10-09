@@ -7,9 +7,10 @@ FROM python:3.12-slim as base
 
 WORKDIR /app
 
-# Install uv
+# Install uv and git (needed for dependencies and submodules)
 RUN --mount=type=cache,target=/root/.cache \
-  pip install uv
+  pip install uv && \
+  apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency definition files  
 COPY pyproject.toml uv.lock README.md ./
@@ -24,18 +25,17 @@ FROM base as dev-deps
 
 # Install system dependencies required for the application
 # - curl: used for debugging in the development container
-# - git: required for git dependencies
-RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Install all dependencies, including development ones
 # Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
 ARG OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-    if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
-        git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
-    fi && \
-    uv sync && \
-    git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
+  if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
+  git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+  fi && \
+  uv sync && \
+  git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
 
 
 # ==============================================================================
@@ -44,30 +44,56 @@ RUN --mount=type=cache,target=/root/.cache \
 # ==============================================================================
 FROM base as prod-deps
 
-# Install git for git dependencies
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+# No additional system dependencies needed for production
 
 # Install only production dependencies
 # Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
 ARG OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-    if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
-        git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
-    fi && \
-    uv sync --no-dev && \
-    git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
+  if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
+  git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+  fi && \
+  uv sync --no-dev && \
+  git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
 
 
 
 # ==============================================================================
-# Stage 4: Development
+# Stage 4: Application Code
+# - Copies application code and initializes submodules
+# ==============================================================================
+FROM base AS app-code
+
+# Create a non-root user
+RUN groupadd -r appgroup && useradd -r -g appgroup -d /home/appuser -m appuser
+
+WORKDIR /app
+RUN chown appuser:appgroup /app
+
+# Copy application code and submodules
+COPY --chown=appuser:appgroup src/ ./src
+COPY --chown=appuser:appgroup alembic/ ./alembic
+COPY --chown=appuser:appgroup submodules/ ./submodules
+COPY --chown=appuser:appgroup pyproject.toml .
+COPY --chown=appuser:appgroup entrypoint.sh .
+
+# Initialize submodules if .git exists
+RUN if [ -d .git ]; then git submodule update --init --recursive && chown -R appuser:appgroup .; fi
+
+RUN chmod +x entrypoint.sh
+
+USER appuser
+
+
+# ==============================================================================
+# Stage 5: Development
 # - Development environment with all dependencies and debugging tools
 # - Includes curl and other development utilities
 # ==============================================================================
-FROM python:3.12-slim AS development
+FROM base AS development
 
 # Install PostgreSQL client and development tools
-RUN apt-get update && apt-get install -y postgresql-client curl git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client curl && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for development
 RUN groupadd -r appgroup && useradd -r -g appgroup -d /home/appuser -m appuser
@@ -81,18 +107,12 @@ COPY --from=dev-deps /app/.venv ./.venv
 # Set the PATH to include the venv's bin directory
 ENV PATH="/app/.venv/bin:${PATH}"
 
-# Copy application code
-COPY --chown=appuser:appgroup src/ ./src
-COPY --chown=appuser:appgroup alembic/ ./alembic
+# Copy application code from app-code stage
+COPY --from=app-code --chown=appuser:appgroup /app ./
+
+# Copy tests and dev directories for development
 COPY --chown=appuser:appgroup tests/ ./tests
 COPY --chown=appuser:appgroup dev/ ./dev
-COPY --chown=appuser:appgroup submodules/ ./submodules
-COPY --chown=appuser:appgroup pyproject.toml .
-COPY --chown=appuser:appgroup entrypoint.sh .
-
-RUN if [ -d .git ]; then git submodule update --init --recursive; fi
-
-RUN chmod +x entrypoint.sh
 
 # Switch to non-root user
 USER appuser
@@ -108,14 +128,14 @@ ENTRYPOINT ["/app/entrypoint.sh"]
 
 
 # ==============================================================================
-# Stage 5: Production
+# Stage 6: Production
 # - Creates the final, lightweight production image.
 # - Copies the lean venv and only necessary application files.
 # ==============================================================================
-FROM python:3.12-slim AS production
+FROM base AS production
 
 # Install PostgreSQL client for database operations
-RUN apt-get update && apt-get install -y postgresql-client git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
 
 
@@ -134,17 +154,8 @@ COPY --from=prod-deps /app/.venv ./.venv
 # Set the PATH to include the venv's bin directory for simpler command execution
 ENV PATH="/app/.venv/bin:${PATH}"
 
-# Copy only the necessary application code and configuration, excluding tests
-COPY --chown=appuser:appgroup src/ ./src
-COPY --chown=appuser:appgroup alembic/ ./alembic
-COPY --chown=appuser:appgroup submodules/ ./submodules
-COPY --chown=appuser:appgroup pyproject.toml .
-COPY --chown=appuser:appgroup entrypoint.sh .
-
-RUN if [ -d .git ]; then git submodule update --init --recursive; fi
-
-# Grant execute permissions to the entrypoint script
-RUN chmod +x entrypoint.sh
+# Copy application code from app-code stage
+COPY --from=app-code --chown=appuser:appgroup /app ./
 
 # Switch to the non-root user
 USER appuser
