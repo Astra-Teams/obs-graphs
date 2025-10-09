@@ -14,7 +14,7 @@ services:
     environment:
       - POSTGRES_DB=${POSTGRES_DEV_DB}
 
-  api:
+  obs-api:
     build:
       target: development
     ports: !override

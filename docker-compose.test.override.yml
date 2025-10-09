@@ -16,7 +16,7 @@ services:
     environment:
       - POSTGRES_DB=${POSTGRES_TEST_DB}
 
-  api:
+  obs-api:
     build:
       target: development
       args:

@@ -1,6 +1,6 @@
 """Application configuration for the obs-graphs project."""
 
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -69,8 +69,8 @@ class Settings(BaseSettings):
         description="Name of the LLM model to use.",
         alias="OLLAMA_MODEL",
     )
-    ollama_host: str = Field(
-        default="http://ollama:11434",
+    ollama_host: Optional[str] = Field(
+        default=None,
         title="Ollama Base URL",
         description="Base URL for the Ollama API.",
         alias="OLLAMA_HOST",
@@ -181,6 +181,19 @@ class Settings(BaseSettings):
         description="Timeout in seconds for research API requests.",
         alias="RESEARCH_API_TIMEOUT_SECONDS",
     )
+
+    @field_validator("ollama_host", mode="before")
+    @classmethod
+    def normalize_ollama_host(cls, value: Any) -> Any:
+        """Normalize ollama_host by trimming whitespace and ensuring trailing slash."""
+        if value is None:
+            return None
+        if isinstance(value, str):
+            trimmed = value.strip()
+            if not trimmed:
+                return None
+            return trimmed.rstrip("/") + "/"
+        return value
 
     @field_validator("DEBUG", mode="before")
     @classmethod

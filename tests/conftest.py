@@ -37,6 +37,7 @@ def prod_settings() -> Settings:
         }
     )
 
+
 # Fixture paths
 MOCKS_ROOT = Path("dev/mocks")
 VAULTS_ROOT = MOCKS_ROOT / "vault"

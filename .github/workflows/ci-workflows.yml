@@ -16,3 +16,5 @@ jobs:
 
   run-docker-tests:
     uses: ./.github/workflows/run-docker-tests.yml
+    secrets:
+      OLLAMA_HOST: ${{ secrets.OLLAMA_HOST }}
