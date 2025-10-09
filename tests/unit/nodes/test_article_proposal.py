@@ -12,9 +12,8 @@ from src.state import AgentResult
 def mock_llm():
     """Create a mock LLM instance."""
     llm = MagicMock()
-    mock_response = MagicMock()
-    # Return JSON format for topic proposal
-    mock_response.content = """
+    # Return JSON format for topic proposal as string (BaseLLM.invoke returns str)
+    llm.invoke.return_value = """
     {
         "title": "Impact of Transformer Models on NLP",
         "summary": "This research explores how transformer architectures have revolutionized natural language processing.",
@@ -22,7 +21,6 @@ def mock_llm():
         "slug": "impact-of-transformer-models-on-nlp"
     }
     """
-    llm.invoke.return_value = mock_response
     return llm
 
 
@@ -78,9 +76,7 @@ def test_execute_with_valid_prompt(agent, vault_path):
 
 def test_execute_with_malformed_json(agent, vault_path, mock_llm):
     """Test that execute handles malformed JSON response."""
-    mock_response = MagicMock()
-    mock_response.content = "This is not valid JSON"
-    mock_llm.invoke.return_value = mock_response
+    mock_llm.invoke.return_value = "This is not valid JSON"
 
     context = {"prompt": "Test prompt"}
 
@@ -93,9 +89,8 @@ def test_execute_with_malformed_json(agent, vault_path, mock_llm):
 
 def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
     """Test that execute accepts any number of tags."""
-    mock_response = MagicMock()
     # Only 2 tags - should be accepted now
-    mock_response.content = """
+    mock_llm.invoke.return_value = """
     {
         "title": "Test Topic",
         "summary": "Test summary",
@@ -103,7 +98,6 @@ def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
         "slug": "test-topic"
     }
     """
-    mock_llm.invoke.return_value = mock_response
 
     context = {"prompt": "Test prompt"}
 
@@ -124,8 +118,7 @@ def test_execute_with_invalid_context(agent, vault_path):
 
 def test_execute_tags_lowercase(agent, vault_path, mock_llm):
     """Test that tags are preserved as-is without lowercase conversion."""
-    mock_response = MagicMock()
-    mock_response.content = """
+    mock_llm.invoke.return_value = """
     {
         "title": "Test Topic",
         "summary": "Test summary",
@@ -133,7 +126,6 @@ def test_execute_tags_lowercase(agent, vault_path, mock_llm):
         "slug": "test-topic"
     }
     """
-    mock_llm.invoke.return_value = mock_response
 
     context = {"prompt": "Test prompt"}
 

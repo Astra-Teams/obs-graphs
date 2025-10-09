@@ -272,8 +272,8 @@ class GraphBuilder:
                 "vault_summary": state["vault_summary"],
                 "strategy": state["strategy"],
                 "prompt": state["prompt"],
-                "previous_changes": state["accumulated_changes"],
-                "previous_results": state["node_results"],
+                "accumulated_changes": state["accumulated_changes"],
+                "node_results": state["node_results"],
             }
 
             # Add metadata from previous nodes to context

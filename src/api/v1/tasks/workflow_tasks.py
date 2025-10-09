@@ -104,7 +104,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
             workflow.status = WorkflowStatus.COMPLETED
             workflow.pr_url = result.pr_url
             workflow.workflow_metadata = {
-                "agent_results": result.agent_results,
+                "node_results": result.node_results,
                 "total_changes": len(result.changes),
                 "branch_name": result.branch_name,
             }

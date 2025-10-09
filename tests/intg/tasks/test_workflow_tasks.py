@@ -66,8 +66,8 @@ class TestRunWorkflowTask:
         mock_result.pr_url = "https://github.com/test/repo/pull/1"
         mock_result.changes = []
         mock_result.summary = "Test summary"
-        mock_result.agent_results = {}
         mock_result.branch_name = "test-branch"
+        mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
         mock_graph_builder.return_value = mock_builder_instance
 
@@ -131,8 +131,8 @@ class TestRunWorkflowTask:
         mock_result.pr_url = "https://github.com/test/repo/pull/1"
         mock_result.changes = []
         mock_result.summary = "Test"
-        mock_result.agent_results = {}
         mock_result.branch_name = "test-branch"
+        mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
         mock_graph_builder.return_value = mock_builder_instance
 
@@ -169,9 +169,9 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Improved articles"
-        mock_result.agent_results = {}
         mock_result.pr_url = "https://github.com/test/repo/pull/42"
         mock_result.branch_name = "test-branch"
+        mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
         mock_graph_builder.return_value = mock_builder_instance
 
@@ -205,9 +205,9 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.agent_results = {}
         mock_result.pr_url = "https://github.com/test/repo/pull/1"
         mock_result.branch_name = "test-branch"
+        mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
         mock_graph_builder.return_value = mock_builder_instance
 
@@ -298,9 +298,9 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.agent_results = {}
         mock_result.pr_url = ""
         mock_result.branch_name = "test-branch"
+        mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
         mock_graph_builder.return_value = mock_builder_instance
 
@@ -345,9 +345,9 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.agent_results = {}
         mock_result.pr_url = ""
         mock_result.branch_name = "test-branch"
+        mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
         mock_graph_builder.return_value = mock_builder_instance
 
@@ -394,9 +394,9 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.agent_results = {}
         mock_result.pr_url = ""
         mock_result.branch_name = "test-branch"
+        mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
         mock_graph_builder.return_value = mock_builder_instance
 

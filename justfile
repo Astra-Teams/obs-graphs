@@ -107,7 +107,10 @@ test:
   @just docker-test
 
 # Run lightweight local test suite (unit + integration + SQLite DB tests)
-local-test: unit-test intg-test sqlt-test
+local-test:
+  @just unit-test
+  @just intg-test
+  @just sqlt-test
 
 # Run unit tests locally (fastest, single component tests)
 unit-test:
@@ -125,7 +128,10 @@ sqlt-test:
     @USE_SQLITE=true uv run pytest tests/db
 
 # Run all Docker-based tests
-docker-test: build-test pstg-test e2e-test
+docker-test:
+  @just build-test
+  @just pstg-test
+  @just e2e-test
 
 # Build Docker image for testing without leaving artifacts
 build-test:
@@ -138,7 +144,7 @@ build-test:
 # Run database tests with PostgreSQL (robust, production-like)
 pstg-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build obs-api db
+    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
     @echo "Running database tests inside api container (against PostgreSQL)..."
     @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-api pytest tests/db; \
     EXIT_CODE=$?; \
@@ -146,15 +152,10 @@ pstg-test:
     {{TEST_COMPOSE}} down --remove-orphans; \
     exit $EXIT_CODE
 
-# Run e2e tests inside containers against real services (PostgreSQL, Research API)
+# Run e2e tests against containerized application stack (runs from host)
 e2e-test:
-	@echo "🚀 Running e2e tests with containers (PostgreSQL + Research API)..."
-	@trap '{{TEST_COMPOSE}} down --remove-orphans' EXIT; \
-	{{TEST_COMPOSE}} up -d --build; \
-	{{TEST_COMPOSE}} exec \
-	-e USE_SQLITE=false \
-	-e USE_MOCK_RESEARCH_API=true \
-	obs-api pytest tests/e2e
+    @echo "🚀 Running e2e tests..."
+    @USE_SQLITE=false uv run pytest tests/e2e
 
 # ==============================================================================
 # CODE QUALITY

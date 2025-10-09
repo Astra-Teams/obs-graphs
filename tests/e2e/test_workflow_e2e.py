@@ -66,15 +66,20 @@ class TestWorkflowE2E:
                 "/api/v1/workflows/run",
                 json={"prompt": "Create a new article about testing"},
             )
+            if response.status_code != 201:
+                print(f"\n=== DEBUG: Error Response ===")
+                print(f"Status: {response.status_code}")
+                print(f"Content: {response.text}")
+                print("=============================\n")
             assert response.status_code == 201
             payload = response.json()
-            print(f"\n=== DEBUG: Initial workflow response ===")
+            print("\n=== DEBUG: Initial workflow response ===")
             print(f"Payload: {payload}")
             workflow_id = payload["id"]
             assert "id" in payload
             print(f"Status: {payload['status']}")
             print(f"Error message: {payload.get('error_message')}")
-            print(f"===================================\n")
+            print("===================================\n")
             assert payload["status"] in {"PENDING", "RUNNING"}
 
             # Poll until terminal state
