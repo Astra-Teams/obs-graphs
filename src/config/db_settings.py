@@ -51,10 +51,7 @@ class DBSettings(BaseSettings):
     @computed_field
     @property
     def database_url(self) -> str:
-        """Assemble the database URL from individual components or use OBS_GRAPHS_DATABASE_URL env var."""
-        env_url = os.getenv("OBS_GRAPHS_DATABASE_URL")
-        if env_url:
-            return env_url
+        """Assemble the database URL from individual components."""
         db_name = os.getenv("POSTGRES_DB", self.db_name)
-        url = f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{db_name}"
+        url = f"postgresql+psycopg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{db_name}"
         return url
