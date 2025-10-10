@@ -26,9 +26,7 @@ celery_app.conf.update(
     task_soft_time_limit=540,
     # Task routing
     task_routes={
-        "src.obs_graphs.api.tasks.workflow_tasks.run_workflow_task": {
-            "queue": "workflows"
-        },
+        "src.obs_graphs.celery.tasks.run_workflow_task": {"queue": "workflows"},
     },
     # Result backend settings
     result_expires=3600,  # Results expire after 1 hour
@@ -41,4 +39,4 @@ celery_app.conf.update(
 )
 
 # Auto-discover tasks
-celery_app.autodiscover_tasks(["src.obs_graphs.tasks"])
+celery_app.autodiscover_tasks(["src.obs_graphs.celery.tasks"])

@@ -2,9 +2,6 @@ name: Run Local Tests
 
 on:
   workflow_call:
-    secrets:
-      OLLAMA_HOST:
-        required: true
 
 permissions:
   contents: read
@@ -16,8 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         test_target: [unit, sqlt]
-    env:
-      OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -100,8 +100,7 @@ class DependencyContainer:
         """
         if self._research_client is None:
             if settings.use_mock_ollama_deep_researcher:
-                import sys
-                from importlib.util import module_from_spec, spec_from_file_location
+                import importlib.util
                 from pathlib import Path
 
                 from src.obs_graphs.protocols.research_client_protocol import (
@@ -111,9 +110,6 @@ class DependencyContainer:
                 submodules_path = (
                     Path(__file__).parent.parent.parent / "src" / "submodules"
                 )
-                if str(submodules_path) not in sys.path:
-                    sys.path.insert(0, str(submodules_path))
-
                 mock_client_path = (
                     submodules_path
                     / "ollama-deep-researcher"
@@ -121,8 +117,10 @@ class DependencyContainer:
                     / "mock_ollama_deep_researcher_client"
                     / "mock_ollama_deep_researcher_client.py"
                 )
-                spec = spec_from_file_location("mock_client", mock_client_path)
-                mock_module = module_from_spec(spec)
+                spec = importlib.util.spec_from_file_location(
+                    "mock_client", mock_client_path
+                )
+                mock_module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(mock_module)
                 MockOllamaDeepResearcherClient = (
                     mock_module.MockOllamaDeepResearcherClient

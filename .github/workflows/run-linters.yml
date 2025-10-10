@@ -9,8 +9,6 @@ permissions:
 jobs:
   run-linters:
     runs-on: ubuntu-latest
-    env:
-      OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

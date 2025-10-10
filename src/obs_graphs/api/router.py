@@ -58,11 +58,6 @@ async def run_workflow(
             # Asynchronous execution using Celery
             from src.obs_graphs.celery.tasks import run_workflow_task
 
-            # Update status to RUNNING before queuing task
-            workflow.status = WorkflowStatus.RUNNING
-            workflow.started_at = datetime.now(timezone.utc)
-            db.commit()
-
             # Queue task only AFTER database commit is complete
             task = run_workflow_task.delay(workflow.id)
 
