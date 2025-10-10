@@ -32,8 +32,6 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-      args:
-        OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}
     ports:
       - "${HOST_BIND_IP}:${HOST_PORT}:8000"
     depends_on:
@@ -62,9 +60,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-      args:
-        OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}
-    command: celery -A src.tasks.celery_app worker --loglevel=info
+    command: celery -A src.obs_graphs.celery.app worker --loglevel=info
     depends_on:
       redis:
         condition: service_healthy

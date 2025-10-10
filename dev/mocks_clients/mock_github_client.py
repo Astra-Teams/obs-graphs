@@ -1,13 +1,12 @@
 """Mock GitHub client for offline development and testing."""
 
 from pathlib import Path
-from typing import Optional
 from unittest.mock import MagicMock
 
 from github import Github
 from github.PullRequest import PullRequest
 
-from src.protocols import GithubClientProtocol
+from src.obs_graphs.protocols import GithubClientProtocol
 
 
 class MockGithubClient(GithubClientProtocol):
@@ -40,16 +39,16 @@ class MockGithubClient(GithubClientProtocol):
             f"[MockGithubClient] clone_repository(target_path={target_path}, branch={branch}) called - no actual cloning performed"
         )
 
-    def create_branch(self, repo_path: Path, branch_name: str) -> None:
+    def create_branch(self, branch_name: str, base_branch: str = "main") -> None:
         """
         Mock branch creation - logs operation without actual branch creation.
 
         Args:
-            repo_path: Path to the local git repository.
             branch_name: Name of the new branch to create.
+            base_branch: Base branch to create from (default: "main").
         """
         print(
-            f"[MockGithubClient] create_branch(repo_path={repo_path}, branch_name={branch_name}) called - no actual branch created"
+            f"[MockGithubClient] create_branch(branch_name={branch_name}, base_branch={base_branch}) called - no actual branch created"
         )
 
     def commit_and_push(self, repo_path: Path, branch_name: str, message: str) -> bool:
@@ -70,31 +69,25 @@ class MockGithubClient(GithubClientProtocol):
         return True
 
     def create_pull_request(
-        self,
-        repo_full_name: str,
-        head_branch: str,
-        title: str,
-        body: str,
-        base_branch: Optional[str] = None,
+        self, head: str, base: str, title: str, body: str
     ) -> PullRequest:
         """
         Mock PR creation - logs operation and returns mock PullRequest.
 
         Args:
-            repo_full_name: Full repository name (e.g., "owner/repo").
-            head_branch: Name of the branch containing changes.
+            head: Name of the branch containing changes.
+            base: Base branch to merge into.
             title: Title of the pull request.
             body: Description/body of the pull request.
-            base_branch: Base branch to merge into (default: "main").
 
         Returns:
             Mock PullRequest object.
         """
         print(
-            f"[MockGithubClient] create_pull_request(repo={repo_full_name}, head={head_branch}, title={title}, base={base_branch or 'main'}) called - returning mock PR"
+            f"[MockGithubClient] create_pull_request(head={head}, base={base}, title={title}) called - returning mock PR"
         )
         mock_pr = MagicMock(spec=PullRequest)
-        mock_pr.html_url = f"https://github.com/{repo_full_name}/pull/1"
+        mock_pr.html_url = "https://github.com/mock-repo/pull/1"
         mock_pr.number = 1
         mock_pr.title = title
         return mock_pr
@@ -113,3 +106,20 @@ class MockGithubClient(GithubClientProtocol):
             f"[MockGithubClient] get_authenticated_clone_url(repo={repo_full_name}) called - returning mock URL"
         )
         return f"https://mock-token@github.com/{repo_full_name}.git"
+
+    def bulk_commit_changes(self, branch: str, changes: list, message: str) -> str:
+        """
+        Mock bulk commit changes - logs operation and returns mock SHA.
+
+        Args:
+            branch: Branch name to commit to.
+            changes: List of dicts with 'path', 'content', 'action'.
+            message: Commit message.
+
+        Returns:
+            Mock commit SHA.
+        """
+        print(
+            f"[MockGithubClient] bulk_commit_changes(branch={branch}, changes={len(changes)}, message={message[:50]}...) called - returning mock SHA"
+        )
+        return "mock-commit-sha-1234567890abcdef"

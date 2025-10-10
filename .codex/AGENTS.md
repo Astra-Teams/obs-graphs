@@ -1,69 +1,75 @@
-# Obsidian Graphs
+# AGENTS.md - AI Agent Context Document
 
-## 1. Project Overview
+## 🚀 Overview
 
-This project is an AI-powered workflow automation tool for Obsidian vaults, utilizing LangGraph and modular nodes. It provides automated workflows where intelligent agents analyze, organize, and enhance knowledge bases.
+**Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes via **GitHub pull requests**.
 
-### Key Features
-- Article improvement, classification, and cross-referencing
-- File organization and quality auditing
-- Automatic PR creation for changes
+**Core Tech**: FastAPI, LangGraph, Ollama, PostgreSQL/SQLite, Celery, Redis, Docker.
 
-### Technology Stack
-- **Framework**: FastAPI
-- **Workflow Engine**: LangGraph
-- **LLM**: Ollama
-- **Database**: PostgreSQL (production), SQLite (testing)
-- **Task Queue**: Celery with Redis
-- **VCS**: GitPython
-- **GitHub API**: PyGithub
-- **Containerization**: Docker
-- **Package Management**: uv
-- **Python Version**: 3.12+
+---
 
-## 2. Architecture and Design
+## 📂 Repository Structure
 
-- **Dependency Injection (DI)**: Protocol-based DI container (`src/container.py`)
-- **Modular Nodes**: Extensible agent system
-- **Service Switching**: Individual flags control each external service (database, GitHub, LLM, Redis)
-- **Design Patterns**:
-    - **Lazy Instantiation**: Dependencies are created on first access
-    - **Settings Pattern**: Configuration management using Pydantic BaseSettings
-    - **Repository Pattern**: File operations in vault services
+-   `src/obs_graphs/`: Main application source.
+-   `tests/`: Test suite (Unit, Integration, E2E, DB).
+-   `dev/`: Mock clients and responses for offline development.
+-   `submodules/`: Git submodules for dependencies like `obsidian-vault`.
+-   `alembic/`: Database migrations.
+-   `docker-compose*.yml`: Container orchestration files.
+-   `justfile`: Task runner for automation.
+-   `.codex/`: Development documentation.
 
-### Service Control Flags
+---
 
-Control each service independently via `.env`:
-- `USE_SQLITE` - SQLite/PostgreSQL
-- `USE_MOCK_GITHUB` - Mock/Real GitHub
-- `USE_MOCK_LLM` - Mock/Real Ollama
-- `USE_MOCK_REDIS` - FakeRedis/Real Redis
-- `USE_MOCK_RESEARCH_API` - Mock/Real Research API
+## 🏛️ Core Architecture
 
-### Mock Definitions
-Define mocks in `dev/mock_vault/` with appropriate directory structure.
+### 1. Application Core (`src/obs_graphs/`)
+-   **API (`api/`)**: FastAPI endpoints, Pydantic schemas, and routing.
+-   **Workflow Engine (`graphs/`)**: LangGraph for stateful workflow orchestration using modular agent nodes.
+-   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
+-   **Data Access (`db/`)**: SQLAlchemy models and repository pattern for DB interactions.
+-   **Clients (`clients/`)**: External service clients (GitHub, Research APIs).
+-   **Async Tasks (`celery/`)**: Background task execution with Redis.
+-   **Configuration (`config/`)**: Environment-based settings and feature flags.
+-   **DI (`container.py`)**: Protocol-based Dependency Injection for loose coupling.
+-   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions.
 
-### Git Submodules
+### 2. Testing (`tests/`)
+-   **Unit**: Isolated component tests (fast) - all services mocked.
+-   **Integration**: Multi-component interaction tests - all services mocked.
+-   **E2E**: Full system tests in a containerized environment (slow) - uses real Redis for Celery testing.
+-   **Database**: Migration and data integrity validation.
+-   **Environment Configuration**: Each test category has its own environment setup in `tests/envs.py`, applied via `conftest.py` in each test directory.
 
-- **obsidian-vault** (`submodules/obsidian-vault`)
-  - Local checkout of the Obsidian content processed during workflows.
-  - Workflows copy this directory into a temp workspace; keep it in sync with the vault repository you want agents to modify.
-  - Do not commit repo-level configuration changes inside the submodule—those should happen upstream in the vault repository.
-- **ollama-deep-researcher** (`submodules/ollama-deep-researcher`)
-  - Source for the external research service consumed via HTTP (`RESEARCH_API_BASE_URL`, default `http://ollama-deep-researcher:8000`).
-  - Run the service separately (e.g. build the submodule's Dockerfile or `uv run uvicorn ollama_deep_researcher.api.main:app`) whenever `USE_MOCK_RESEARCH_API=false`.
-  - CI/local installs no longer pull a Python package; the submodule is the reference implementation.
+---
 
-**Important**:
-- Fetch with `git submodule update --init --recursive` after cloning so both submodules are available.
-- Avoid editing submodules directly here—contribute upstream instead.
+## ⚖️ Architectural Principles
 
-### DB Changes
-1. Create models in `src/db/models/`
-2. Generate migration file: `alembic revision --autogenerate -m "description"`
-3. Apply migration: `alembic upgrade head`
-4. Test on both SQLite and PostgreSQL
+-   **Separation of Concerns**: Clear boundaries between API, business logic, data, and infrastructure.
+-   **Dependency Injection**: Protocol-based DI for testability and flexibility.
+-   **Schema Separation**: Pydantic for API validation, distinct types for internal state.
+-   **Node-Based Agents**: Modular, single-responsibility agents registered by name.
+-   **Comprehensive Testing**: Multi-layered testing strategy (Unit → Integration → E2E).
 
-## 4. Common Mistakes
+---
 
-- **State Objects**: Check `src/state.py` for correct parameter names and types (e.g., `FileChange` uses `action: FileAction`, not `operation: str`)
+## 🛠️ Development Workflow
+
+1.  **Setup**: Use `just setup` and `just up` to start the local stack.
+2.  **Testing**: Run tests with `just unit-test` and `just intg-test`.
+3.  **Graph Extension**:
+    -   Implement the `NodeProtocol`.
+    -   Define Pydantic schemas.
+    -   Build the LangGraph state machine.
+    -   Integrate with the API and add tests.
+4.  **DB Changes**:
+    -   Update SQLAlchemy models.
+    -   Generate migrations with `alembic`.
+    -   Test migrations on both SQLite and PostgreSQL.
+
+---
+
+## ⚙️ Configuration & QA
+
+-   **Configuration**: Managed via `.env` files and Docker Compose overrides for different environments.
+-   **Quality Assurance**: Enforced through type hints (mypy), linting/formatting (Ruff), and a CI/CD pipeline that runs all automated tests and security scans.

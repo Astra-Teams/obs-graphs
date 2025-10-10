@@ -1,11 +1,8 @@
 from sqlalchemy import create_engine, pool
 
 from alembic import context
-
-# Import all models so they are registered with Base
-from src.api.v1.models.workflow import Workflow, WorkflowStatus  # noqa: F401
-from src.db.database import Base
-from src.settings import get_settings
+from src.obs_graphs.db.database import Base
+from src.obs_graphs.settings import get_settings
 
 config = context.config
 

@@ -4,16 +4,19 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_DB=${POSTGRES_TEST_DB}
+    volumes: !override []
 
   obs-api:
     build:
       target: development
-      args:
-        OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}
     ports: !override
       - "${HOST_BIND_IP}:${TEST_PORT}:8000"
-    env_file:
-      - .env
     environment:
       - POSTGRES_DB=${POSTGRES_TEST_DB}
-      - OBS_GRAPHS_OLLAMA_MODEL=${OBS_GRAPHS_OLLAMA_MODEL}
+
+  celery-worker:
+    build:
+      target: development
+    command: celery -A src.obs_graphs.celery.app worker --loglevel=debug
+    environment:
+      - POSTGRES_DB=${POSTGRES_TEST_DB}

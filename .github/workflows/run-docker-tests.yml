@@ -5,6 +5,10 @@ on:
     secrets:
       OLLAMA_HOST:
         required: true
+      OBSIDIAN_VAULT_GITHUB_TOKEN:
+        required: true
+      OBSIDIAN_VAULT_REPOSITORY:
+        required: true
 
 permissions:
   contents: read
@@ -15,13 +19,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_target: [build-test, pstg-test, e2e-test]
+        test_target: [build-test, psql-test, e2e-test]
     env:
-      OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
-      OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${{ secrets.OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN }}
+      OLLAMA_HOST: ${{ secrets.OLLAMA_HOST }}
+      OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.OBSIDIAN_VAULT_GITHUB_TOKEN }}
+      OBSIDIAN_VAULT_REPOSITORY: ${{ secrets.OBSIDIAN_VAULT_REPOSITORY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@v5

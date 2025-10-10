@@ -2,7 +2,17 @@
 
 from datetime import datetime, timedelta, timezone
 
-from src.api.v1.models.workflow import Workflow, WorkflowStatus
+import pytest
+
+from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
+from tests.envs import setup_db_test_env
+
+
+@pytest.fixture(autouse=True)
+def set_db_test_env(monkeypatch):
+    """Setup environment variables for database tests."""
+    setup_db_test_env(monkeypatch)
+
 
 # Existing factory functions...
 

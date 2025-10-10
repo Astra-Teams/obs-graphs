@@ -4,9 +4,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.api.v1.nodes.deep_research import DeepResearchAgent
-from src.protocols.research_client_protocol import ResearchResult
-from src.state import AgentResult, FileAction
+from src.obs_graphs.graphs.article_proposal.nodes.deep_research import DeepResearchAgent
+from src.obs_graphs.graphs.article_proposal.state import AgentResult, FileAction
+from src.obs_graphs.protocols.research_client_protocol import ResearchResult
 
 
 @pytest.fixture
@@ -14,12 +14,17 @@ def mock_research_client():
     """Create a mock research client."""
     client = MagicMock()
     client.run_research.return_value = ResearchResult(
-        summary="Comprehensive research findings on transformers in NLP.",
-        sources=[
-            "https://arxiv.org/abs/1706.03762",
-            "https://example.com/nlp-research",
-            "https://example.com/transformers-guide",
-        ],
+        article="# Impact of Transformers on NLP\n\nContent body",
+        metadata={
+            "sources": [
+                "https://arxiv.org/abs/1706.03762",
+                "https://example.com/nlp-research",
+                "https://example.com/transformers-guide",
+            ],
+            "source_count": 3,
+        },
+        diagnostics=["mock"],
+        processing_time=1.23,
     )
     return client
 
@@ -51,6 +56,14 @@ def test_validate_input_valid(agent):
     }
     assert agent.validate_input(context) is True
 
+    # Also test without tags (now optional)
+    context_without_tags = {
+        "topic_title": "Test Topic",
+        "topic_summary": "Test summary",
+        "proposal_slug": "test-topic",
+    }
+    assert agent.validate_input(context_without_tags) is True
+
 
 def test_validate_input_missing_fields(agent):
     """Test that validate_input rejects missing required fields."""
@@ -62,13 +75,21 @@ def test_validate_input_missing_fields(agent):
     }
     assert agent.validate_input(context) is False
 
-    # Missing tags
+    # Empty topic_title
+    context = {
+        "topic_title": "",
+        "topic_summary": "Test summary",
+        "proposal_slug": "test-topic",
+    }
+    assert agent.validate_input(context) is False
+
+    # Valid context without tags (tags are now optional)
     context = {
         "topic_title": "Test Topic",
         "topic_summary": "Test summary",
         "proposal_slug": "test-topic",
     }
-    assert agent.validate_input(context) is False
+    assert agent.validate_input(context) is True
 
 
 def test_execute_with_valid_context(agent, vault_path, mock_research_client):
@@ -92,10 +113,15 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
     # Check metadata
     assert "proposal_filename" in result.metadata
     assert "proposal_path" in result.metadata
-    assert "tags" in result.metadata
     assert "sources_count" in result.metadata
     assert result.metadata["sources_count"] == 3
-    assert result.metadata["tags"] == ["transformers", "nlp", "deep-learning"]
+    assert result.metadata["research_metadata"]["source_count"] == 3
+    assert (
+        result.metadata["research_metadata"]["sources"][0]
+        == "https://arxiv.org/abs/1706.03762"
+    )
+    assert result.metadata["diagnostics"] == ["mock"]
+    assert result.metadata["topic_summary"] == "Research on transformer architectures"
 
     # Verify research client was called
     mock_research_client.run_research.assert_called_once_with(
@@ -103,8 +129,8 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
     )
 
 
-def test_execute_markdown_format(agent, vault_path, mock_research_client):
-    """Test that generated Markdown has correct format."""
+def test_execute_preserves_article(agent, vault_path, mock_research_client):
+    """Test that the article returned by the client is persisted verbatim."""
     context = {
         "topic_title": "Test Topic",
         "topic_summary": "Test summary",
@@ -117,22 +143,8 @@ def test_execute_markdown_format(agent, vault_path, mock_research_client):
     assert result.success is True
     content = result.changes[0].content
 
-    # Check YAML front matter
-    assert content.startswith("---\n")
-    assert "tags:\n" in content
-    assert "  - tag1\n" in content
-    assert "  - tag2\n" in content
-    assert "  - tag3\n" in content
-    assert content.count("---") == 2
-
-    # Check Markdown sections
-    assert "# Test Topic\n" in content
-    assert "## Summary\n" in content
-    assert "Test summary" in content
-    assert "## Research Findings\n" in content
-    assert "Comprehensive research findings" in content
-    assert "## Sources\n" in content
-    assert "1. https://arxiv.org/abs/1706.03762\n" in content
+    expected_article = mock_research_client.run_research.return_value.article
+    assert content == expected_article
 
 
 def test_execute_with_api_error(agent, vault_path, mock_research_client):
@@ -157,9 +169,9 @@ def test_execute_with_api_error(agent, vault_path, mock_research_client):
 
 def test_execute_with_invalid_context(agent, vault_path):
     """Test that execute raises error with invalid context."""
-    context = {"topic_title": "Test"}  # Missing required fields
+    context = {"topic_title": ""}  # Empty topic_title
 
-    with pytest.raises(ValueError, match="topic metadata"):
+    with pytest.raises(ValueError, match="topic_title is required"):
         agent.execute(context)
 
 

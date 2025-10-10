@@ -8,10 +8,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from src.api.v1.models.workflow import Base, Workflow
-from src.api.v1.router import router
-from src.db.database import get_db
-from src.state import WorkflowStrategy
+from src.obs_graphs.api.router import router
+from src.obs_graphs.db.database import Base, get_db
+from src.obs_graphs.db.models.workflow import Workflow
+from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -47,7 +47,7 @@ def client(test_db):
     from fastapi import FastAPI
 
     app = FastAPI()
-    app.include_router(router, prefix="/api/v1")
+    app.include_router(router, prefix="/api")
     app.dependency_overrides[get_db] = override_get_db
 
     return TestClient(app)
@@ -56,7 +56,7 @@ def client(test_db):
 @pytest.fixture
 def mock_celery_task():
     """Mock Celery task to prevent actual task execution."""
-    with patch("src.api.v1.tasks.workflow_tasks.run_workflow_task") as mock_task:
+    with patch("src.obs_graphs.celery.tasks.run_workflow_task") as mock_task:
         mock_result = MagicMock()
         mock_result.id = "test-task-id"
         mock_task.delay.return_value = mock_result
@@ -66,7 +66,7 @@ def mock_celery_task():
 def test_workflow_run_with_valid_prompt(client, mock_celery_task):
     """Test that valid prompt is accepted and persisted to database."""
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "prompt": "Research the impact of transformers on NLP",
             "async_execution": True,
@@ -92,7 +92,7 @@ def test_workflow_run_accepts_empty_prompt_for_backward_compatibility(
 ):
     """Test that empty prompt is accepted for backward compatibility (internal use)."""
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "prompt": "",
             "async_execution": True,
@@ -112,7 +112,7 @@ def test_workflow_run_accepts_empty_prompt_for_backward_compatibility(
 def test_workflow_run_rejects_whitespace_only_prompt(client):
     """Test that whitespace-only prompt is rejected."""
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "prompt": "   ",
             "async_execution": False,
@@ -127,7 +127,7 @@ def test_workflow_run_rejects_whitespace_only_prompt(client):
 def test_workflow_run_rejects_missing_prompt(client):
     """Test that missing prompt field is rejected."""
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "async_execution": False,
         },
@@ -141,7 +141,7 @@ def test_workflow_run_rejects_missing_prompt(client):
 def test_workflow_run_prompt_strips_whitespace(client, mock_celery_task):
     """Test that prompt whitespace is stripped before storage."""
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "prompt": "  Research topic with spaces  ",
             "async_execution": True,
@@ -160,7 +160,7 @@ def test_workflow_run_prompt_strips_whitespace(client, mock_celery_task):
 def test_workflow_run_with_strategy_override(client, mock_celery_task):
     """Test that prompt works with strategy override."""
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "prompt": "Research transformers",
             "strategy": WorkflowStrategy.RESEARCH_PROPOSAL.value,
@@ -181,7 +181,7 @@ def test_workflow_run_with_strategy_override(client, mock_celery_task):
 def test_workflow_run_prompt_in_metadata(client, mock_celery_task):
     """Test that prompt appears in workflow response metadata."""
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "prompt": "Test research prompt",
             "async_execution": True,
@@ -206,7 +206,7 @@ def test_workflow_run_long_prompt_truncated_in_repr(client, mock_celery_task):
     long_prompt = "A" * 100  # 100 character prompt
 
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "prompt": long_prompt,
             "async_execution": True,
@@ -231,7 +231,7 @@ def test_workflow_run_long_prompt_truncated_in_repr(client, mock_celery_task):
 def test_workflow_run_async_propagates_prompt(client, mock_celery_task):
     """Test that async execution propagates prompt to Celery task."""
     response = client.post(
-        "/api/v1/workflows/run",
+        "/api/workflows/run",
         json={
             "prompt": "Async research prompt",
             "async_execution": True,

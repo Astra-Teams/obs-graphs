@@ -28,14 +28,8 @@ FROM base as dev-deps
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Install all dependencies, including development ones
-# Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
-ARG OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-  if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
-  git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
-  fi && \
-  uv sync && \
-  git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
+  uv sync
 
 
 # ==============================================================================
@@ -47,14 +41,8 @@ FROM base as prod-deps
 # No additional system dependencies needed for production
 
 # Install only production dependencies
-# Use OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN for private git dependencies
-ARG OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN
 RUN --mount=type=cache,target=/root/.cache \
-  if [ -n "$OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN" ]; then \
-  git config --global url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
-  fi && \
-  uv sync --no-dev && \
-  git config --global --unset url."https://${OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN}@github.com/".insteadOf || true
+  uv sync --no-dev
 
 
 
@@ -73,7 +61,6 @@ RUN chown appuser:appgroup /app
 # Copy application code and submodules
 COPY --chown=appuser:appgroup src/ ./src
 COPY --chown=appuser:appgroup alembic/ ./alembic
-COPY --chown=appuser:appgroup submodules/ ./submodules
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
 
@@ -104,8 +91,9 @@ RUN chown appuser:appgroup /app
 # Copy the development virtual environment from dev-deps stage
 COPY --from=dev-deps /app/.venv ./.venv
 
-# Set the PATH to include the venv's bin directory
+# Set the PATH to include the venv's bin directory and PYTHONPATH for dev modules
 ENV PATH="/app/.venv/bin:${PATH}"
+ENV PYTHONPATH="/app"
 
 # Copy application code from app-code stage
 COPY --from=app-code --chown=appuser:appgroup /app ./
@@ -136,8 +124,6 @@ FROM base AS production
 
 # Install PostgreSQL client for database operations
 RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
-
-
 
 # Create a non-root user and group for security
 RUN groupadd -r appgroup && useradd -r -g appgroup -d /home/appuser -m appuser

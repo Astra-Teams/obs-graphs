@@ -8,28 +8,22 @@ import os
 import subprocess
 import time
 from typing import Generator
-from unittest.mock import Mock, patch
 
 import httpx
 import pytest
-from dotenv import load_dotenv
 
-from src.container import DependencyContainer
+from tests.envs import setup_e2e_test_env
 
-# Load environment variables from .env file
-load_dotenv()
 
-# Set environment variables for Docker Compose
-os.environ["HOST_BIND_IP"] = os.getenv("HOST_BIND_IP", "127.0.0.1")
-os.environ["TEST_PORT"] = os.getenv("TEST_PORT", "8002")
+@pytest.fixture(autouse=True)
+def set_e2e_test_env(monkeypatch):
+    """Setup environment variables for E2E tests."""
+    setup_e2e_test_env(monkeypatch)
 
 
 @pytest.fixture(scope="session")
-def api_base_url():
-    """
-    Provides the base URL for the API service.
-    Uses the e2e_setup fixture for container management.
-    """
+def api_base_url() -> str:
+    """Return the base URL for the API service under test."""
     host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")
     host_port = os.getenv("TEST_PORT", "8002")
     return f"http://{host_bind_ip}:{host_port}"
@@ -43,10 +37,10 @@ def _wait_for_health_check(url: str, timeout: int = 120, interval: int = 5) -> N
         try:
             response = httpx.get(url, timeout=5.0)
             if response.status_code == 200:
-                print("✅ Health check passed.")
+                print(f"✅ Service at {url} is healthy")
                 return
             print(
-                f"⚠️ Health check returned {response.status_code}; retrying in {interval}s..."
+                f"⚠️ Health check at {url} returned {response.status_code}; retrying in {interval}s..."
             )
         except httpx.RequestError as exc:
             print(
@@ -79,6 +73,7 @@ def e2e_setup() -> Generator[None, None, None]:
         "--project-name",
         test_project_name,
     ]
+
     compose_up_command = docker_command + compose_common_args + ["up", "-d", "--build"]
     compose_down_command = (
         docker_command + compose_common_args + ["down", "-v", "--remove-orphans"]
@@ -86,12 +81,16 @@ def e2e_setup() -> Generator[None, None, None]:
 
     host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")
     host_port = os.getenv("TEST_PORT", "8002")
-    health_url = f"http://{host_bind_ip}:{host_port}/health"
+    api_health_url = f"http://{host_bind_ip}:{host_port}/health"
 
     try:
         print("\n🚀 Starting E2E test services with docker compose...")
         subprocess.run(compose_up_command, check=True, timeout=300)
-        _wait_for_health_check(health_url)
+
+        print("⏳ Waiting for service 'obs-api' to become healthy...")
+        _wait_for_health_check(api_health_url)
+
+        print("✅ All services are ready")
         yield
     except (subprocess.CalledProcessError, TimeoutError) as exc:
         print(f"\n🛑 E2E setup failed: {exc}")
@@ -100,38 +99,3 @@ def e2e_setup() -> Generator[None, None, None]:
     finally:
         print("\n🛑 Stopping E2E services...")
         subprocess.run(compose_down_command, check=False)
-
-
-@pytest.fixture(autouse=True)
-def mock_github_client_for_e2e():
-    """Mock GitHub client for e2e tests to avoid real API calls."""
-    mock_client = Mock()
-    mock_client.clone_repository.return_value = None
-    mock_client.create_branch.return_value = None
-    mock_client.commit_and_push.return_value = True
-
-    mock_pr = Mock()
-    mock_pr.html_url = "https://github.com/test/repo/pull/1"
-    mock_client.create_pull_request.return_value = mock_pr
-
-    with patch.object(
-        DependencyContainer, "get_github_client", return_value=mock_client
-    ):
-        yield
-
-
-@pytest.fixture(autouse=True)
-def mock_graph_builder_run_workflow():
-    """Mock GraphBuilder.run_workflow for e2e tests to avoid real workflow execution."""
-    from src.api.v1.graph import GraphBuilder, WorkflowResult
-
-    mock_result = WorkflowResult(
-        success=True,
-        changes=[],
-        summary="Mock workflow completed successfully",
-        node_results={},
-        pr_url="https://github.com/test/repo/pull/1",
-        branch_name="mock-branch",
-    )
-    with patch.object(GraphBuilder, "run_workflow", return_value=mock_result):
-        yield

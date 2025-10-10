@@ -21,16 +21,21 @@ case "${1:-}" in
         done
         echo "Database exists."
         
-        while ! alembic upgrade head; do
-            count=$((count + 1))
-            if [ ${count} -ge 30 ]; then
-                echo "Failed to connect to database after 30 attempts. Exiting."
-                exit 1
-            fi
-            echo "Migration failed, retrying in 2 seconds... (${count}/30)"
-            sleep 2
-        done
-        echo "Database migrations completed successfully."
+        # Check if migrations are already applied
+        if alembic current | grep -q .; then
+            echo "Migrations already applied, skipping upgrade."
+        else
+            while ! alembic upgrade head; do
+                count=$((count + 1))
+                if [ ${count} -ge 30 ]; then
+                    echo "Failed to connect to database after 30 attempts. Exiting."
+                    exit 1
+                fi
+                echo "Migration failed, retrying in 2 seconds... (${count}/30)"
+                sleep 2
+            done
+            echo "Database migrations completed successfully."
+        fi
         ;;
     *)
         ;;
@@ -44,7 +49,7 @@ if [ "$#" -gt 0 ]; then
 else
     WORKERS=${NUM_OF_UVICORN_WORKERS:-4}
     echo "Starting server on 0.0.0.0:8000 with ${WORKERS} worker(s)..."
-    exec uvicorn src.main:app \
+    exec uvicorn src.obs_graphs.main:app \
         --host "0.0.0.0" \
         --port "8000" \
         --workers "${WORKERS}" \
