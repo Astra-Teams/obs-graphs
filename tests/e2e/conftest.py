@@ -8,12 +8,17 @@ import os
 import subprocess
 import time
 from typing import Generator
-from unittest.mock import Mock, patch
 
 import httpx
 import pytest
 
-from src.obs_graphs.container import DependencyContainer
+from tests.envs import setup_e2e_test_env
+
+
+@pytest.fixture(autouse=True)
+def set_e2e_test_env(monkeypatch):
+    """Setup environment variables for E2E tests."""
+    setup_e2e_test_env(monkeypatch)
 
 
 @pytest.fixture(scope="session")
@@ -94,21 +99,3 @@ def e2e_setup() -> Generator[None, None, None]:
     finally:
         print("\n🛑 Stopping E2E services...")
         subprocess.run(compose_down_command, check=False)
-
-
-@pytest.fixture(autouse=True)
-def mock_github_client_for_e2e():
-    """Mock GitHub client for e2e tests to avoid real API calls."""
-    mock_client = Mock()
-    mock_client.clone_repository.return_value = None
-    mock_client.create_branch.return_value = None
-    mock_client.commit_and_push.return_value = True
-
-    mock_pr = Mock()
-    mock_pr.html_url = "https://github.com/test/repo/pull/1"
-    mock_client.create_pull_request.return_value = mock_pr
-
-    with patch.object(
-        DependencyContainer, "get_github_client", return_value=mock_client
-    ):
-        yield

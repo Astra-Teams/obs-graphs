@@ -35,10 +35,11 @@
 -   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions.
 
 ### 2. Testing (`tests/`)
--   **Unit**: Isolated component tests (fast).
--   **Integration**: Multi-component interaction tests.
--   **E2E**: Full system tests in a containerized environment (slow).
+-   **Unit**: Isolated component tests (fast) - all services mocked.
+-   **Integration**: Multi-component interaction tests - all services mocked.
+-   **E2E**: Full system tests in a containerized environment (slow) - uses real Redis for Celery testing.
 -   **Database**: Migration and data integrity validation.
+-   **Environment Configuration**: Each test category has its own environment setup in `tests/envs.py`, applied via `conftest.py` in each test directory.
 
 ---
 

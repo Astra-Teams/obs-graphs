@@ -3,7 +3,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_TEST_DB}
+      - POSTGRES_DB=${POSTGRES_TEST_DB}
     volumes: !override []
 
   obs-api:
@@ -12,17 +12,11 @@ services:
     ports: !override
       - "${HOST_BIND_IP}:${TEST_PORT}:8000"
     environment:
-      POSTGRES_DB: ${POSTGRES_TEST_DB}
-      USE_MOCK_LLM: true
-      USE_MOCK_GITHUB: true
-      USE_MOCK_OLLAMA_DEEP_RESEARCHER: true
+      - POSTGRES_DB=${POSTGRES_TEST_DB}
 
   celery-worker:
     build:
       target: development
     command: celery -A src.obs_graphs.celery.app worker --loglevel=debug
     environment:
-      POSTGRES_DB: ${POSTGRES_TEST_DB}
-      USE_MOCK_LLM: true
-      USE_MOCK_GITHUB: true
-      USE_MOCK_OLLAMA_DEEP_RESEARCHER: true
+      - POSTGRES_DB=${POSTGRES_TEST_DB}

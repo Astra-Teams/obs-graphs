@@ -91,8 +91,9 @@ RUN chown appuser:appgroup /app
 # Copy the development virtual environment from dev-deps stage
 COPY --from=dev-deps /app/.venv ./.venv
 
-# Set the PATH to include the venv's bin directory
+# Set the PATH to include the venv's bin directory and PYTHONPATH for dev modules
 ENV PATH="/app/.venv/bin:${PATH}"
+ENV PYTHONPATH="/app"
 
 # Copy application code from app-code stage
 COPY --from=app-code --chown=appuser:appgroup /app ./

@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import AsyncGenerator, Generator
 
 import pytest
-from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker

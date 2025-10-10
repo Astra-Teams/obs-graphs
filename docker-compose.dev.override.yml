@@ -1,7 +1,7 @@
 services:
   db:
     environment:
-      POSTGRES_DB: ${POSTGRES_DEV_DB}
+      - POSTGRES_DB=${POSTGRES_DEV_DB}
     volumes: !override []
 
   obs-api:
@@ -10,7 +10,7 @@ services:
     ports: !override
       - "${HOST_BIND_IP}:${DEV_PORT}:8000"
     environment:
-      POSTGRES_DB: ${POSTGRES_DEV_DB}
+      - POSTGRES_DB=${POSTGRES_DEV_DB}
     volumes:
       - .:/app
       - /app/.venv
@@ -19,7 +19,7 @@ services:
     build:
       target: development
     environment:
-      POSTGRES_DB: ${POSTGRES_DEV_DB}
+      - POSTGRES_DB=${POSTGRES_DEV_DB}
     volumes:
       - .:/app
       - /app/.venv
