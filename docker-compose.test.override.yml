@@ -21,7 +21,7 @@ services:
   celery-worker:
     build:
       target: development
-    command: celery -A src.tasks.celery_app worker --loglevel=debug
+    command: celery -A src.obs_graphs.celery.app worker --loglevel=debug
     environment:
       POSTGRES_DB: ${POSTGRES_TEST_DB}
       USE_MOCK_LLM: true

@@ -106,7 +106,7 @@ class ObsGraphsSettings(BaseSettings):
         alias="VAULT_GITHUB_API_TIMEOUT_SECONDS",
     )
     vault_submodule_path: str = Field(
-        default="submodules/obsidian-vault",
+        default="src/submodules/obsidian-vault",
         title="Vault Submodule Path",
         description="Filesystem path to the locally checked out Obsidian vault submodule.",
         alias="VAULT_SUBMODULE_PATH",
