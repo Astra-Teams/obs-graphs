@@ -1,8 +1,7 @@
-[submodule "submodules/ollama-deep-researcher"] # v1.4.0
-	path = submodules/ollama-deep-researcher
-	url = git@github.com:Astra-Teams/ollama-deep-researcher.git
-
 [submodule "submodules/obsidian-vault"]
 	path = submodules/obsidian-vault
 	url = https://github.com/Astra-Teams/constellations.git
 	branch = main
+[submodule "submodules/ollama-deep-researcher"]
+	path = submodules/ollama-deep-researcher
+	url = git@github.com:Astra-Teams/ollama-deep-researcher.git
