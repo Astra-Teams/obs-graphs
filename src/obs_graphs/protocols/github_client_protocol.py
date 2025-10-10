@@ -117,3 +117,7 @@ class GithubClientProtocol(Protocol):
             Exception: If tree retrieval fails.
         """
         ...
+
+    def bulk_commit_changes(self, branch: str, changes: list, message: str) -> str:
+        """Commit multiple file changes atomically and return the commit SHA."""
+        ...

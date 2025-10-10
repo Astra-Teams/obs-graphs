@@ -1,11 +1,14 @@
 """Pydantic models for article proposal graph schemas."""
 
-from typing import Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
 
 from pydantic import BaseModel, ConfigDict
 
 if TYPE_CHECKING:
-    from src.obs_graphs.graphs.article_proposal.state import FileChange, WorkflowStrategy
+    from src.obs_graphs.graphs.article_proposal.state import (
+        FileChange,
+        WorkflowStrategy,
+    )
 
 
 class VaultSummaryModel(BaseModel):

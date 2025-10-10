@@ -40,9 +40,7 @@ class TestAgentIntegration:
             create_changes
         ), "Expected at least one CREATE change from new article agent"
 
-        vault_service = container.get_vault_service()
-        vault_service.apply_changes(result.changes, "test message")
-        assert vault_service.validate_vault_structure(vault_path)
+        assert container.get_vault_service().validate_vault_structure(vault_path)
 
     def test_improvement_strategy_runs_all_agents(self, vault_fixture) -> None:
         """A populated vault should trigger the improvement strategy and execute all agents."""
@@ -68,6 +66,4 @@ class TestAgentIntegration:
         assert result.summary.startswith("Workflow completed with 'research_proposal'")
 
         # Ensure vault structure remains valid after applying no-op changes
-        vault_service = container.get_vault_service()
-        vault_service.apply_changes(result.changes, "test message")
-        assert vault_service.validate_vault_structure(vault_path)
+        assert container.get_vault_service().validate_vault_structure(vault_path)

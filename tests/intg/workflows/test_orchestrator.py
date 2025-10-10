@@ -1,4 +1,4 @@
-"""Unit tests for the ObsidianArticleProposalToPRGraph."""
+"""Unit tests for the ArticleProposalGraph orchestration."""
 
 from unittest.mock import MagicMock, patch
 
@@ -25,94 +25,70 @@ def mock_container():
     """Return a mock DependencyContainer."""
     from src.obs_graphs.container import DependencyContainer
 
-    # Create a mock container
     mock_container = MagicMock(spec=DependencyContainer)
-    mock_github_client = MagicMock()
     mock_vault_service = MagicMock()
-
-    mock_container.get_github_client.return_value = mock_github_client
     mock_container.get_vault_service.return_value = mock_vault_service
 
-    # Mock get_node to return MockAgent instances
-    def mock_get_node(name):
+    def mock_get_node(name: str):
         return MockAgent()
 
     mock_container.get_node.side_effect = mock_get_node
-
     return mock_container
 
 
 def test_determine_workflow_plan_uses_new_article_strategy_without_prompt(
     mock_container,
 ):
-    """Test that determine_workflow_plan uses new_article strategy when prompt is empty."""
-    # Arrange
+    """determine_workflow_plan should choose the new article path when no prompt is provided."""
     article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompt="")
 
-    # Act
     plan = article_proposal_graph.determine_workflow_plan(
         mock_container.get_vault_service(), request
     )
 
-    # Assert
     assert isinstance(plan, WorkflowPlan)
     assert plan.strategy == "new_article"
     assert plan.nodes == [
         "article_proposal",
         "article_content_generation",
-        "commit_changes",
-        "github_pr_creation",
+        "submit_pull_request",
     ]
 
 
 def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
     mock_container,
 ):
-    """Test that determine_workflow_plan uses research_proposal strategy when prompt is provided."""
-    # Arrange
+    """determine_workflow_plan should choose the research path when a prompt is given."""
     article_proposal_graph = ArticleProposalGraph()
-    request = WorkflowRunRequest(
-        prompt="Research the impact of transformers on natural language processing"
-    )
+    request = WorkflowRunRequest(prompt="Research transformers")
 
-    # Act
     plan = article_proposal_graph.determine_workflow_plan(
         mock_container.get_vault_service(), request
     )
 
-    # Assert
     assert isinstance(plan, WorkflowPlan)
     assert plan.strategy == "research_proposal"
     assert plan.nodes == [
         "article_proposal",
         "deep_research",
-        "commit_changes",
-        "github_pr_creation",
+        "submit_pull_request",
     ]
 
 
 def test_determine_workflow_plan_validates_whitespace_only_prompt():
-    """Test that whitespace-only prompt raises validation error."""
-    # Act & Assert
+    """A whitespace-only prompt should raise a validation error."""
     with pytest.raises(ValueError, match="Prompt cannot be whitespace-only"):
         WorkflowRunRequest(prompt="   ")
 
 
 def test_execute_workflow(mock_container):
-    """Test that execute_workflow runs agents and aggregates results."""
-    # Arrange
-    plan = WorkflowPlan(
-        strategy="test_plan",
-        nodes=["article_proposal"],
-    )
-
+    """execute_workflow should run each node and aggregate results."""
+    plan = WorkflowPlan(strategy="test_plan", nodes=["article_proposal"])
     article_proposal_graph = ArticleProposalGraph()
 
-    # Act
     result = article_proposal_graph.execute_workflow(plan, mock_container)
 
-    # Assert
     assert isinstance(result, WorkflowResult)
     assert result.success
     assert len(result.node_results) == 1
@@ -120,127 +96,113 @@ def test_execute_workflow(mock_container):
 
 
 def test_execute_workflow_with_research_proposal_strategy(mock_container):
-    """Test that execute_workflow correctly handles research_proposal strategy."""
-    # Arrange
+    """execute_workflow should handle the research workflow plan."""
     plan = WorkflowPlan(
         strategy="research_proposal",
-        nodes=[
-            "article_proposal",
-            "deep_research",
-            "commit_changes",
-            "github_pr_creation",
-        ],
+        nodes=["article_proposal", "deep_research", "submit_pull_request"],
     )
-
     article_proposal_graph = ArticleProposalGraph()
 
-    # Act
     result = article_proposal_graph.execute_workflow(
-        plan,
-        mock_container,
-        prompt="Research quantum computing",
+        plan, mock_container, prompt="Research quantum computing"
     )
 
-    # Assert
     assert isinstance(result, WorkflowResult)
     assert result.success
-    assert len(result.node_results) == 4
-    assert "article_proposal" in result.node_results
-    assert "deep_research" in result.node_results
-    assert "commit_changes" in result.node_results
-    assert "github_pr_creation" in result.node_results
+    assert len(result.node_results) == 3
+    assert set(result.node_results.keys()) == {
+        "article_proposal",
+        "deep_research",
+        "submit_pull_request",
+    }
     assert "research_proposal" in result.summary
 
 
 def test_execute_workflow_with_multiple_nodes(mock_container):
-    """Test that execute_workflow processes multiple nodes in sequence."""
-    # Arrange
+    """execute_workflow should process multiple nodes sequentially."""
     plan = WorkflowPlan(
         strategy="new_article",
         nodes=[
             "article_proposal",
             "article_content_generation",
-            "commit_changes",
-            "github_pr_creation",
+            "submit_pull_request",
         ],
     )
-
     article_proposal_graph = ArticleProposalGraph()
 
-    # Act
     result = article_proposal_graph.execute_workflow(plan, mock_container)
 
-    # Assert
     assert isinstance(result, WorkflowResult)
     assert result.success
-    assert len(result.node_results) == 4
-    # Verify all nodes were executed
-    assert mock_container.get_node.call_count == 4
+    assert len(result.node_results) == 3
+    assert mock_container.get_node.call_count == 3
 
 
 @patch("src.obs_graphs.graphs.article_proposal.graph.get_container")
-@patch("src.obs_graphs.graphs.article_proposal.graph.get_settings")
-def test_run_workflow_creates_branch_and_executes(
-    mock_get_settings, mock_get_container
-):
-    """Test that run_workflow creates a branch and executes the workflow."""
-    # Arrange
-    mock_settings = MagicMock()
-    mock_settings.workflow_default_branch = "main"
-    mock_get_settings.return_value = mock_settings
-
+def test_run_workflow_collects_pr_metadata(mock_get_container):
+    """run_workflow should propagate PR metadata from the submit node."""
     mock_container = MagicMock()
-    mock_github_client = MagicMock()
     mock_vault_service = MagicMock()
-
-    mock_container.get_github_client.return_value = mock_github_client
+    mock_vault_service.get_vault_summary.return_value = MagicMock()
     mock_container.get_vault_service.return_value = mock_vault_service
-    mock_container.get_node.return_value = MockAgent()
-    mock_container.set_vault_path = MagicMock()
 
+    def node_factory(name: str):
+        if name == "submit_pull_request":
+            agent = MagicMock()
+
+            def execute(context: dict) -> AgentResult:
+                return AgentResult(
+                    success=True,
+                    changes=[],
+                    message="Submitted",
+                    metadata={
+                        "branch_name": "obsidian-agents/workflow-123",
+                        "pr_url": "https://github.com/test/pr/1",
+                    },
+                )
+
+            agent.execute.side_effect = execute
+            return agent
+        return MockAgent()
+
+    mock_container.get_node.side_effect = node_factory
     mock_get_container.return_value = mock_container
 
     article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompt="Test research")
 
-    # Act
     result = article_proposal_graph.run_workflow(request)
 
-    # Assert
     assert isinstance(result, WorkflowResult)
-    # Verify branch was created
-    mock_github_client.create_branch.assert_called_once()
-    call_args = mock_github_client.create_branch.call_args
-    assert call_args[1]["base_branch"] == "main"
-    assert call_args[1]["branch_name"].startswith("obsidian-agents/workflow-")
-    # Note: set_vault_path is no longer called in run_workflow, it's called in workflow_tasks.py
-    mock_container.set_vault_path.assert_not_called()
+    assert result.success
+    assert result.pr_url == "https://github.com/test/pr/1"
+    assert result.branch_name == "obsidian-agents/workflow-123"
 
 
 @patch("src.obs_graphs.graphs.article_proposal.graph.get_container")
-@patch("src.obs_graphs.graphs.article_proposal.graph.get_settings")
-def test_run_workflow_handles_failure(mock_get_settings, mock_get_container):
-    """Test that run_workflow handles failures gracefully."""
-    # Arrange
-    mock_settings = MagicMock()
-    mock_settings.workflow_default_branch = "main"
-    mock_get_settings.return_value = mock_settings
-
+def test_run_workflow_handles_failure(mock_get_container):
+    """run_workflow should return a failure result if a node raises."""
     mock_container = MagicMock()
-    mock_github_client = MagicMock()
-    mock_github_client.create_branch.side_effect = Exception("Branch creation failed")
+    mock_vault_service = MagicMock()
+    mock_vault_service.get_vault_summary.return_value = MagicMock()
+    mock_container.get_vault_service.return_value = mock_vault_service
 
-    mock_container.get_github_client.return_value = mock_github_client
-    mock_container.set_vault_path = MagicMock()
+    failing_agent = MagicMock()
+    failing_agent.execute.side_effect = RuntimeError("node failure")
+
+    def node_factory(name: str):
+        if name == "article_proposal":
+            return failing_agent
+        return MockAgent()
+
+    mock_container.get_node.side_effect = node_factory
     mock_get_container.return_value = mock_container
 
     article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompt="")
 
-    # Act
     result = article_proposal_graph.run_workflow(request)
 
-    # Assert
     assert isinstance(result, WorkflowResult)
     assert not result.success
-    assert "Branch creation failed" in result.summary
+    assert "node failure" in result.summary

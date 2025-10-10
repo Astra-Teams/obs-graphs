@@ -10,11 +10,12 @@ from langchain_ollama import OllamaLLM
 from src.obs_graphs.clients import GithubClient
 from src.obs_graphs.protocols import (
     GithubClientProtocol,
+    GithubServiceProtocol,
     NodeProtocol,
     ResearchClientProtocol,
     VaultServiceProtocol,
 )
-from src.obs_graphs.services import VaultService
+from src.obs_graphs.services import GithubService, VaultService
 from src.obs_graphs.settings import settings
 
 
@@ -24,6 +25,7 @@ class DependencyContainer:
     def __init__(self):
         """Initialize the container with empty caches."""
         self._github_client: Optional[GithubClientProtocol] = None
+        self._github_service: Optional[GithubServiceProtocol] = None
         self._vault_service: Optional[VaultServiceProtocol] = None
         self._research_client: Optional[ResearchClientProtocol] = None
         self._nodes: Dict[str, NodeProtocol] = {}
@@ -51,14 +53,11 @@ class DependencyContainer:
         """
         Set the current branch for the workflow.
 
-        This must be called before get_vault_service().
+        The value is retained for backward compatibility with legacy workflows.
         """
         self._current_branch = branch
-        # Clear cached vault service when branch changes
-        self._vault_service = None
-        # Clear cached nodes that depend on vault service
-        if "commit_changes" in self._nodes:
-            del self._nodes["commit_changes"]
+        # Branch state no longer influences vault service caching but we keep the
+        # assignment for backward compatibility with existing callers.
 
     def set_vault_path(self, vault_path: Path) -> None:
         """Set the local vault path used during workflow execution."""
@@ -70,32 +69,27 @@ class DependencyContainer:
 
     def get_vault_service(self, branch: Optional[str] = None) -> VaultServiceProtocol:
         """
-        Get the vault service instance for a specific branch.
+        Get the vault service instance for reading the local vault copy.
 
         Args:
-            branch: Branch name. If not provided, uses current branch set by set_branch().
+            branch: Deprecated. Present for backward compatibility.
 
         Returns:
-            VaultService configured for the specified branch.
-
-        Raises:
-            ValueError: If no branch is specified and no current branch is set.
+            VaultService configured with the currently registered vault path.
         """
         if branch:
-            # Direct branch specification (used by ArticleProposalGraph)
-            service = VaultService(self.get_github_client(), branch, self._vault_path)
-            return service
-
-        if self._current_branch is None:
-            raise ValueError(
-                "No branch specified. Call set_branch() or provide branch parameter."
-            )
+            # Direct branch specification kept for backward compatibility
+            return VaultService(self._vault_path)
 
         if self._vault_service is None:
-            self._vault_service = VaultService(
-                self.get_github_client(), self._current_branch, self._vault_path
-            )
+            self._vault_service = VaultService(self._vault_path)
         return self._vault_service
+
+    def get_github_service(self) -> GithubServiceProtocol:
+        """Get the high-level GitHub service instance."""
+        if self._github_service is None:
+            self._github_service = GithubService(self.get_github_client())
+        return self._github_service
 
     def get_research_client(self) -> ResearchClientProtocol:
         """
@@ -208,33 +202,29 @@ class DependencyContainer:
         """Get a node instance by name."""
         if name not in self._nodes:
             # Import all node classes and find the one with matching name
-            from src.obs_graphs.graphs.article_proposal.nodes.article_proposal import (
-                ArticleProposalAgent,
-            )
             from src.obs_graphs.graphs.article_proposal.nodes.article_content_generation import (
                 ArticleContentGenerationAgent,
             )
-            from src.obs_graphs.graphs.article_proposal.nodes.commit_changes import (
-                CommitChangesAgent,
+            from src.obs_graphs.graphs.article_proposal.nodes.article_proposal import (
+                ArticleProposalAgent,
             )
             from src.obs_graphs.graphs.article_proposal.nodes.deep_research import (
                 DeepResearchAgent,
             )
-            from src.obs_graphs.graphs.article_proposal.nodes.github_pr_creation import (
-                GithubPRCreationAgent,
+            from src.obs_graphs.graphs.article_proposal.nodes.submit_pull_request import (
+                SubmitPullRequestAgent,
             )
 
             node_classes = [
                 ArticleProposalAgent,
                 ArticleContentGenerationAgent,
-                CommitChangesAgent,
                 DeepResearchAgent,
-                GithubPRCreationAgent,
+                SubmitPullRequestAgent,
             ]
 
             node_class = None
             for cls in node_classes:
-                if hasattr(cls, 'name') and cls.name == name:
+                if hasattr(cls, "name") and cls.name == name:
                     node_class = cls
                     break
 
@@ -244,12 +234,8 @@ class DependencyContainer:
             # Instantiate with dependencies
             if name in ["article_proposal", "article_content_generation"]:
                 self._nodes[name] = node_class(self.get_llm())
-            elif name == "commit_changes":
-                self._nodes[name] = node_class(self.get_vault_service())
-            elif name == "github_pr_creation":
-                self._nodes[name] = node_class(
-                    self.get_github_client(), self.get_vault_service()
-                )
+            elif name == "submit_pull_request":
+                self._nodes[name] = node_class(self.get_github_service())
             elif name == "deep_research":
                 self._nodes[name] = node_class(self.get_research_client())
             else:

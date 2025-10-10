@@ -11,8 +11,7 @@ article_proposal/
 │   ├── article_proposal.py          # Analyzes vault and proposes new articles
 │   ├── article_content_generation.py # Generates full article content from proposals
 │   ├── deep_research.py             # Conducts deep research using external API
-│   ├── commit_changes.py            # Commits accumulated changes to branch
-│   └── github_pr_creation.py        # Creates GitHub pull requests
+│   └── submit_pull_request.py       # Commits changes and opens pull requests
 ├── prompts/           # LLM prompt templates
 │   ├── new_article_content.md       # Template for generating article content
 │   ├── new_article_creation.md      # Template for proposing new articles
@@ -27,12 +26,12 @@ The article proposal graph supports two main strategies:
 
 ### 1. New Article Creation Strategy
 - **Trigger**: No user prompt provided
-- **Flow**: `article_proposal` → `article_content_generation` → `commit_changes` → `github_pr_creation`
+- **Flow**: `article_proposal` → `article_content_generation` → `submit_pull_request`
 - **Purpose**: Analyzes vault structure and generates new articles to fill gaps
 
 ### 2. Research Proposal Strategy
 - **Trigger**: User provides a research prompt
-- **Flow**: `article_proposal` → `deep_research` → `commit_changes` → `github_pr_creation`
+- **Flow**: `article_proposal` → `deep_research` → `submit_pull_request`
 - **Purpose**: Creates research articles based on user-specified topics
 
 ## Node Responsibilities
@@ -53,15 +52,10 @@ The article proposal graph supports two main strategies:
 - Persists research results as markdown articles
 - Handles API errors gracefully
 
-### CommitChangesAgent (`commit_changes`)
-- Commits all accumulated file changes atomically
-- Generates meaningful commit messages
-- Uses GitHub API for bulk operations
-
-### GithubPRCreationAgent (`github_pr_creation`)
-- Creates pull requests for committed changes
-- Generates PR titles and descriptions
-- Links PRs to workflow execution results
+### SubmitPullRequestAgent (`submit_pull_request`)
+- Generates commit messages and PR content from accumulated results
+- Creates workflow branches, commits changes, and opens GitHub pull requests via `GithubService`
+- Stores PR metadata (URL, branch) for downstream consumers
 
 ## State Management
 

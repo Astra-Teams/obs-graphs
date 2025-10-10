@@ -60,11 +60,11 @@ def test_get_github_client_returns_mock_when_flag_enabled(
 
 @patch("src.obs_graphs.container.VaultService")
 def test_get_vault_service_lazy_instantiation(
-    mock_vault_service, container: DependencyContainer
+    mock_vault_service, container: DependencyContainer, tmp_path
 ):
     """Test that vault service is lazily instantiated."""
     # Arrange
-    container.set_branch("test-branch")
+    container.set_vault_path(tmp_path)
     mock_instance = MagicMock()
     mock_vault_service.return_value = mock_instance
 
@@ -75,7 +75,7 @@ def test_get_vault_service_lazy_instantiation(
     # Assert
     assert service1 is service2
     assert service1 is mock_instance
-    mock_vault_service.assert_called_once()
+    mock_vault_service.assert_called_once_with(tmp_path)
 
 
 @patch("src.obs_graphs.container.settings")
@@ -120,6 +120,22 @@ def test_get_llm_returns_mock_when_flag_enabled(
 
     assert isinstance(llm1, MockOllamaClient)
     assert llm1 is llm2  # Should be cached
+
+
+@patch("src.obs_graphs.container.GithubService")
+def test_get_github_service_lazy_instantiation(
+    mock_github_service, container: DependencyContainer
+):
+    """Test that GithubService is lazily instantiated and cached."""
+    mock_instance = MagicMock()
+    mock_github_service.return_value = mock_instance
+    container.get_github_client = MagicMock(return_value=MagicMock())
+
+    service1 = container.get_github_service()
+    service2 = container.get_github_service()
+
+    assert service1 is service2 is mock_instance
+    mock_github_service.assert_called_once()
 
 
 def test_get_node_valid_name(container: DependencyContainer):

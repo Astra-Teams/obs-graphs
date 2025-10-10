@@ -4,7 +4,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Annotated, Dict, List, Optional, TypedDict
 
-from pydantic import BaseModel, ConfigDict
+# Re-export Pydantic models for backward compatibility
+from src.obs_graphs.graphs.article_proposal.schemas import (
+    AgentResultModel,
+    GraphStateModel,
+    VaultSummaryModel,
+)
 
 
 class WorkflowStrategy(str, Enum):
@@ -91,9 +96,6 @@ class GraphState(TypedDict):
     node_results: Dict
     messages: Annotated[List, "add_messages"]
 
-
-# Re-export Pydantic models for backward compatibility
-from src.obs_graphs.graphs.article_proposal.schemas import AgentResultModel, GraphStateModel, VaultSummaryModel
 
 __all__ = [
     "WorkflowStrategy",

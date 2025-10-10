@@ -1,7 +1,6 @@
 """LangGraph-based workflow orchestration for Obsidian Vault nodes."""
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 
 from langgraph.graph import END, StateGraph
 
@@ -12,7 +11,6 @@ from src.obs_graphs.graphs.article_proposal.state import (
     FileChange,
     GraphState,
 )
-from src.obs_graphs.settings import get_settings
 
 
 @dataclass
@@ -69,25 +67,10 @@ class ArticleProposalGraph:
         Returns:
             WorkflowResult with execution results
         """
-        settings = get_settings()
-        branch_name = ""
 
         try:
             # Instantiate DependencyContainer
             container = get_container()
-
-            # Get required services and clients
-            github_client = container.get_github_client()
-
-            # Create new branch for this workflow
-            branch_name = f"obsidian-agents/workflow-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
-            github_client.create_branch(
-                branch_name=branch_name,
-                base_branch=settings.workflow_default_branch,
-            )
-
-            # Set the branch in the container for workflow execution
-            container.set_branch(branch_name)
 
             # Analyze vault to create workflow plan
             vault_service = container.get_vault_service()
@@ -105,11 +88,10 @@ class ArticleProposalGraph:
             if not workflow_result.success:
                 raise Exception(f"Workflow execution failed: {workflow_result.summary}")
 
-            # Update result with PR info from github_pr_creation node
-            pr_result = workflow_result.node_results.get("github_pr_creation", {})
+            pr_result = workflow_result.node_results.get("submit_pull_request", {})
             pr_metadata = pr_result.get("metadata", {})
             workflow_result.pr_url = pr_metadata.get("pr_url", "")
-            workflow_result.branch_name = branch_name
+            workflow_result.branch_name = pr_metadata.get("branch_name", "")
 
             return workflow_result
 
@@ -119,7 +101,6 @@ class ArticleProposalGraph:
                 changes=[],
                 summary=f"Workflow failed: {str(e)}",
                 node_results={},
-                branch_name=branch_name,
             )
 
     def determine_workflow_plan(
@@ -146,8 +127,7 @@ class ArticleProposalGraph:
             nodes = [
                 "article_proposal",
                 "deep_research",
-                "commit_changes",
-                "github_pr_creation",
+                "submit_pull_request",
             ]
         else:
             # Default: new article creation strategy
@@ -155,8 +135,7 @@ class ArticleProposalGraph:
             nodes = [
                 "article_proposal",
                 "article_content_generation",
-                "commit_changes",
-                "github_pr_creation",
+                "submit_pull_request",
             ]
 
         return WorkflowPlan(nodes=nodes, strategy=strategy)
