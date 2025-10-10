@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.services import VaultService
-from src.state import FileAction, FileChange
+from src.obs_graphs.services import VaultService
+from src.obs_graphs.state import FileAction, FileChange
 
 
 @pytest.fixture

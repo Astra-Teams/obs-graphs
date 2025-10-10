@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-from src.clients.research_api_client import ResearchApiClient
-from src.protocols.research_client_protocol import ResearchResult
+from src.obs_graphs.clients.research_api_client import ResearchApiClient
+from src.obs_graphs.protocols.research_client_protocol import ResearchResult
 
 
 @pytest.fixture

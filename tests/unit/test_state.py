@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.state import AgentResult, FileAction, FileChange
+from src.obs_graphs.state import AgentResult, FileAction, FileChange
 
 
 class TestFileAction:

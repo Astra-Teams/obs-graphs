@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 import httpx
 import pytest
 
-from src.container import DependencyContainer
+from src.obs_graphs.container import DependencyContainer
 
 
 @pytest.fixture(scope="session")

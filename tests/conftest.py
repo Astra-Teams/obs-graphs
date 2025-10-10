@@ -11,9 +11,9 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
-from src.db.database import Base, create_db_session, get_engine
-from src.main import app
-from src.settings import Settings
+from src.obs_graphs.db.database import Base, create_db_session, get_engine
+from src.obs_graphs.main import app
+from src.obs_graphs.settings import Settings
 
 
 @pytest.fixture(scope="session")

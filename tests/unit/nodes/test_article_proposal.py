@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.api.nodes.article_proposal import ArticleProposalAgent
-from src.state import AgentResult
+from src.obs_graphs.api.nodes.article_proposal import ArticleProposalAgent
+from src.obs_graphs.state import AgentResult
 
 
 @pytest.fixture

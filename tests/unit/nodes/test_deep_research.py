@@ -4,9 +4,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.api.nodes.deep_research import DeepResearchAgent
-from src.protocols.research_client_protocol import ResearchResult
-from src.state import AgentResult, FileAction
+from src.obs_graphs.api.nodes.deep_research import DeepResearchAgent
+from src.obs_graphs.protocols.research_client_protocol import ResearchResult
+from src.obs_graphs.state import AgentResult, FileAction
 
 
 @pytest.fixture

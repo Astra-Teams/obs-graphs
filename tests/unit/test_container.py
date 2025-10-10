@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.container import DependencyContainer, get_container
+from src.obs_graphs.container import DependencyContainer, get_container
 
 
 @pytest.fixture
@@ -13,8 +13,8 @@ def container():
     return DependencyContainer()
 
 
-@patch("src.container.settings")
-@patch("src.container.GithubClient")
+@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.GithubClient")
 def test_get_github_client_lazy_instantiation(
     mock_github_client,
     mock_settings,
@@ -38,7 +38,7 @@ def test_get_github_client_lazy_instantiation(
     mock_github_client.assert_called_once()
 
 
-@patch("src.container.settings")
+@patch("src.obs_graphs.container.settings")
 def test_get_github_client_returns_mock_when_flag_enabled(
     mock_settings, container: DependencyContainer, default_settings
 ):
@@ -58,7 +58,7 @@ def test_get_github_client_returns_mock_when_flag_enabled(
     assert client1 is client2  # Should be cached
 
 
-@patch("src.container.VaultService")
+@patch("src.obs_graphs.container.VaultService")
 def test_get_vault_service_lazy_instantiation(
     mock_vault_service, container: DependencyContainer
 ):
@@ -78,8 +78,8 @@ def test_get_vault_service_lazy_instantiation(
     mock_vault_service.assert_called_once()
 
 
-@patch("src.container.settings")
-@patch("src.container.OllamaLLM")
+@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.OllamaLLM")
 def test_get_llm_lazy_instantiation(
     mock_ollama, mock_settings, container: DependencyContainer, default_settings
 ):
@@ -102,7 +102,7 @@ def test_get_llm_lazy_instantiation(
     mock_ollama.assert_called_once_with(model="test-model", base_url="http://test-url")
 
 
-@patch("src.container.settings")
+@patch("src.obs_graphs.container.settings")
 def test_get_llm_returns_mock_when_flag_enabled(
     mock_settings, container: DependencyContainer, default_settings
 ):
@@ -141,8 +141,8 @@ def test_get_node_invalid_name(container: DependencyContainer):
         container.get_node("invalid_node")
 
 
-@patch("src.container.settings")
-@patch("src.container.OllamaLLM")
+@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.OllamaLLM")
 def test_get_node_new_article_creation_with_llm(
     mock_ollama,
     mock_settings,
@@ -178,8 +178,8 @@ def test_get_container_singleton():
     assert isinstance(container1, DependencyContainer)
 
 
-@patch("src.container.settings")
-@patch("src.container.redis.Redis")
+@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.redis.Redis")
 def test_get_redis_client_production_mode(
     mock_redis,
     mock_settings,
@@ -209,7 +209,7 @@ def test_get_redis_client_production_mode(
     )
 
 
-@patch("src.container.settings")
+@patch("src.obs_graphs.container.settings")
 def test_get_redis_client_returns_mock_when_flag_enabled(
     mock_settings, container: DependencyContainer, default_settings
 ):

@@ -4,13 +4,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.graph import (
+from src.obs_graphs.api.graph import (
     GraphBuilder,
     WorkflowPlan,
     WorkflowResult,
 )
-from src.api.schemas import WorkflowRunRequest
-from src.state import AgentResult
+from src.obs_graphs.api.schemas import WorkflowRunRequest
+from src.obs_graphs.state import AgentResult
 
 
 class MockAgent(MagicMock):
@@ -23,7 +23,7 @@ class MockAgent(MagicMock):
 @pytest.fixture
 def mock_container():
     """Return a mock DependencyContainer."""
-    from src.container import DependencyContainer
+    from src.obs_graphs.container import DependencyContainer
 
     # Create a mock container
     mock_container = MagicMock(spec=DependencyContainer)
@@ -178,8 +178,8 @@ def test_execute_workflow_with_multiple_nodes(mock_container):
     assert mock_container.get_node.call_count == 4
 
 
-@patch("src.api.graph.get_container")
-@patch("src.api.graph.get_settings")
+@patch("src.obs_graphs.api.graph.get_container")
+@patch("src.obs_graphs.api.graph.get_settings")
 def test_run_workflow_creates_branch_and_executes(
     mock_get_settings, mock_get_container
 ):
@@ -217,8 +217,8 @@ def test_run_workflow_creates_branch_and_executes(
     mock_container.set_vault_path.assert_not_called()
 
 
-@patch("src.api.graph.get_container")
-@patch("src.api.graph.get_settings")
+@patch("src.obs_graphs.api.graph.get_container")
+@patch("src.obs_graphs.api.graph.get_settings")
 def test_run_workflow_handles_failure(mock_get_settings, mock_get_container):
     """Test that run_workflow handles failures gracefully."""
     # Arrange

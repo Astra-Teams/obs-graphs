@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 
-from src.db.models.workflow import Workflow, WorkflowStatus
+from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 
 # Existing factory functions...
 

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 from github import Github
 from github.PullRequest import PullRequest
 
-from src.protocols import GithubClientProtocol
+from src.obs_graphs.protocols import GithubClientProtocol
 
 
 class MockGithubClient(GithubClientProtocol):

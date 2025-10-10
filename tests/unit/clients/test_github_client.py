@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.clients import GithubClient
-from src.settings import Settings
+from src.obs_graphs.clients import GithubClient
+from src.obs_graphs.settings import Settings
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def github_client():
     return GithubClient(settings)
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_create_branch(mock_authenticate, github_client: GithubClient):
     """Test that create_branch calls the GitHub API with correct parameters."""
     # Arrange
@@ -44,7 +44,7 @@ def test_create_branch(mock_authenticate, github_client: GithubClient):
     )
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_get_file_content(mock_authenticate, github_client: GithubClient):
     """Test that get_file_content retrieves file content via API."""
     # Arrange
@@ -67,7 +67,7 @@ def test_get_file_content(mock_authenticate, github_client: GithubClient):
     mock_repo.get_contents.assert_called_once_with("path/to/file.md", ref="main")
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_bulk_commit_changes_create_only(
     mock_authenticate, github_client: GithubClient
 ):
@@ -113,7 +113,7 @@ def test_bulk_commit_changes_create_only(
     mock_branch_ref.edit.assert_called_once_with(sha="new-commit-sha", force=False)
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_bulk_commit_changes_update_only(
     mock_authenticate, github_client: GithubClient
 ):
@@ -167,7 +167,7 @@ def test_bulk_commit_changes_update_only(
     assert any(elem["path"] == "other/file.md" for elem in created_tree_elements)
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_bulk_commit_changes_delete_only(
     mock_authenticate, github_client: GithubClient
 ):
@@ -220,7 +220,7 @@ def test_bulk_commit_changes_delete_only(
     assert not any(elem["path"] == "delete/file.md" for elem in created_tree_elements)
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_bulk_commit_changes_mixed_operations(
     mock_authenticate, github_client: GithubClient
 ):
@@ -272,7 +272,7 @@ def test_bulk_commit_changes_mixed_operations(
     assert mock_repo.create_git_blob.call_count == 2
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_bulk_commit_changes_empty_list(mock_authenticate, github_client: GithubClient):
     """Test bulk_commit_changes with empty changes list."""
     # Arrange
@@ -298,7 +298,7 @@ def test_bulk_commit_changes_empty_list(mock_authenticate, github_client: Github
     mock_branch_ref.edit.assert_not_called()
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_create_pull_request(mock_authenticate, github_client: GithubClient):
     """Test that create_pull_request calls the GitHub API with correct parameters."""
     # Arrange
@@ -325,7 +325,7 @@ def test_create_pull_request(mock_authenticate, github_client: GithubClient):
     )
 
 
-@patch("src.clients.github_client.GithubClient.authenticate")
+@patch("src.obs_graphs.clients.github_client.GithubClient.authenticate")
 def test_get_tree(mock_authenticate, github_client: GithubClient):
     """Test that get_tree retrieves repository tree via API."""
     # Arrange

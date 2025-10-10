@@ -48,11 +48,12 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["sdk"]
+packages = ["src/obs_graphs"]
 
 [tool.pytest.ini_options]
 python_files = "test_*.py"
 asyncio_mode = "auto"
+pythonpath = ["src"]
 addopts = "-v -s --tb=short"
 
 [tool.black]

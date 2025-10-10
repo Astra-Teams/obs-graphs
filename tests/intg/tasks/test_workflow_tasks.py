@@ -7,9 +7,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.api.tasks.workflow_tasks import run_workflow_task
-from src.db.database import Base
-from src.db.models.workflow import Workflow, WorkflowStatus
+from src.obs_graphs.api.tasks.workflow_tasks import run_workflow_task
+from src.obs_graphs.db.database import Base
+from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 from tests.db.conftest import create_pending_workflow
 
 
@@ -30,7 +30,7 @@ def test_db():
 @pytest.fixture
 def celery_eager_mode():
     """Configure Celery to run tasks synchronously in eager mode."""
-    from src.tasks.celery_app import celery_app
+    from src.obs_graphs.tasks.celery_app import celery_app
 
     celery_app.conf.update(task_always_eager=True, task_eager_propagates=True)
     yield celery_app
@@ -40,9 +40,9 @@ def celery_eager_mode():
 class TestRunWorkflowTask:
     """Tests for run_workflow_task Celery task."""
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_retrieves_workflow_from_database(
         self,
         mock_get_container,
@@ -86,9 +86,9 @@ class TestRunWorkflowTask:
         assert updated_workflow.status == WorkflowStatus.COMPLETED
         assert updated_workflow.pr_url == "https://github.com/test/repo/pull/1"
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_updates_status_to_running(
         self, mock_get_container, mock_get_db, mock_prepare_dir, test_db
     ):
@@ -116,9 +116,9 @@ class TestRunWorkflowTask:
         assert workflow.status == WorkflowStatus.FAILED
         assert workflow.started_at is not None
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_calls_run_workflow_and_updates_db(
         self,
         mock_get_container,
@@ -160,9 +160,9 @@ class TestRunWorkflowTask:
         )
         assert updated_workflow.status == WorkflowStatus.COMPLETED
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_creates_pull_request(
         self,
         mock_get_container,
@@ -201,9 +201,9 @@ class TestRunWorkflowTask:
         )
         assert updated_workflow.pr_url == "https://github.com/test/repo/pull/42"
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_updates_workflow_to_completed(
         self,
         mock_get_container,
@@ -243,9 +243,9 @@ class TestRunWorkflowTask:
         assert updated_workflow.status == WorkflowStatus.COMPLETED
         assert updated_workflow.completed_at is not None
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_updates_workflow_to_failed_on_error(
         self,
         mock_get_container,
@@ -281,8 +281,8 @@ class TestRunWorkflowTask:
         assert updated_workflow.error_message == "Workflow error"
         assert updated_workflow.completed_at is not None
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
     def test_task_raises_error_for_nonexistent_workflow(
         self, mock_get_db, mock_prepare_dir, test_db
     ):
@@ -295,9 +295,9 @@ class TestRunWorkflowTask:
 
         assert "not found" in str(exc_info.value).lower()
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_prompt_to_workflow_request(
         self,
         mock_get_container,
@@ -347,9 +347,9 @@ class TestRunWorkflowTask:
         assert hasattr(request, "prompt")
         assert request.prompt == "Test research prompt for propagation"
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_empty_prompt_when_null(
         self,
         mock_get_container,
@@ -399,9 +399,9 @@ class TestRunWorkflowTask:
         assert hasattr(request, "prompt")
         assert request.prompt == ""
 
-    @patch("src.api.tasks.workflow_tasks._prepare_workflow_directory")
-    @patch("src.api.tasks.workflow_tasks.get_db")
-    @patch("src.container.get_container")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.api.tasks.workflow_tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_prompt_with_strategy(
         self,
         mock_get_container,
@@ -411,7 +411,7 @@ class TestRunWorkflowTask:
     ):
         """Test that task propagates both prompt and strategy to WorkflowRunRequest."""
         mock_prepare_dir.return_value = Path("/tmp/vault")
-        from src.state import WorkflowStrategy
+        from src.obs_graphs.state import WorkflowStrategy
 
         # Create workflow with prompt and strategy
         workflow = Workflow(

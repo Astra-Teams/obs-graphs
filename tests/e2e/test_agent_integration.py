@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from src.api.schemas import WorkflowRunRequest
-from src.state import FileAction
+from src.obs_graphs.api.schemas import WorkflowRunRequest
+from src.obs_graphs.state import FileAction
 
 
 class TestAgentIntegration:
@@ -13,7 +13,7 @@ class TestAgentIntegration:
         self, vault_fixture
     ) -> None:
         """An empty vault should trigger the new article agent via the orchestrator."""
-        from src.container import get_container
+        from src.obs_graphs.container import get_container
 
         vault_path = vault_fixture("empty_vault")
         container = get_container()
@@ -46,7 +46,7 @@ class TestAgentIntegration:
 
     def test_improvement_strategy_runs_all_agents(self, vault_fixture) -> None:
         """A populated vault should trigger the improvement strategy and execute all agents."""
-        from src.container import get_container
+        from src.obs_graphs.container import get_container
 
         vault_path = vault_fixture("well_maintained_vault")
         container = get_container()
