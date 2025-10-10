@@ -15,6 +15,7 @@ class TestAgentIntegration:
     ) -> None:
         """An empty vault should trigger the new article agent via the orchestrator."""
         monkeypatch.setenv("USE_MOCK_LLM", "false")
+        monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
         from src.container import get_container
 
         vault_path = vault_fixture("empty_vault")
@@ -57,6 +58,7 @@ class TestAgentIntegration:
     ) -> None:
         """A populated vault should trigger the improvement strategy and execute all agents."""
         monkeypatch.setenv("USE_MOCK_LLM", "false")
+        monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
         from src.container import get_container
 
         vault_path = vault_fixture("well_maintained_vault")

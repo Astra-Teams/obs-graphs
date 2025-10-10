@@ -58,6 +58,12 @@ class ObsGraphsSettings(BaseSettings):
         description="Return a mocked Redis client when enabled.",
         alias="USE_MOCK_REDIS",
     )
+    use_mock_ollama_deep_researcher: bool = Field(
+        default=True,
+        title="Use Mock Ollama Deep Researcher",
+        description="Return a mocked ollama deep researcher client when enabled.",
+        alias="USE_MOCK_OLLAMA_DEEP_RESEARCHER",
+    )
 
     # --- LLM Settings ---
     llm_model: str = Field(

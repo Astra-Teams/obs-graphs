@@ -125,46 +125,73 @@ class DependencyContainer:
         """
         Get the research API client instance.
 
-        Returns MockOllamaDeepResearcherClient from submodule.
+        Returns either the mock adapter or the real HTTP client depending on
+        the USE_MOCK_OLLAMA_DEEP_RESEARCHER setting.
         """
         if self._research_client is None:
-            import sys
-            from importlib.util import module_from_spec, spec_from_file_location
-            from pathlib import Path
+            if settings.use_mock_ollama_deep_researcher:
+                import sys
+                from importlib.util import module_from_spec, spec_from_file_location
+                from pathlib import Path
 
-            # Add submodules to path
-            submodules_path = (
-                Path(__file__).parent.parent.parent / "obs-graphs" / "submodules"
-            )
-            if str(submodules_path) not in sys.path:
-                sys.path.insert(0, str(submodules_path))
+                from src.protocols.research_client_protocol import ResearchResult
 
-            # Direct import from file path
-            mock_client_path = (
-                submodules_path
-                / "ollama-deep-researcher"
-                / "sdk"
-                / "mock_ollama_deep_researcher_client"
-                / "mock_ollama_deep_researcher_client.py"
-            )
-            spec = spec_from_file_location("mock_client", mock_client_path)
-            mock_module = module_from_spec(spec)
-            spec.loader.exec_module(mock_module)
-            MockOllamaDeepResearcherClient = mock_module.MockOllamaDeepResearcherClient
+                submodules_path = (
+                    Path(__file__).parent.parent.parent / "obs-graphs" / "submodules"
+                )
+                if str(submodules_path) not in sys.path:
+                    sys.path.insert(0, str(submodules_path))
 
-            from src.protocols.research_client_protocol import ResearchResult
+                mock_client_path = (
+                    submodules_path
+                    / "ollama-deep-researcher"
+                    / "sdk"
+                    / "mock_ollama_deep_researcher_client"
+                    / "mock_ollama_deep_researcher_client.py"
+                )
+                spec = spec_from_file_location("mock_client", mock_client_path)
+                mock_module = module_from_spec(spec)
+                spec.loader.exec_module(mock_module)
+                MockOllamaDeepResearcherClient = (
+                    mock_module.MockOllamaDeepResearcherClient
+                )
 
-            class AdaptedMockClient:
-                def __init__(self):
-                    self.client = MockOllamaDeepResearcherClient()
+                class AdaptedMockClient:
+                    def __init__(self):
+                        self.client = MockOllamaDeepResearcherClient()
 
-                def run_research(self, topic: str) -> ResearchResult:
-                    result = self.client.research(topic)
-                    return ResearchResult(
-                        summary=result["summary"], sources=result["sources"]
-                    )
+                    def run_research(self, query: str) -> ResearchResult:
+                        result = self.client.research(query)
+                        article = result.get("article")
+                        if not isinstance(article, str) or not article.strip():
+                            raise ValueError(
+                                "Mock research client returned empty article"
+                            )
 
-            self._research_client = AdaptedMockClient()
+                        metadata = result.get("metadata") or {}
+                        if not isinstance(metadata, dict):
+                            metadata = {}
+
+                        diagnostics = result.get("diagnostics") or []
+                        if not isinstance(diagnostics, list):
+                            diagnostics = [str(diagnostics)]
+
+                        return ResearchResult(
+                            article=article,
+                            metadata=metadata,
+                            diagnostics=[str(item) for item in diagnostics],
+                            processing_time=result.get("processing_time"),
+                        )
+
+                self._research_client = AdaptedMockClient()
+            else:
+                from src.clients.research_api_client import ResearchApiClient
+
+                api_settings = settings.research_api_settings
+                self._research_client = ResearchApiClient(
+                    base_url=api_settings.research_api_url,
+                    timeout=api_settings.research_api_timeout_seconds,
+                )
         return self._research_client
 
     def get_llm(self) -> BaseLLM:

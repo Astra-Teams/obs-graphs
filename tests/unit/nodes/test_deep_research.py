@@ -14,12 +14,17 @@ def mock_research_client():
     """Create a mock research client."""
     client = MagicMock()
     client.run_research.return_value = ResearchResult(
-        summary="Comprehensive research findings on transformers in NLP.",
-        sources=[
-            "https://arxiv.org/abs/1706.03762",
-            "https://example.com/nlp-research",
-            "https://example.com/transformers-guide",
-        ],
+        article="# Impact of Transformers on NLP\n\nContent body",
+        metadata={
+            "sources": [
+                "https://arxiv.org/abs/1706.03762",
+                "https://example.com/nlp-research",
+                "https://example.com/transformers-guide",
+            ],
+            "source_count": 3,
+        },
+        diagnostics=["mock"],
+        processing_time=1.23,
     )
     return client
 
@@ -110,8 +115,13 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
     assert "proposal_path" in result.metadata
     assert "sources_count" in result.metadata
     assert result.metadata["sources_count"] == 3
-    # Tags are no longer included in metadata
-    assert "tags" not in result.metadata
+    assert result.metadata["research_metadata"]["source_count"] == 3
+    assert (
+        result.metadata["research_metadata"]["sources"][0]
+        == "https://arxiv.org/abs/1706.03762"
+    )
+    assert result.metadata["diagnostics"] == ["mock"]
+    assert result.metadata["topic_summary"] == "Research on transformer architectures"
 
     # Verify research client was called
     mock_research_client.run_research.assert_called_once_with(
@@ -119,8 +129,8 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
     )
 
 
-def test_execute_markdown_format(agent, vault_path, mock_research_client):
-    """Test that generated Markdown has correct format."""
+def test_execute_preserves_article(agent, vault_path, mock_research_client):
+    """Test that the article returned by the client is persisted verbatim."""
     context = {
         "topic_title": "Test Topic",
         "topic_summary": "Test summary",
@@ -133,18 +143,8 @@ def test_execute_markdown_format(agent, vault_path, mock_research_client):
     assert result.success is True
     content = result.changes[0].content
 
-    # Check Markdown sections (no YAML front matter)
-    assert content.startswith("# Test Topic\n")
-    assert "## Summary\n" in content
-    assert "Test summary" in content
-    assert "## Research Findings\n" in content
-    assert "Comprehensive research findings" in content
-    assert "## Sources\n" in content
-    assert "1. https://arxiv.org/abs/1706.03762\n" in content
-
-    # No YAML front matter
-    assert not content.startswith("---\n")
-    assert "tags:\n" not in content
+    expected_article = mock_research_client.run_research.return_value.article
+    assert content == expected_article
 
 
 def test_execute_with_api_error(agent, vault_path, mock_research_client):

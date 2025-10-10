@@ -27,15 +27,15 @@ class ResearchApiClient:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
 
-    def run_research(self, topic: str) -> ResearchResult:
+    def run_research(self, query: str) -> ResearchResult:
         """
-        Run research on the given topic.
+        Run research on the given query.
 
         Args:
-            topic: Research topic to investigate
+            query: Search query or topic description
 
         Returns:
-            ResearchResult with summary and sources
+            ResearchResult containing generated article and metadata
 
         Raises:
             httpx.HTTPError: If API request fails
@@ -47,21 +47,45 @@ class ResearchApiClient:
                 endpoint = f"{endpoint}/research"
 
             with httpx.Client(timeout=self.timeout) as client:
-                response = client.post(
-                    endpoint,
-                    json={"topic": topic},
-                )
+                response = client.post(endpoint, json={"query": query})
                 response.raise_for_status()
 
                 data = response.json()
+                if not data.get("success", False):
+                    error_message = data.get("error_message") or "Unknown error"
+                    raise ValueError(f"Research API reported failure: {error_message}")
+
+                article = data.get("article")
+                if not isinstance(article, str) or not article.strip():
+                    raise ValueError("Research API response missing article content")
+
+                metadata = data.get("metadata") or {}
+                if not isinstance(metadata, dict):
+                    raise ValueError("Research API metadata must be a JSON object")
+
+                diagnostics = data.get("diagnostics") or []
+                if not isinstance(diagnostics, list):
+                    raise ValueError("Research API diagnostics must be a list")
+
+                processing_time = data.get("processing_time")
+                if processing_time is not None:
+                    try:
+                        processing_time = float(processing_time)
+                    except (TypeError, ValueError) as exc:
+                        raise ValueError(
+                            "Research API processing_time must be numeric"
+                        ) from exc
+
                 return ResearchResult(
-                    summary=data["summary"],
-                    sources=data.get("sources", []),
+                    article=article,
+                    metadata=metadata,
+                    diagnostics=[str(item) for item in diagnostics],
+                    processing_time=processing_time,
                 )
 
         except httpx.HTTPError as e:
             logger.error(f"Research API request failed: {e}")
             raise
-        except (KeyError, ValueError) as e:
+        except (KeyError, ValueError, TypeError) as e:
             logger.error(f"Invalid research API response: {e}")
             raise ValueError(f"Invalid API response format: {e}") from e

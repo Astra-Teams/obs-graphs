@@ -5,7 +5,7 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.db.models.workflow import WorkflowStatus
-from src.enums import WorkflowStrategy
+from src.state import WorkflowStrategy
 
 
 class WorkflowRunRequest(BaseModel):

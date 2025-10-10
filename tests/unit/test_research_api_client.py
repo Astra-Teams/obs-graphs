@@ -37,14 +37,19 @@ def test_client_default_timeout():
 @patch("httpx.Client")
 def test_run_research_success(mock_client_class, client):
     """Test successful research API call."""
-    # Setup mock
     mock_response = MagicMock()
     mock_response.json.return_value = {
-        "summary": "Research findings on transformers",
-        "sources": [
-            "https://arxiv.org/abs/1706.03762",
-            "https://example.com/nlp",
-        ],
+        "success": True,
+        "article": "# Article\n\nContent",
+        "metadata": {
+            "sources": [
+                "https://arxiv.org/abs/1706.03762",
+                "https://example.com/nlp",
+            ],
+            "source_count": 2,
+        },
+        "diagnostics": ["info"],
+        "processing_time": 2.5,
     }
     mock_client = MagicMock()
     mock_client.post.return_value = mock_response
@@ -52,29 +57,28 @@ def test_run_research_success(mock_client_class, client):
     mock_client.__exit__.return_value = None
     mock_client_class.return_value = mock_client
 
-    # Execute
     result = client.run_research("Transformers in NLP")
 
-    # Verify
     assert isinstance(result, ResearchResult)
-    assert result.summary == "Research findings on transformers"
-    assert len(result.sources) == 2
-    assert result.sources[0] == "https://arxiv.org/abs/1706.03762"
+    assert result.article.startswith("# Article")
+    assert result.metadata["source_count"] == 2
+    assert result.metadata["sources"][0] == "https://arxiv.org/abs/1706.03762"
+    assert result.diagnostics == ["info"]
+    assert result.processing_time == 2.5
 
-    # Verify API call
     mock_client.post.assert_called_once_with(
         "http://test-api:8000/research",
-        json={"topic": "Transformers in NLP"},
+        json={"query": "Transformers in NLP"},
     )
 
 
 @patch("httpx.Client")
-def test_run_research_without_sources(mock_client_class, client):
-    """Test research API call when sources field is missing."""
-    # Setup mock
+def test_run_research_defaults(mock_client_class, client):
+    """Test research API call handles missing optional fields."""
     mock_response = MagicMock()
     mock_response.json.return_value = {
-        "summary": "Research findings",
+        "success": True,
+        "article": "# Article\nContent",
     }
     mock_client = MagicMock()
     mock_client.post.return_value = mock_response
@@ -82,13 +86,13 @@ def test_run_research_without_sources(mock_client_class, client):
     mock_client.__exit__.return_value = None
     mock_client_class.return_value = mock_client
 
-    # Execute
     result = client.run_research("Test topic")
 
-    # Verify - sources should default to empty list
     assert isinstance(result, ResearchResult)
-    assert result.summary == "Research findings"
-    assert result.sources == []
+    assert result.article.startswith("# Article")
+    assert result.metadata == {}
+    assert result.diagnostics == []
+    assert result.processing_time is None
 
 
 @patch("httpx.Client")
@@ -131,8 +135,8 @@ def test_run_research_timeout_setting(mock_client_class, client):
     # Setup mock
     mock_response = MagicMock()
     mock_response.json.return_value = {
-        "summary": "Test",
-        "sources": [],
+        "success": True,
+        "article": "# Test",
     }
     mock_client = MagicMock()
     mock_client.post.return_value = mock_response
@@ -145,3 +149,39 @@ def test_run_research_timeout_setting(mock_client_class, client):
 
     # Verify timeout was passed to Client constructor
     mock_client_class.assert_called_once_with(timeout=30.0)
+
+
+@patch("httpx.Client")
+def test_run_research_failure_flag(mock_client_class, client):
+    """Test that API failure response raises ValueError."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "success": False,
+        "error_message": "upstream error",
+    }
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client.__enter__.return_value = mock_client
+    mock_client.__exit__.return_value = None
+    mock_client_class.return_value = mock_client
+
+    with pytest.raises(ValueError, match="Research API reported failure"):
+        client.run_research("Test topic")
+
+
+@patch("httpx.Client")
+def test_run_research_missing_article(mock_client_class, client):
+    """Test that missing article content raises ValueError."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "success": True,
+        "article": None,
+    }
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client.__enter__.return_value = mock_client
+    mock_client.__exit__.return_value = None
+    mock_client_class.return_value = mock_client
+
+    with pytest.raises(ValueError, match="missing article content"):
+        client.run_research("Test topic")

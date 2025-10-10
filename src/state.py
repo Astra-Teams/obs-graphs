@@ -6,7 +6,11 @@ from typing import Annotated, Dict, List, Optional, TypedDict
 
 from pydantic import BaseModel, ConfigDict
 
-from .enums import WorkflowStrategy
+
+class WorkflowStrategy(str, Enum):
+    """Enumeration of available workflow strategies."""
+
+    RESEARCH_PROPOSAL = "research_proposal"
 
 
 class FileAction(str, Enum):

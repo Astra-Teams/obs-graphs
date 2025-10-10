@@ -1,28 +1,30 @@
 """Protocol for research API client."""
 
-from typing import List, Protocol
+from typing import Any, Dict, List, Optional, Protocol
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ResearchResult(BaseModel):
     """Result from research API."""
 
-    summary: str
-    sources: List[str]
+    article: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    diagnostics: List[str] = Field(default_factory=list)
+    processing_time: Optional[float] = None
 
 
 class ResearchClientProtocol(Protocol):
     """Protocol for research API client."""
 
-    def run_research(self, topic: str) -> ResearchResult:
+    def run_research(self, query: str) -> ResearchResult:
         """
-        Run research on the given topic.
+        Run research on the given query.
 
         Args:
-            topic: Research topic to investigate
+            query: Search query to investigate
 
         Returns:
-            ResearchResult with summary and sources
+            ResearchResult containing the generated article and metadata
         """
         ...

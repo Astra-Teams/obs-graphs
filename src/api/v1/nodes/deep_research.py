@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 
 class DeepResearchAgent(NodeProtocol):
     """
-    Agent responsible for conducting deep research and generating proposal documents.
+    Agent responsible for delegating deep research and persisting returned articles.
 
     This agent takes topic metadata from the article_proposal node, calls the
-    research API to gather findings, and generates a Markdown proposal file
-    with YAML front matter.
+    research API to gather findings, and writes the generated Markdown article
+    directly to disk without additional formatting.
     """
 
     def __init__(self, research_client: ResearchClientProtocol):
@@ -41,13 +41,12 @@ class DeepResearchAgent(NodeProtocol):
 
     def execute(self, context: dict) -> AgentResult:
         """
-        Execute deep research and generate proposal document.
+        Execute deep research and persist the returned article.
         """
         if not self.validate_input(context):
             raise ValueError("Invalid context: topic_title is required")
 
         topic_title = context["topic_title"]
-        topic_summary = context.get("topic_summary", f"Research on {topic_title}")
         proposal_slug = context.get(
             "proposal_slug",
             topic_title.lower()
@@ -66,25 +65,21 @@ class DeepResearchAgent(NodeProtocol):
             filename = f"{proposal_slug}-{timestamp}.md"
             file_path = f"proposals/{filename}"
 
-            # Generate Markdown content with YAML front matter
-            markdown_content = self._generate_proposal_markdown(
-                title=topic_title,
-                summary=topic_summary,
-                research_summary=research_result.summary,
-                sources=research_result.sources,
-            )
-
             # Create file change
             file_change = FileChange(
                 path=file_path,
                 action=FileAction.CREATE,
-                content=markdown_content,
+                content=research_result.article,
             )
 
             metadata = {
                 "proposal_filename": filename,
                 "proposal_path": file_path,
-                "sources_count": len(research_result.sources),
+                "sources_count": research_result.metadata.get("source_count", 0),
+                "research_metadata": research_result.metadata,
+                "diagnostics": research_result.diagnostics,
+                "processing_time_seconds": research_result.processing_time,
+                "topic_summary": context.get("topic_summary"),
             }
 
             message = f"Generated research proposal: {filename}"
@@ -104,38 +99,3 @@ class DeepResearchAgent(NodeProtocol):
                 message=f"Failed to conduct research: {str(e)}",
                 metadata={"error": str(e)},
             )
-
-    def _generate_proposal_markdown(
-        self,
-        title: str,
-        summary: str,
-        research_summary: str,
-        sources: list[str],
-    ) -> str:
-        """
-        Generate Markdown proposal with YAML front matter.
-
-        Args:
-            title: Research topic title
-            summary: Brief topic summary
-            research_summary: Research findings from API
-            sources: List of source URLs
-
-        Returns:
-            Complete Markdown document string
-        """
-        # No YAML front matter needed
-        front_matter = ""
-
-        # Markdown body
-        body = f"# {title}\n\n"
-        body += f"## Summary\n\n{summary}\n\n"
-        body += f"## Research Findings\n\n{research_summary}\n\n"
-
-        # Sources section
-        if sources:
-            body += "## Sources\n\n"
-            for i, source in enumerate(sources, 1):
-                body += f"{i}. {source}\n"
-
-        return front_matter + body
