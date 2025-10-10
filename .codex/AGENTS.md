@@ -1,35 +1,74 @@
-# Obsidian Graphs - Agent Guide
+# AGENTS.md - AI Agent Context Document
 
-## Stack
-FastAPI + LangGraph + Ollama + PostgreSQL/SQLite + Celery + Redis. Docker orchestration, uv package management, Python 3.12+.
+## 🚀 Overview
 
-## Architecture
-- **DI Container**: `src/container.py` (protocol-based, lazy instantiation)
-- **Service Flags**: `.env` controls DB/GitHub/LLM/Redis (mock vs real). Research API is always mocked.
-- **Submodules**: `obsidian-vault` (content), `ollama-deep-researcher` (research service reference)
+**Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes via **GitHub pull requests**.
 
-## Configuration & Orchestration
-- `.env` = single source of truth for both obs-graphs and research-api
-- Compose files:
-  - `docker-compose.yml`: base (PostgreSQL, Redis, obs-api, celery-worker, backend network)
-  - `docker-compose.{dev,test}.override.yml`: environment-specific tweaks
+**Core Tech**: FastAPI, LangGraph, Ollama, PostgreSQL/SQLite, Celery, Redis, Docker.
 
-## Testing
-- **Unit Tests (`just unit-test`)**: Single component tests with all dependencies mocked. Fast (<3s). Tests individual classes/functions in isolation.
-- **Integration Tests (`just intg-test`)**: Multiple real components working together (workflows, tasks, services). External dependencies mocked. Very fast (~0.2s).
-- **E2E Tests (`just e2e-test`)**: Full system in containers (PostgreSQL, Celery). Research API is mocked. Slow (~40s+). Tests entire workflow lifecycle via HTTP.
-- E2E tests poll `/api/v1/workflows/{id}` until terminal status
-- Fixtures wait for container health via `docker compose ps --format json`
-- GitHub and Research API interactions always mocked in all test types
+---
 
-## DB Migrations
-1. Add models in `src/db/models/`
-2. `alembic revision --autogenerate -m "description"`
-3. `alembic upgrade head`
-4. Test on both SQLite and PostgreSQL
+## 📂 Repository Structure
 
-## Common Pitfalls
-- Check `src/state.py` for correct types (e.g., `FileChange.action: FileAction`)
-- Use `git submodule update --init --recursive` after clone
-- Never edit submodules directly
-- When using `sleep` in scripts, limit to 3 seconds maximum
+-   `src/obs_graphs/`: Main application source.
+-   `tests/`: Test suite (Unit, Integration, E2E, DB).
+-   `dev/`: Mock clients and responses for offline development.
+-   `submodules/`: Git submodules for dependencies like `obsidian-vault`.
+-   `alembic/`: Database migrations.
+-   `docker-compose*.yml`: Container orchestration files.
+-   `justfile`: Task runner for automation.
+-   `.codex/`: Development documentation.
+
+---
+
+## 🏛️ Core Architecture
+
+### 1. Application Core (`src/obs_graphs/`)
+-   **API (`api/`)**: FastAPI endpoints, Pydantic schemas, and routing.
+-   **Workflow Engine (`graphs/`)**: LangGraph for stateful workflow orchestration using modular agent nodes.
+-   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
+-   **Data Access (`db/`)**: SQLAlchemy models and repository pattern for DB interactions.
+-   **Clients (`clients/`)**: External service clients (GitHub, Research APIs).
+-   **Async Tasks (`celery/`)**: Background task execution with Redis.
+-   **Configuration (`config/`)**: Environment-based settings and feature flags.
+-   **DI (`container.py`)**: Protocol-based Dependency Injection for loose coupling.
+-   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions.
+
+### 2. Testing (`tests/`)
+-   **Unit**: Isolated component tests (fast).
+-   **Integration**: Multi-component interaction tests.
+-   **E2E**: Full system tests in a containerized environment (slow).
+-   **Database**: Migration and data integrity validation.
+
+---
+
+## ⚖️ Architectural Principles
+
+-   **Separation of Concerns**: Clear boundaries between API, business logic, data, and infrastructure.
+-   **Dependency Injection**: Protocol-based DI for testability and flexibility.
+-   **Schema Separation**: Pydantic for API validation, distinct types for internal state.
+-   **Node-Based Agents**: Modular, single-responsibility agents registered by name.
+-   **Comprehensive Testing**: Multi-layered testing strategy (Unit → Integration → E2E).
+
+---
+
+## 🛠️ Development Workflow
+
+1.  **Setup**: Use `just setup` and `just up` to start the local stack.
+2.  **Testing**: Run tests with `just unit-test` and `just intg-test`.
+3.  **Graph Extension**:
+    -   Implement the `NodeProtocol`.
+    -   Define Pydantic schemas.
+    -   Build the LangGraph state machine.
+    -   Integrate with the API and add tests.
+4.  **DB Changes**:
+    -   Update SQLAlchemy models.
+    -   Generate migrations with `alembic`.
+    -   Test migrations on both SQLite and PostgreSQL.
+
+---
+
+## ⚙️ Configuration & QA
+
+-   **Configuration**: Managed via `.env` files and Docker Compose overrides for different environments.
+-   **Quality Assurance**: Enforced through type hints (mypy), linting/formatting (Ruff), and a CI/CD pipeline that runs all automated tests and security scans.
