@@ -101,9 +101,6 @@ COPY --from=app-code --chown=appuser:appgroup /app ./
 COPY --chown=appuser:appgroup tests/ ./tests
 COPY --chown=appuser:appgroup dev/ ./dev
 
-# Set PYTHONPATH
-ENV PYTHONPATH=/app
-
 # Switch to non-root user
 USER appuser
 

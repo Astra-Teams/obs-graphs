@@ -140,6 +140,8 @@ build-test:
 psql-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
     @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
+    @echo "Waiting for migrations to be applied..."
+    @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-api sh -c "while ! alembic current | grep -q .; do echo 'Waiting for migrations...'; sleep 2; done"
     @echo "Running database tests inside api container (against PostgreSQL)..."
     @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-api pytest tests/db; \
     EXIT_CODE=$?; \
