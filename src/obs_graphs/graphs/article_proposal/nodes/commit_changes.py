@@ -1,7 +1,7 @@
 """Agent for committing workflow changes to the branch."""
 
+from src.obs_graphs.graphs.article_proposal.state import AgentResult, FileChange
 from src.obs_graphs.protocols import NodeProtocol, VaultServiceProtocol
-from src.obs_graphs.state import AgentResult, FileChange
 
 
 class CommitChangesAgent(NodeProtocol):

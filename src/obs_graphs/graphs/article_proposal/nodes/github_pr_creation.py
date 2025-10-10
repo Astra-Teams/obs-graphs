@@ -1,8 +1,8 @@
 """Agent for creating GitHub pull requests from workflow results."""
 
+from src.obs_graphs.graphs.article_proposal.state import AgentResult, FileChange
 from src.obs_graphs.protocols import GithubClientProtocol, NodeProtocol
 from src.obs_graphs.settings import get_settings
-from src.obs_graphs.state import AgentResult, FileChange
 
 
 class GithubPRCreationAgent(NodeProtocol):

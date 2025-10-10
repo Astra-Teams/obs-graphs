@@ -9,13 +9,29 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
 
-## Repository layout
+## Directory Structure
 
 ```
-├── src/                 # Application code, services, agents, configuration
+├── src/obs_graphs/       # Main application package
+│   ├── api/             # FastAPI endpoints and schemas
+│   ├── celery/          # Celery tasks for async workflow execution
+│   ├── clients/         # External service clients (GitHub, research API)
+│   ├── config/          # Configuration modules
+│   ├── container.py     # Dependency injection container
+│   ├── db/              # Database models and session management
+│   ├── graphs/          # LangGraph workflow definitions
+│   │   └── article_proposal/  # Article proposal workflow
+│   │       ├── graph.py       # Main workflow orchestration
+│   │       ├── nodes/         # Individual workflow nodes/agents
+│   │       ├── prompts/       # LLM prompt templates
+│   │       └── state.py       # Workflow state definitions
+│   ├── protocols/       # Protocol definitions for dependency injection
+│   ├── services/        # Business logic services
+│   ├── settings.py      # Application settings
+│   └── main.py          # FastAPI application entry point
 ├── tests/               # Unit, database, and end-to-end tests
-├── dev/mock_vault/      # Fixtures used when mock services are enabled
-├── submodules/
+├── dev/                 # Development fixtures and mocks
+├── submodules/          # Git submodules for external dependencies
 │   ├── obsidian-vault/              # Local checkout of the vault used during workflows
 │   └── ollama-deep-researcher/      # Reference implementation of the external research API
 └── justfile             # Helpful automation commands (setup, tests, linting)

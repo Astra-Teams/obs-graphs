@@ -35,23 +35,23 @@ class DependencyContainer:
         # Registry of node classes (module, class_name)
         self._node_classes = {
             "article_proposal": (
-                "src.obs_graphs.api.nodes.article_proposal",
+                "src.obs_graphs.graphs.article_proposal.nodes.article_proposal",
                 "ArticleProposalAgent",
             ),
             "article_content_generation": (
-                "src.obs_graphs.api.nodes.article_content_generation",
+                "src.obs_graphs.graphs.article_proposal.nodes.article_content_generation",
                 "ArticleContentGenerationAgent",
             ),
             "deep_research": (
-                "src.obs_graphs.api.nodes.deep_research",
+                "src.obs_graphs.graphs.article_proposal.nodes.deep_research",
                 "DeepResearchAgent",
             ),
             "commit_changes": (
-                "src.obs_graphs.api.nodes.commit_changes",
+                "src.obs_graphs.graphs.article_proposal.nodes.commit_changes",
                 "CommitChangesAgent",
             ),
             "github_pr_creation": (
-                "src.obs_graphs.api.nodes.github_pr_creation",
+                "src.obs_graphs.graphs.article_proposal.nodes.github_pr_creation",
                 "GithubPRCreationAgent",
             ),
         }
@@ -106,7 +106,7 @@ class DependencyContainer:
             ValueError: If no branch is specified and no current branch is set.
         """
         if branch:
-            # Direct branch specification (used by GraphBuilder)
+            # Direct branch specification (used by ArticleProposalGraph)
             service = VaultService(self.get_github_client(), branch, self._vault_path)
             return service
 
@@ -134,7 +134,9 @@ class DependencyContainer:
                 from importlib.util import module_from_spec, spec_from_file_location
                 from pathlib import Path
 
-                from src.obs_graphs.protocols.research_client_protocol import ResearchResult
+                from src.obs_graphs.protocols.research_client_protocol import (
+                    ResearchResult,
+                )
 
                 submodules_path = Path(__file__).parent.parent / "submodules"
                 if str(submodules_path) not in sys.path:
@@ -256,9 +258,9 @@ class DependencyContainer:
 
     def get_graph_builder(self):
         """Get the graph builder instance."""
-        from src.obs_graphs.api.graph import GraphBuilder
+        from src.obs_graphs.graphs.article_proposal.graph import ArticleProposalGraph
 
-        return GraphBuilder()
+        return ArticleProposalGraph()
 
 
 # Global container instance

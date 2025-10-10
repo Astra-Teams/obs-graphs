@@ -2,7 +2,11 @@
 
 import pytest
 
-from src.obs_graphs.state import AgentResult, FileAction, FileChange
+from src.obs_graphs.graphs.article_proposal.state import (
+    AgentResult,
+    FileAction,
+    FileChange,
+)
 
 
 class TestFileAction:

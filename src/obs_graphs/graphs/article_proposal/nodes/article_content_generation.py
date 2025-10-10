@@ -5,10 +5,14 @@ from pathlib import Path
 
 from langchain_community.llms import Ollama
 
-from src.obs_graphs.api.prompts import render_prompt
+from src.obs_graphs.graphs.article_proposal.prompts import render_prompt
+from src.obs_graphs.graphs.article_proposal.state import (
+    AgentResult,
+    FileAction,
+    FileChange,
+)
 from src.obs_graphs.protocols import NodeProtocol
 from src.obs_graphs.settings import get_settings
-from src.obs_graphs.state import AgentResult, FileAction, FileChange
 
 
 class ArticleContentGenerationAgent(NodeProtocol):

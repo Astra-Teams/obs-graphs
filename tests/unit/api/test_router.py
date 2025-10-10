@@ -11,7 +11,7 @@ from sqlalchemy.pool import StaticPool
 from src.obs_graphs.api.router import router
 from src.obs_graphs.db.database import Base, get_db
 from src.obs_graphs.db.models.workflow import Workflow
-from src.obs_graphs.state import WorkflowStrategy
+from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -56,7 +56,7 @@ def client(test_db):
 @pytest.fixture
 def mock_celery_task():
     """Mock Celery task to prevent actual task execution."""
-    with patch("src.obs_graphs.api.tasks.workflow_tasks.run_workflow_task") as mock_task:
+    with patch("src.obs_graphs.celery.tasks.run_workflow_task") as mock_task:
         mock_result = MagicMock()
         mock_result.id = "test-task-id"
         mock_task.delay.return_value = mock_result

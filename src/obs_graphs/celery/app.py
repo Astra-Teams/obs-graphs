@@ -10,7 +10,7 @@ celery_app = Celery(
     "obsidian_agents",
     broker=os.getenv("OBS_GRAPHS_CELERY_BROKER_URL", "redis://localhost:6379/0"),
     backend=os.getenv("OBS_GRAPHS_CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
-    include=["src.obs_graphs.api.tasks.workflow_tasks"],
+    include=["src.obs_graphs.celery.tasks"],
 )
 
 # Celery configuration
@@ -26,7 +26,9 @@ celery_app.conf.update(
     task_soft_time_limit=540,
     # Task routing
     task_routes={
-        "src.obs_graphs.api.tasks.workflow_tasks.run_workflow_task": {"queue": "workflows"},
+        "src.obs_graphs.api.tasks.workflow_tasks.run_workflow_task": {
+            "queue": "workflows"
+        },
     },
     # Result backend settings
     result_expires=3600,  # Results expire after 1 hour

@@ -4,8 +4,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.obs_graphs.api.nodes.article_content_generation import ArticleContentGenerationAgent
-from src.obs_graphs.state import AgentResult, FileAction
+from src.obs_graphs.graphs.article_proposal.nodes.article_content_generation import (
+    ArticleContentGenerationAgent,
+)
+from src.obs_graphs.graphs.article_proposal.state import AgentResult, FileAction
 
 
 @pytest.fixture

@@ -56,7 +56,7 @@ async def run_workflow(
 
         if request.async_execution:
             # Asynchronous execution using Celery
-            from src.obs_graphs.api.tasks.workflow_tasks import run_workflow_task
+            from src.obs_graphs.celery.tasks import run_workflow_task
 
             # Update status to RUNNING before queuing task
             workflow.status = WorkflowStatus.RUNNING
@@ -101,11 +101,13 @@ async def run_workflow(
             vault_path = raw_path if raw_path.is_absolute() else project_root / raw_path
             container.set_vault_path(vault_path)
 
-            # Create GraphBuilder and run workflow
-            from src.obs_graphs.api.graph import GraphBuilder
+            # Create Graph and run workflow
+            from src.obs_graphs.graphs.article_proposal.graph import (
+                ArticleProposalGraph,
+            )
 
-            graph_builder = GraphBuilder()
-            result = graph_builder.run_workflow(request)
+            article_proposal_graph = ArticleProposalGraph()
+            result = article_proposal_graph.run_workflow(request)
 
             # Update workflow based on result
             if result.success:

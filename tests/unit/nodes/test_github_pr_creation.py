@@ -4,8 +4,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.obs_graphs.api.nodes.github_pr_creation import GithubPRCreationAgent
-from src.obs_graphs.state import AgentResult, FileAction, FileChange
+from src.obs_graphs.graphs.article_proposal.nodes.github_pr_creation import (
+    GithubPRCreationAgent,
+)
+from src.obs_graphs.graphs.article_proposal.state import (
+    AgentResult,
+    FileAction,
+    FileChange,
+)
 
 
 @pytest.fixture

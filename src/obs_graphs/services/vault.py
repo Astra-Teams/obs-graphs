@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import List, Optional
 
+from src.obs_graphs.graphs.article_proposal.state import FileChange, VaultSummary
 from src.obs_graphs.protocols import GithubClientProtocol, VaultServiceProtocol
-from src.obs_graphs.state import FileChange, VaultSummary
 
 
 class VaultService(VaultServiceProtocol):

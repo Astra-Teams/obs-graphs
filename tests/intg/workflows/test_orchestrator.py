@@ -1,16 +1,16 @@
-"""Unit tests for the GraphBuilder."""
+"""Unit tests for the ObsidianArticleProposalToPRGraph."""
 
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.obs_graphs.api.graph import (
-    GraphBuilder,
+from src.obs_graphs.api.schemas import WorkflowRunRequest
+from src.obs_graphs.graphs.article_proposal.graph import (
+    ArticleProposalGraph,
     WorkflowPlan,
     WorkflowResult,
 )
-from src.obs_graphs.api.schemas import WorkflowRunRequest
-from src.obs_graphs.state import AgentResult
+from src.obs_graphs.graphs.article_proposal.state import AgentResult
 
 
 class MockAgent(MagicMock):
@@ -47,11 +47,11 @@ def test_determine_workflow_plan_uses_new_article_strategy_without_prompt(
 ):
     """Test that determine_workflow_plan uses new_article strategy when prompt is empty."""
     # Arrange
-    graph_builder = GraphBuilder()
+    article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompt="")
 
     # Act
-    plan = graph_builder.determine_workflow_plan(
+    plan = article_proposal_graph.determine_workflow_plan(
         mock_container.get_vault_service(), request
     )
 
@@ -71,13 +71,13 @@ def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
 ):
     """Test that determine_workflow_plan uses research_proposal strategy when prompt is provided."""
     # Arrange
-    graph_builder = GraphBuilder()
+    article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(
         prompt="Research the impact of transformers on natural language processing"
     )
 
     # Act
-    plan = graph_builder.determine_workflow_plan(
+    plan = article_proposal_graph.determine_workflow_plan(
         mock_container.get_vault_service(), request
     )
 
@@ -107,10 +107,10 @@ def test_execute_workflow(mock_container):
         nodes=["article_proposal"],
     )
 
-    graph_builder = GraphBuilder()
+    article_proposal_graph = ArticleProposalGraph()
 
     # Act
-    result = graph_builder.execute_workflow(plan, mock_container)
+    result = article_proposal_graph.execute_workflow(plan, mock_container)
 
     # Assert
     assert isinstance(result, WorkflowResult)
@@ -132,10 +132,10 @@ def test_execute_workflow_with_research_proposal_strategy(mock_container):
         ],
     )
 
-    graph_builder = GraphBuilder()
+    article_proposal_graph = ArticleProposalGraph()
 
     # Act
-    result = graph_builder.execute_workflow(
+    result = article_proposal_graph.execute_workflow(
         plan,
         mock_container,
         prompt="Research quantum computing",
@@ -165,10 +165,10 @@ def test_execute_workflow_with_multiple_nodes(mock_container):
         ],
     )
 
-    graph_builder = GraphBuilder()
+    article_proposal_graph = ArticleProposalGraph()
 
     # Act
-    result = graph_builder.execute_workflow(plan, mock_container)
+    result = article_proposal_graph.execute_workflow(plan, mock_container)
 
     # Assert
     assert isinstance(result, WorkflowResult)
@@ -178,8 +178,8 @@ def test_execute_workflow_with_multiple_nodes(mock_container):
     assert mock_container.get_node.call_count == 4
 
 
-@patch("src.obs_graphs.api.graph.get_container")
-@patch("src.obs_graphs.api.graph.get_settings")
+@patch("src.obs_graphs.graphs.article_proposal.graph.get_container")
+@patch("src.obs_graphs.graphs.article_proposal.graph.get_settings")
 def test_run_workflow_creates_branch_and_executes(
     mock_get_settings, mock_get_container
 ):
@@ -200,11 +200,11 @@ def test_run_workflow_creates_branch_and_executes(
 
     mock_get_container.return_value = mock_container
 
-    graph_builder = GraphBuilder()
+    article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompt="Test research")
 
     # Act
-    result = graph_builder.run_workflow(request)
+    result = article_proposal_graph.run_workflow(request)
 
     # Assert
     assert isinstance(result, WorkflowResult)
@@ -217,8 +217,8 @@ def test_run_workflow_creates_branch_and_executes(
     mock_container.set_vault_path.assert_not_called()
 
 
-@patch("src.obs_graphs.api.graph.get_container")
-@patch("src.obs_graphs.api.graph.get_settings")
+@patch("src.obs_graphs.graphs.article_proposal.graph.get_container")
+@patch("src.obs_graphs.graphs.article_proposal.graph.get_settings")
 def test_run_workflow_handles_failure(mock_get_settings, mock_get_container):
     """Test that run_workflow handles failures gracefully."""
     # Arrange
@@ -234,11 +234,11 @@ def test_run_workflow_handles_failure(mock_get_settings, mock_get_container):
     mock_container.set_vault_path = MagicMock()
     mock_get_container.return_value = mock_container
 
-    graph_builder = GraphBuilder()
+    article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompt="")
 
     # Act
-    result = graph_builder.run_workflow(request)
+    result = article_proposal_graph.run_workflow(request)
 
     # Assert
     assert isinstance(result, WorkflowResult)

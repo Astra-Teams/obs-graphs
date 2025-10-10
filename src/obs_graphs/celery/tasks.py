@@ -9,10 +9,10 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from src.obs_graphs.celery.app import celery_app
 from src.obs_graphs.db.database import get_db
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 from src.obs_graphs.settings import get_settings
-from src.obs_graphs.tasks.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -91,7 +91,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
         container = get_container()
         container.set_vault_path(temp_vault_dir)
 
-        # 4. Create GraphBuilder and run workflow
+        # 4. Create ArticleProposalGraph and run workflow
         from src.obs_graphs.api.schemas import WorkflowRunRequest
 
         request = WorkflowRunRequest(

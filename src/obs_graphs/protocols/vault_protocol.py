@@ -2,7 +2,7 @@
 
 from typing import List, Protocol
 
-from src.obs_graphs.state import FileChange, VaultSummary
+from src.obs_graphs.graphs.article_proposal.state import FileChange, VaultSummary
 
 
 class VaultServiceProtocol(Protocol):

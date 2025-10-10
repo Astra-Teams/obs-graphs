@@ -3,8 +3,12 @@
 import logging
 from datetime import datetime
 
+from src.obs_graphs.graphs.article_proposal.state import (
+    AgentResult,
+    FileAction,
+    FileChange,
+)
 from src.obs_graphs.protocols import NodeProtocol, ResearchClientProtocol
-from src.obs_graphs.state import AgentResult, FileAction, FileChange
 
 logger = logging.getLogger(__name__)
 

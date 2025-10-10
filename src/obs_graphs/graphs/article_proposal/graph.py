@@ -7,8 +7,12 @@ from langgraph.graph import END, StateGraph
 
 from src.obs_graphs.api.schemas import WorkflowRunRequest
 from src.obs_graphs.container import DependencyContainer, get_container
+from src.obs_graphs.graphs.article_proposal.state import (
+    AgentResult,
+    FileChange,
+    GraphState,
+)
 from src.obs_graphs.settings import get_settings
-from src.obs_graphs.state import AgentResult, FileChange, GraphState
 
 
 @dataclass
@@ -47,7 +51,7 @@ class WorkflowResult:
     branch_name: str = ""
 
 
-class GraphBuilder:
+class ArticleProposalGraph:
     """
     Builds and orchestrates the execution of nodes using LangGraph.
 

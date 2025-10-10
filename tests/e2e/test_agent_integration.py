@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from src.obs_graphs.api.schemas import WorkflowRunRequest
-from src.obs_graphs.state import FileAction
+from src.obs_graphs.graphs.article_proposal.state import FileAction
 
 
 class TestAgentIntegration:
