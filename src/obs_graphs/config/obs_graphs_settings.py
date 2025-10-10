@@ -93,8 +93,9 @@ class ObsGraphsSettings(BaseSettings):
         description="Personal Access Token for GitHub API.",
         alias="OBSIDIAN_VAULT_GITHUB_TOKEN",
     )
+
     github_repository: str = Field(
-        default="your-username/your-repo",
+        default="Astra-Teams/constellations",
         title="GitHub Repository",
         description="The target repository for creating pull requests.",
         alias="OBSIDIAN_VAULT_REPOSITORY",
