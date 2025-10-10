@@ -124,8 +124,6 @@ FROM base AS production
 # Install PostgreSQL client for database operations
 RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
-
-
 # Create a non-root user and group for security
 RUN groupadd -r appgroup && useradd -r -g appgroup -d /home/appuser -m appuser
 
