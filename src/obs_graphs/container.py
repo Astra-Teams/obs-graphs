@@ -108,7 +108,9 @@ class DependencyContainer:
                     ResearchResult,
                 )
 
-                submodules_path = Path(__file__).parent.parent / "submodules"
+                submodules_path = (
+                    Path(__file__).parent.parent.parent / "src" / "submodules"
+                )
                 if str(submodules_path) not in sys.path:
                     sys.path.insert(0, str(submodules_path))
 

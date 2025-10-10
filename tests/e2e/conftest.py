@@ -69,7 +69,7 @@ def e2e_setup() -> Generator[None, None, None]:
         test_project_name,
     ]
 
-    compose_up_command = docker_command + compose_common_args + ["up", "-d", "--build", "--no-cache"]
+    compose_up_command = docker_command + compose_common_args + ["up", "-d", "--build"]
     compose_down_command = (
         docker_command + compose_common_args + ["down", "-v", "--remove-orphans"]
     )

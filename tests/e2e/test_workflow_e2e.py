@@ -122,7 +122,7 @@ class TestWorkflowE2E:
             response = client.post(
                 "/api/v1/workflows/run",
                 json={
-                    "prompt": "Invalid workflow that should fail",
+                    "prompt": "fail intentionally",
                     "async_execution": True,
                 },
             )

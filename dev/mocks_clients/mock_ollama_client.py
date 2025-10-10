@@ -44,7 +44,10 @@ class MockOllamaClient(BaseLLM):
         print("[MockOllamaClient] Returning mock LLM response")
 
         # Detect prompt type and return appropriate JSON
-        if "research topic" in prompt.lower() or "topic proposal" in prompt.lower():
+        if "fail" in prompt.lower():
+            print("[MockOllamaClient] Detected: intentional failure")
+            raise Exception("Mock LLM failure for testing")
+        elif "research topic" in prompt.lower() or "topic proposal" in prompt.lower():
             print("[MockOllamaClient] Detected: research topic proposal")
             # Return topic metadata for article_proposal node
             return """{

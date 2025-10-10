@@ -97,5 +97,5 @@ ignore = ["E501"] # E501 (line too long) is ignored
 
 [tool.alembic]
 script_location = "alembic"
-prepend_sys_path = "."
+prepend_sys_path = "src"
 path_separator = "os"

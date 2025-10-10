@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
-      OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${{ secrets.OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
