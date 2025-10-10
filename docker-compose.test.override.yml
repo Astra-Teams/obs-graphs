@@ -4,6 +4,7 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_TEST_DB}
+    volumes: !override []
 
   obs-api:
     build:

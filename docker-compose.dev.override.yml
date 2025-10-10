@@ -2,6 +2,7 @@ services:
   db:
     environment:
       POSTGRES_DB: ${POSTGRES_DEV_DB}
+    volumes: !override []
 
   obs-api:
     build:

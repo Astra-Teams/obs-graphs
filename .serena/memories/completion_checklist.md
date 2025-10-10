@@ -1,0 +1,5 @@
+- Ensure relevant `just` test recipes pass (typically `just test` or targeted suites for the feature).
+- Run `just format` or `just lint` to match Black/Ruff if code touched.
+- Verify Docker workflows if changes impact containers (`just build-test` / `just docker-test`).
+- Update documentation (README or env samples) when behaviour/config changes.
+- Keep submodules synced when their contents are required.

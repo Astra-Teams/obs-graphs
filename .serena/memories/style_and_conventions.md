@@ -1,0 +1,3 @@
+- Code style: Black formatting, Ruff linting; project is type-hint heavy (Pydantic models + protocols) and uses docstrings to describe modules/services.
+- Configuration via Pydantic `BaseSettings`; settings pulled from `.env`.
+- Tests organised by unit/intg/db/e2e; prefer uv-managed virtualenv for commands.

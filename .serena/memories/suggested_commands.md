@@ -1,0 +1,8 @@
+- `just setup` — install deps with uv, init submodules, create .env, pull Postgres image.
+- `just up` / `just down` — start/stop development docker stack.
+- `just unit-test`, `just intg-test`, `just sqlt-test` — host-based test suites.
+- `just docker-test` — build prod image, run Postgres tests, then e2e.
+- `just e2e-test` — run HTTP end-to-end suite against running stack.
+- `just format` / `just lint` — Black + Ruff formatting and linting.
+- `just clean` — remove caches and virtualenv.
+- `uv run ...` — execute Python commands within uv-managed venv.

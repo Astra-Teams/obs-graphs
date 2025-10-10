@@ -16,4 +16,4 @@ async def health_check():
 
 
 # Include routers
-app.include_router(workflows_router, prefix="/api", tags=["workflows"])
+app.include_router(workflows_router, prefix="/api/v1", tags=["workflows"])

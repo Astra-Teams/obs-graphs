@@ -73,7 +73,6 @@ RUN chown appuser:appgroup /app
 # Copy application code and submodules
 COPY --chown=appuser:appgroup src/ ./src
 COPY --chown=appuser:appgroup alembic/ ./alembic
-COPY --chown=appuser:appgroup submodules/ ./submodules
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
 
