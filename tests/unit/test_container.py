@@ -24,7 +24,6 @@ def test_get_github_client_lazy_instantiation(
     """Test that github client is lazily instantiated."""
     # Arrange
     mock_settings.configure_mock(**default_settings.model_dump())
-    mock_settings.use_mock_github = False  # Use real client
     mock_instance = MagicMock()
     mock_github_client.return_value = mock_instance
 
@@ -45,7 +44,6 @@ def test_get_github_client_returns_mock_when_flag_enabled(
     """Test that MockGithubClient is returned when USE_MOCK_GITHUB=True."""
     # Arrange
     mock_settings.configure_mock(**default_settings.model_dump())
-    mock_settings.use_mock_github = True  # Use mock client
 
     # Act
     client1 = container.get_github_client()
@@ -86,7 +84,6 @@ def test_get_llm_lazy_instantiation(
     """Test that LLM is lazily instantiated."""
     # Arrange
     mock_settings.configure_mock(**default_settings.model_dump())
-    mock_settings.use_mock_llm = False  # Use real client
     mock_settings.llm_model = "test-model"
     mock_settings.ollama_host = "http://test-url"
     mock_instance = MagicMock()
@@ -109,7 +106,6 @@ def test_get_llm_returns_mock_when_flag_enabled(
     """Test that MockOllamaClient is returned when USE_MOCK_LLM=True."""
     # Arrange
     mock_settings.configure_mock(**default_settings.model_dump())
-    mock_settings.use_mock_llm = True  # Use mock client
 
     # Act
     llm1 = container.get_llm()
@@ -168,7 +164,6 @@ def test_get_node_new_article_creation_with_llm(
     """Test that article_proposal node is instantiated with LLM."""
     # Arrange
     mock_settings.configure_mock(**default_settings.model_dump())
-    mock_settings.use_mock_llm = False  # Use real client
     mock_settings.llm_model = "test-model"
     mock_settings.ollama_host = "http://test-url"
     mock_llm = MagicMock()
@@ -205,7 +200,6 @@ def test_get_redis_client_production_mode(
     """Test that redis.Redis is returned when USE_MOCK_REDIS=False."""
     # Arrange
     mock_settings.configure_mock(**default_settings.model_dump())
-    mock_settings.use_mock_redis = False  # Use real client
     # Mock the redis_settings as an object with celery_broker_url attribute
     mock_redis_settings = MagicMock()
     mock_redis_settings.celery_broker_url = "redis://localhost:6379/0"
@@ -232,7 +226,6 @@ def test_get_redis_client_returns_mock_when_flag_enabled(
     """Test that FakeRedis is returned when USE_MOCK_REDIS=True."""
     # Arrange
     mock_settings.configure_mock(**default_settings.model_dump())
-    mock_settings.use_mock_redis = True  # Use mock client
 
     # Act
     client1 = container.get_redis_client()

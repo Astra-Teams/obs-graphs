@@ -16,8 +16,9 @@ from src.obs_graphs.db.database import Base, create_db_session, get_engine
 from src.obs_graphs.main import app
 from src.obs_graphs.settings import Settings
 
-# Load environment variables from .env file for tests
-load_dotenv()
+pytest_plugins = [
+    "tests.envs",
+]
 
 
 @pytest.fixture(scope="session")

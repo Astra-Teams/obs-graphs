@@ -15,7 +15,6 @@ services:
       POSTGRES_DB: ${POSTGRES_TEST_DB}
       USE_MOCK_LLM: true
       USE_MOCK_GITHUB: true
-      USE_MOCK_REDIS: true
       USE_MOCK_OLLAMA_DEEP_RESEARCHER: true
 
   celery-worker:
@@ -26,5 +25,4 @@ services:
       POSTGRES_DB: ${POSTGRES_TEST_DB}
       USE_MOCK_LLM: true
       USE_MOCK_GITHUB: true
-      USE_MOCK_REDIS: true
       USE_MOCK_OLLAMA_DEEP_RESEARCHER: true
