@@ -112,20 +112,3 @@ def mock_github_client_for_e2e():
         DependencyContainer, "get_github_client", return_value=mock_client
     ):
         yield
-
-
-@pytest.fixture(autouse=True)
-def mock_graph_builder_run_workflow():
-    """Mock GraphBuilder.run_workflow for e2e tests to avoid real workflow execution."""
-    from src.api.v1.graph import GraphBuilder, WorkflowResult
-
-    mock_result = WorkflowResult(
-        success=True,
-        changes=[],
-        summary="Mock workflow completed successfully",
-        node_results={},
-        pr_url="https://github.com/test/repo/pull/1",
-        branch_name="mock-branch",
-    )
-    with patch.object(GraphBuilder, "run_workflow", return_value=mock_result):
-        yield

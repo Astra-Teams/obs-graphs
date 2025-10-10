@@ -5,7 +5,7 @@ from pathlib import Path
 
 from langchain_community.llms import Ollama
 
-from src.api.v1.prompts import render_prompt
+from src.api.prompts import render_prompt
 from src.protocols import NodeProtocol
 from src.settings import get_settings
 from src.state import AgentResult, FileAction, FileChange

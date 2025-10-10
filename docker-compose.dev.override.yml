@@ -17,7 +17,6 @@ services:
   celery-worker:
     build:
       target: development
-    command: celery -A src.tasks.celery_app worker --loglevel=info
     environment:
       POSTGRES_DB: ${POSTGRES_DEV_DB}
     volumes:

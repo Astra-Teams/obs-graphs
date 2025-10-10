@@ -88,3 +88,12 @@ class VaultService(VaultServiceProtocol):
             categories=sorted(categories),
             recent_updates=recent_updates,
         )
+
+    def validate_vault_structure(self, vault_path: Path) -> bool:
+        """Validate that the vault structure is intact after changes."""
+        if not vault_path.exists():
+            return False
+
+        # Check for at least some markdown files
+        markdown_files = list(vault_path.rglob("*.md"))
+        return len(markdown_files) > 0

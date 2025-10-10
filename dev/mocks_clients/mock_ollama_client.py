@@ -53,7 +53,7 @@ class MockOllamaClient(BaseLLM):
   "tags": ["testing", "e2e", "mock"],
   "slug": "test-article-title"
 }"""
-        elif "new article" in prompt.lower() or "article proposal" in prompt.lower():
+        elif "suggest new articles" in prompt.lower():
             print("[MockOllamaClient] Detected: new article proposal")
             # Return article proposals for vault analysis
             return """[
@@ -64,6 +64,33 @@ class MockOllamaClient(BaseLLM):
     "filename": "test-article-1.md"
   }
 ]"""
+        elif "create a comprehensive" in prompt.lower():
+            print("[MockOllamaClient] Detected: article content generation")
+            # Return article content for vault generation
+            return """---
+title: Test Article 1
+category: Testing
+created: 2025-10-10
+---
+
+# Test Article 1
+
+This is a test article generated for E2E testing purposes.
+
+## Introduction
+
+This article serves as a placeholder for testing the workflow system.
+
+## Content
+
+- Point 1: Testing functionality
+- Point 2: Ensuring proper integration
+- Point 3: Validating mock responses
+
+## Conclusion
+
+The testing is complete.
+"""
         else:
             print("[MockOllamaClient] Detected: default fallback")
             # Default fallback response

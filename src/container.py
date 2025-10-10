@@ -35,23 +35,23 @@ class DependencyContainer:
         # Registry of node classes (module, class_name)
         self._node_classes = {
             "article_proposal": (
-                "src.api.v1.nodes.article_proposal",
+                "src.api.nodes.article_proposal",
                 "ArticleProposalAgent",
             ),
             "article_content_generation": (
-                "src.api.v1.nodes.article_content_generation",
+                "src.api.nodes.article_content_generation",
                 "ArticleContentGenerationAgent",
             ),
             "deep_research": (
-                "src.api.v1.nodes.deep_research",
+                "src.api.nodes.deep_research",
                 "DeepResearchAgent",
             ),
             "commit_changes": (
-                "src.api.v1.nodes.commit_changes",
+                "src.api.nodes.commit_changes",
                 "CommitChangesAgent",
             ),
             "github_pr_creation": (
-                "src.api.v1.nodes.github_pr_creation",
+                "src.api.nodes.github_pr_creation",
                 "GithubPRCreationAgent",
             ),
         }
@@ -256,7 +256,7 @@ class DependencyContainer:
 
     def get_graph_builder(self):
         """Get the graph builder instance."""
-        from src.api.v1.graph import GraphBuilder
+        from src.api.graph import GraphBuilder
 
         return GraphBuilder()
 

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from src.api.v1.router import router as workflows_router
+from src.api.router import router as workflows_router
 
 app = FastAPI(
     title="FastAPI Template",
@@ -16,4 +16,4 @@ async def health_check():
 
 
 # Include routers
-app.include_router(workflows_router, prefix="/api/v1", tags=["workflows"])
+app.include_router(workflows_router, prefix="/api", tags=["workflows"])

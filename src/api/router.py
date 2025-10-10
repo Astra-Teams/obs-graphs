@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from src.api.v1.schemas import (
+from src.api.schemas import (
     WorkflowListResponse,
     WorkflowResponse,
     WorkflowRunRequest,
@@ -56,7 +56,7 @@ async def run_workflow(
 
         if request.async_execution:
             # Asynchronous execution using Celery
-            from src.api.v1.tasks.workflow_tasks import run_workflow_task
+            from src.api.tasks.workflow_tasks import run_workflow_task
 
             # Update status to RUNNING before queuing task
             workflow.status = WorkflowStatus.RUNNING
@@ -102,7 +102,7 @@ async def run_workflow(
             container.set_vault_path(vault_path)
 
             # Create GraphBuilder and run workflow
-            from src.api.v1.graph import GraphBuilder
+            from src.api.graph import GraphBuilder
 
             graph_builder = GraphBuilder()
             result = graph_builder.run_workflow(request)

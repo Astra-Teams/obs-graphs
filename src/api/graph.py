@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from langgraph.graph import END, StateGraph
 
-from src.api.v1.schemas import WorkflowRunRequest
+from src.api.schemas import WorkflowRunRequest
 from src.container import DependencyContainer, get_container
 from src.settings import get_settings
 from src.state import AgentResult, FileChange, GraphState

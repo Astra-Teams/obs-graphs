@@ -17,14 +17,15 @@ from src.tasks.celery_app import celery_app
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[4]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_graphs" / "workflows"
 
 
 def _resolve_submodule_path() -> Path:
     """Resolve the configured vault submodule path to an absolute path."""
     raw_path = Path(settings.vault_submodule_path)
-    return raw_path if raw_path.is_absolute() else PROJECT_ROOT / raw_path
+    source = raw_path if raw_path.is_absolute() else PROJECT_ROOT / raw_path
+    return source
 
 
 def _prepare_workflow_directory(workflow_id: int) -> Path:
@@ -91,7 +92,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
         container.set_vault_path(temp_vault_dir)
 
         # 4. Create GraphBuilder and run workflow
-        from src.api.v1.schemas import WorkflowRunRequest
+        from src.api.schemas import WorkflowRunRequest
 
         request = WorkflowRunRequest(
             prompt=workflow.prompt or "",

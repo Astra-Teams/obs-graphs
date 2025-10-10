@@ -1,4 +1,4 @@
-"""API v1 endpoints."""
+"""API endpoints for workflow management."""
 
 from .router import router
 

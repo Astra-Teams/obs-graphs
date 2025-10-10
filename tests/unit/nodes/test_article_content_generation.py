@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.api.v1.nodes.article_content_generation import ArticleContentGenerationAgent
+from src.api.nodes.article_content_generation import ArticleContentGenerationAgent
 from src.state import AgentResult, FileAction
 
 

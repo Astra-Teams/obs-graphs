@@ -4,12 +4,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.v1.graph import (
+from src.api.graph import (
     GraphBuilder,
     WorkflowPlan,
     WorkflowResult,
 )
-from src.api.v1.schemas import WorkflowRunRequest
+from src.api.schemas import WorkflowRunRequest
 from src.state import AgentResult
 
 
@@ -178,8 +178,8 @@ def test_execute_workflow_with_multiple_nodes(mock_container):
     assert mock_container.get_node.call_count == 4
 
 
-@patch("src.api.v1.graph.get_container")
-@patch("src.api.v1.graph.get_settings")
+@patch("src.api.graph.get_container")
+@patch("src.api.graph.get_settings")
 def test_run_workflow_creates_branch_and_executes(
     mock_get_settings, mock_get_container
 ):
@@ -217,8 +217,8 @@ def test_run_workflow_creates_branch_and_executes(
     mock_container.set_vault_path.assert_not_called()
 
 
-@patch("src.api.v1.graph.get_container")
-@patch("src.api.v1.graph.get_settings")
+@patch("src.api.graph.get_container")
+@patch("src.api.graph.get_settings")
 def test_run_workflow_handles_failure(mock_get_settings, mock_get_container):
     """Test that run_workflow handles failures gracefully."""
     # Arrange

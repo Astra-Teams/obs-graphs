@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.api.v1.nodes.github_pr_creation import GithubPRCreationAgent
+from src.api.nodes.github_pr_creation import GithubPRCreationAgent
 from src.state import AgentResult, FileAction, FileChange
 
 

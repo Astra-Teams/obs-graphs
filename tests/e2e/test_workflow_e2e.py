@@ -53,15 +53,15 @@ def _poll_workflow_until_terminal(
 class TestWorkflowE2E:
     """Full-stack workflow scenarios executed against the running API service."""
 
-    def test_successful_workflow_lifecycle(self, api_base_url: str) -> None:
+    def test_successful_workflow_lifecycle(self) -> None:
         """
         Execute a workflow end-to-end and verify successful completion.
 
         This test validates the full workflow lifecycle using only API calls,
         polling until the workflow reaches a terminal state.
         """
-        with httpx.Client(base_url=api_base_url, timeout=30.0) as client:
-            # Submit workflow
+        # Submit workflow
+        with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
             response = client.post(
                 "/api/v1/workflows/run",
                 json={
@@ -90,6 +90,11 @@ class TestWorkflowE2E:
                 client, workflow_id, timeout=300.0
             )
 
+            print("\n=== DEBUG: Final workflow data ===")
+            print(f"Status: {workflow_data['status']}")
+            print(f"Error message: {workflow_data.get('error_message')}")
+            print("===================================\n")
+
             # Verify completion
             assert workflow_data["id"] == workflow_id
             assert workflow_data["status"] == "COMPLETED"
@@ -105,15 +110,15 @@ class TestWorkflowE2E:
             list_payload = list_response.json()
             assert any(item["id"] == workflow_id for item in list_payload["workflows"])
 
-    def test_failed_workflow_surfaces_error_details(self, api_base_url: str) -> None:
+    def test_failed_workflow_surfaces_error_details(self) -> None:
         """
         Execute a workflow that fails and verify error diagnostics.
 
         This test validates that workflow failures are properly captured and
         surfaced through the API with meaningful error messages.
         """
-        with httpx.Client(base_url=api_base_url, timeout=30.0) as client:
-            # Submit workflow with invalid configuration to trigger failure
+        # Submit workflow with invalid configuration to trigger failure
+        with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
             response = client.post(
                 "/api/v1/workflows/run",
                 json={
@@ -143,9 +148,7 @@ class TestWorkflowE2E:
             failed_ids = {item["id"] for item in failed_list.json()["workflows"]}
             assert workflow_id in failed_ids
 
-    def test_concurrent_workflow_requests_assign_unique_ids(
-        self, api_base_url: str
-    ) -> None:
+    def test_concurrent_workflow_requests_assign_unique_ids(self) -> None:
         """
         Submit multiple workflows concurrently and verify they are independent.
 
@@ -154,7 +157,7 @@ class TestWorkflowE2E:
         """
 
         def _submit_workflow() -> Dict[str, Any]:
-            with httpx.Client(base_url=api_base_url, timeout=30.0) as client:
+            with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
                 response = client.post(
                     "/api/v1/workflows/run",
                     json={
@@ -173,7 +176,7 @@ class TestWorkflowE2E:
         assert len(workflow_ids) == 3, "All workflows should have unique IDs"
 
         # Verify all workflows are accessible via API
-        with httpx.Client(base_url=api_base_url, timeout=30.0) as client:
+        with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
             for workflow_id in workflow_ids:
                 response = client.get(f"/api/v1/workflows/{workflow_id}")
                 assert response.status_code == 200

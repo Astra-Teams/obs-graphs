@@ -4,7 +4,7 @@ import json
 
 from langchain_community.llms import Ollama
 
-from src.api.v1.prompts import render_prompt
+from src.api.prompts import render_prompt
 from src.protocols import NodeProtocol
 from src.settings import get_settings
 from src.state import AgentResult
@@ -46,17 +46,23 @@ class ArticleProposalAgent(NodeProtocol):
 
     def execute(self, context: dict) -> AgentResult:
         """
-        Execute research topic proposal or new article proposal based on strategy.
+        Execute article proposal generation.
+
+        Args:
+            context: Dictionary containing vault_summary, strategy, and prompt
+
+        Returns:
+            AgentResult with article proposals or topic proposal
         """
         if not self.validate_input(context):
-            raise ValueError("Invalid context: required fields missing")
+            raise ValueError("required fields missing")
 
-        strategy = context.get("strategy", "research_proposal")
+        strategy = context.get("strategy", "new_article")
 
-        if strategy == "new_article":
-            return self._execute_new_article_proposal(context)
-        else:
+        if strategy == "research_proposal":
             return self._execute_research_topic_proposal(context)
+        else:
+            return self._execute_new_article_proposal(context)
 
     def _execute_research_topic_proposal(self, context: dict) -> AgentResult:
         """

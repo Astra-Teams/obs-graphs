@@ -15,3 +15,7 @@ class VaultServiceProtocol(Protocol):
     def get_vault_summary(self) -> VaultSummary:
         """Return a summary of the vault including total articles and categories."""
         ...
+
+    def validate_vault_structure(self, vault_path) -> bool:
+        """Validate that the vault structure is intact after changes."""
+        ...

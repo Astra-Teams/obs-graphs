@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.api.v1.nodes.article_proposal import ArticleProposalAgent
+from src.api.nodes.article_proposal import ArticleProposalAgent
 from src.state import AgentResult
 
 
@@ -58,7 +58,10 @@ def test_validate_input_empty_prompt(agent):
 
 def test_execute_with_valid_prompt(agent, vault_path):
     """Test that execute returns topic proposal successfully."""
-    context = {"prompt": "Research the impact of transformers on NLP"}
+    context = {
+        "prompt": "Research the impact of transformers on NLP",
+        "strategy": "research_proposal",
+    }
 
     result = agent.execute(context)
 
@@ -78,7 +81,7 @@ def test_execute_with_malformed_json(agent, vault_path, mock_llm):
     """Test that execute handles malformed JSON response."""
     mock_llm.invoke.return_value = "This is not valid JSON"
 
-    context = {"prompt": "Test prompt"}
+    context = {"prompt": "Test prompt", "strategy": "research_proposal"}
 
     result = agent.execute(context)
 
@@ -99,7 +102,7 @@ def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
     }
     """
 
-    context = {"prompt": "Test prompt"}
+    context = {"prompt": "Test prompt", "strategy": "research_proposal"}
 
     result = agent.execute(context)
 
@@ -127,7 +130,7 @@ def test_execute_tags_lowercase(agent, vault_path, mock_llm):
     }
     """
 
-    context = {"prompt": "Test prompt"}
+    context = {"prompt": "Test prompt", "strategy": "research_proposal"}
 
     result = agent.execute(context)
 

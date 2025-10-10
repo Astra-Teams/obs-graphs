@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.api.v1.nodes.deep_research import DeepResearchAgent
+from src.api.nodes.deep_research import DeepResearchAgent
 from src.protocols.research_client_protocol import ResearchResult
 from src.state import AgentResult, FileAction
 
