@@ -92,33 +92,17 @@ class GraphState(TypedDict):
     messages: Annotated[List, "add_messages"]
 
 
-class VaultSummaryModel(BaseModel):
-    """Pydantic model for vault summary data."""
+# Re-export Pydantic models for backward compatibility
+from src.obs_graphs.graphs.article_proposal.schemas import AgentResultModel, GraphStateModel, VaultSummaryModel
 
-    total_articles: int
-    categories: List[str]
-    recent_updates: List[str]
-
-
-class AgentResultModel(BaseModel):
-    """Pydantic model for agent execution results."""
-
-    success: bool
-    changes: List[FileChange]
-    message: str
-    metadata: Dict = {}
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-class GraphStateModel(BaseModel):
-    """Pydantic model for validating and serializing graph state."""
-
-    vault_summary: VaultSummaryModel
-    strategy: WorkflowStrategy
-    prompt: str
-    accumulated_changes: List[FileChange]
-    node_results: Dict[str, AgentResultModel]
-    messages: List[str]
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+__all__ = [
+    "WorkflowStrategy",
+    "FileAction",
+    "FileChange",
+    "AgentResult",
+    "VaultSummary",
+    "GraphState",
+    "VaultSummaryModel",
+    "AgentResultModel",
+    "GraphStateModel",
+]
