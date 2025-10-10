@@ -9,15 +9,13 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from src.api.v1.models.workflow import Workflow, WorkflowStatus
-from src.container import get_container
 from src.db.database import get_db
+from src.db.models.workflow import Workflow, WorkflowStatus
 from src.settings import get_settings
 from src.tasks.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-container = get_container()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_graphs" / "workflows"
@@ -87,6 +85,9 @@ def run_workflow_task(self, workflow_id: int) -> None:
         temp_vault_dir = _prepare_workflow_directory(workflow_id)
 
         # Set the path in the container
+        from src.container import get_container
+
+        container = get_container()
         container.set_vault_path(temp_vault_dir)
 
         # 4. Create GraphBuilder and run workflow

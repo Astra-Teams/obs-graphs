@@ -7,16 +7,14 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from src.api.v1.graph import GraphBuilder
-from src.api.v1.models.workflow import Workflow, WorkflowStatus
 from src.api.v1.schemas import (
     WorkflowListResponse,
     WorkflowResponse,
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
-from src.container import get_container
 from src.db.database import get_db
+from src.db.models.workflow import Workflow, WorkflowStatus
 from src.settings import get_settings
 
 router = APIRouter()
@@ -81,6 +79,8 @@ async def run_workflow(
             db.commit()
 
             # Set vault path for synchronous execution
+            from src.container import get_container
+
             container = get_container()
             settings = get_settings()
 
@@ -97,6 +97,8 @@ async def run_workflow(
             container.set_vault_path(vault_path)
 
             # Create GraphBuilder and run workflow
+            from src.api.v1.graph import GraphBuilder
+
             graph_builder = GraphBuilder()
             result = graph_builder.run_workflow(request)
 

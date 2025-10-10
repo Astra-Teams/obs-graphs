@@ -4,8 +4,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Annotated, Dict, List, Optional, TypedDict
 
-from langgraph.graph.message import add_messages
 from pydantic import BaseModel, ConfigDict
+
+from .enums import WorkflowStrategy
 
 
 class FileAction(str, Enum):
@@ -60,14 +61,6 @@ class AgentResult:
     metadata: Dict = field(default_factory=dict)
 
 
-class WorkflowStrategy(str, Enum):
-    """Enumeration of available workflow strategies."""
-
-    NEW_ARTICLE = "new_article"
-    IMPROVEMENT = "improvement"
-    RESEARCH_PROPOSAL = "research_proposal"
-
-
 @dataclass
 class VaultSummary:
     """
@@ -92,7 +85,7 @@ class GraphState(TypedDict):
     prompt: str
     accumulated_changes: List[FileChange]
     node_results: Dict
-    messages: Annotated[List, add_messages]
+    messages: Annotated[List, "add_messages"]
 
 
 class VaultSummaryModel(BaseModel):

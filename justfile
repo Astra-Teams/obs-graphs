@@ -87,7 +87,7 @@ logs:
     @echo "Tailing logs from all development services..."
     @{{DEV_COMPOSE}} logs -f
 
-# Tail logs from specific service (usage: just logs-service obs-api)
+# Tail logs from specific service
 logs-service SERVICE:
     @echo "Tailing logs from {{SERVICE}}..."
     @{{DEV_COMPOSE}} logs -f {{SERVICE}}
@@ -101,28 +101,28 @@ status:
 # TESTING
 # ==============================================================================
 
-# Run complete test suite (local SQLite then docker PostgreSQL)
+# Run complete test suite
 test: 
   @just local-test 
   @just docker-test
 
-# Run lightweight local test suite (unit + integration + SQLite DB tests)
+# Run lightweight local test suite
 local-test:
   @just unit-test
   @just intg-test
   @just sqlt-test
 
-# Run unit tests locally (fastest, single component tests)
+# Run unit tests locally
 unit-test:
-    @echo "🚀 Running unit tests (single component, no dependencies)..."
+    @echo "🚀 Running unit tests..."
     @uv run pytest tests/unit
 
-# Run integration tests locally (fast, all mocks, no containers)
+# Run integration tests locally
 intg-test:
-    @echo "🚀 Running integration tests (local, all dependencies mocked)..."
+    @echo "🚀 Running integration tests..."
     @uv run pytest tests/intg
 
-# Run database tests with SQLite (fast, lightweight, no docker)
+# Run database tests with SQLite
 sqlt-test:
     @echo "🚀 Running database tests with SQLite..."
     @USE_SQLITE=true uv run pytest tests/db
@@ -141,7 +141,7 @@ build-test:
     echo "Build successful. Cleaning up temporary image..." && \
     docker rmi temp-build-test:$TEMP_IMAGE_TAG || true
 
-# Run database tests with PostgreSQL (robust, production-like)
+# Run database tests with PostgreSQL
 pstg-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
     @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
@@ -152,7 +152,7 @@ pstg-test:
     {{TEST_COMPOSE}} down --remove-orphans; \
     exit $EXIT_CODE
 
-# Run e2e tests against containerized application stack (runs from host)
+# Run e2e tests against containerized application stack
 e2e-test:
     @echo "🚀 Running e2e tests..."
     @USE_SQLITE=false uv run pytest tests/e2e

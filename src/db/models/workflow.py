@@ -1,4 +1,4 @@
-# src/api/v1/models/workflow.py
+# src/db/models/workflow.py
 import enum
 from datetime import datetime, timezone
 

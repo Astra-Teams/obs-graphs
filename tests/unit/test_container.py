@@ -79,7 +79,7 @@ def test_get_vault_service_lazy_instantiation(
 
 
 @patch("src.container.settings")
-@patch("src.container.Ollama")
+@patch("src.container.OllamaLLM")
 def test_get_llm_lazy_instantiation(
     mock_ollama, mock_settings, container: DependencyContainer, default_settings
 ):
@@ -142,7 +142,7 @@ def test_get_node_invalid_name(container: DependencyContainer):
 
 
 @patch("src.container.settings")
-@patch("src.container.Ollama")
+@patch("src.container.OllamaLLM")
 def test_get_node_new_article_creation_with_llm(
     mock_ollama,
     mock_settings,

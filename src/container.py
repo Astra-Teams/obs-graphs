@@ -7,7 +7,7 @@ import redis
 from langchain_core.language_models.llms import BaseLLM
 from langchain_ollama import OllamaLLM
 
-from src.clients import GithubClient, ResearchApiClient
+from src.clients import GithubClient
 from src.protocols import (
     GithubClientProtocol,
     NodeProtocol,
@@ -125,12 +125,46 @@ class DependencyContainer:
         """
         Get the research API client instance.
 
-        Always returns MockResearchApiClient for testing purposes.
+        Returns MockOllamaDeepResearcherClient from submodule.
         """
         if self._research_client is None:
-            from dev.mocks_clients import MockResearchApiClient
+            import sys
+            from importlib.util import module_from_spec, spec_from_file_location
+            from pathlib import Path
 
-            self._research_client = MockResearchApiClient()
+            # Add submodules to path
+            submodules_path = (
+                Path(__file__).parent.parent.parent / "obs-graphs" / "submodules"
+            )
+            if str(submodules_path) not in sys.path:
+                sys.path.insert(0, str(submodules_path))
+
+            # Direct import from file path
+            mock_client_path = (
+                submodules_path
+                / "ollama-deep-researcher"
+                / "sdk"
+                / "mock_ollama_deep_researcher_client"
+                / "mock_ollama_deep_researcher_client.py"
+            )
+            spec = spec_from_file_location("mock_client", mock_client_path)
+            mock_module = module_from_spec(spec)
+            spec.loader.exec_module(mock_module)
+            MockOllamaDeepResearcherClient = mock_module.MockOllamaDeepResearcherClient
+
+            from src.protocols.research_client_protocol import ResearchResult
+
+            class AdaptedMockClient:
+                def __init__(self):
+                    self.client = MockOllamaDeepResearcherClient()
+
+                def run_research(self, topic: str) -> ResearchResult:
+                    result = self.client.research(topic)
+                    return ResearchResult(
+                        summary=result["summary"], sources=result["sources"]
+                    )
+
+            self._research_client = AdaptedMockClient()
         return self._research_client
 
     def get_llm(self) -> BaseLLM:

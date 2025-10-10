@@ -8,9 +8,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from src.api.v1.models.workflow import Base, Workflow
 from src.api.v1.router import router
-from src.db.database import get_db
+from src.db.database import Base, get_db
+from src.db.models.workflow import Workflow
 from src.state import WorkflowStrategy
 
 # Create in-memory SQLite database for testing

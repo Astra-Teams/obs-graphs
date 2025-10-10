@@ -7,9 +7,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.api.v1.models.workflow import Workflow, WorkflowStatus
 from src.api.v1.tasks.workflow_tasks import run_workflow_task
 from src.db.database import Base
+from src.db.models.workflow import Workflow, WorkflowStatus
 from tests.db.conftest import create_pending_workflow
 
 
@@ -42,14 +42,10 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_github_client")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_vault_service")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_retrieves_workflow_from_database(
         self,
-        mock_graph_builder,
-        mock_vault_service,
-        mock_github_client,
+        mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -60,6 +56,11 @@ class TestRunWorkflowTask:
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
 
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
+
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
         mock_result.success = True
@@ -69,7 +70,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         # Save workflow ID before task execution (session will be closed)
         workflow_id = workflow.id
@@ -87,9 +88,9 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_updates_status_to_running(
-        self, mock_graph_builder, mock_get_db, mock_prepare_dir, test_db
+        self, mock_get_container, mock_get_db, mock_prepare_dir, test_db
     ):
         """Test that task updates workflow status to RUNNING at start."""
         mock_prepare_dir.return_value = Path("/tmp/vault")
@@ -97,10 +98,15 @@ class TestRunWorkflowTask:
         workflow_id = workflow.id
         mock_get_db.return_value = iter([test_db])
 
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
+
         # Mock GraphBuilder to raise error
         mock_builder_instance = MagicMock()
         mock_builder_instance.run_workflow.side_effect = Exception("Stop here")
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         with pytest.raises(Exception):
             run_workflow_task(workflow_id)
@@ -112,10 +118,10 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_calls_run_workflow_and_updates_db(
         self,
-        mock_graph_builder,
+        mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -124,6 +130,11 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
+
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -134,7 +145,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -151,10 +162,10 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_creates_pull_request(
         self,
-        mock_graph_builder,
+        mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -163,6 +174,11 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
+
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -173,7 +189,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -187,10 +203,10 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_updates_workflow_to_completed(
         self,
-        mock_graph_builder,
+        mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -199,6 +215,11 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
+
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -209,7 +230,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -224,10 +245,10 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_updates_workflow_to_failed_on_error(
         self,
-        mock_graph_builder,
+        mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -237,9 +258,14 @@ class TestRunWorkflowTask:
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
 
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
+
         mock_builder_instance = MagicMock()
         mock_builder_instance.run_workflow.side_effect = Exception("Workflow error")
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -271,10 +297,10 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_propagates_prompt_to_workflow_request(
         self,
-        mock_graph_builder,
+        mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -293,6 +319,11 @@ class TestRunWorkflowTask:
 
         mock_get_db.return_value = iter([test_db])
 
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
+
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
         mock_result.success = True
@@ -302,7 +333,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -318,10 +349,10 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_propagates_empty_prompt_when_null(
         self,
-        mock_graph_builder,
+        mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -340,6 +371,11 @@ class TestRunWorkflowTask:
 
         mock_get_db.return_value = iter([test_db])
 
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
+
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
         mock_result.success = True
@@ -349,7 +385,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -365,10 +401,10 @@ class TestRunWorkflowTask:
 
     @patch("src.api.v1.tasks.workflow_tasks._prepare_workflow_directory")
     @patch("src.api.v1.tasks.workflow_tasks.get_db")
-    @patch("src.api.v1.tasks.workflow_tasks.container.get_graph_builder")
+    @patch("src.container.get_container")
     def test_task_propagates_prompt_with_strategy(
         self,
-        mock_graph_builder,
+        mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -389,6 +425,11 @@ class TestRunWorkflowTask:
 
         mock_get_db.return_value = iter([test_db])
 
+        # Mock container
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
+
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
         mock_result.success = True
@@ -398,7 +439,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_graph_builder.return_value = mock_builder_instance
+        mock_container.get_graph_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 

@@ -3,7 +3,6 @@ import pytest
 from dev.mocks_clients.mock_github_client import MockGithubClient
 from dev.mocks_clients.mock_ollama_client import MockOllamaClient
 from dev.mocks_clients.mock_redis_client import MockRedisClient
-from dev.mocks_clients.mock_research_api_client import MockResearchApiClient
 
 
 @pytest.fixture
@@ -36,13 +35,6 @@ def mock_github_client() -> MockGithubClient:
     """Provide a mock GitHub client for unit tests."""
 
     return MockGithubClient()
-
-
-@pytest.fixture
-def mock_research_api_client() -> MockResearchApiClient:
-    """Provide a mock research API client for unit tests."""
-
-    return MockResearchApiClient()
 
 
 @pytest.fixture

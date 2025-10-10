@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 
-from src.api.v1.models.workflow import Workflow, WorkflowStatus
+from src.db.models.workflow import Workflow, WorkflowStatus
 
 # Existing factory functions...
 

@@ -7,7 +7,7 @@ This file contains only E2E-specific fixtures like e2e_setup and api_base_url.
 import os
 import subprocess
 import time
-from typing import Generator, List
+from typing import Generator
 from unittest.mock import Mock, patch
 
 import httpx

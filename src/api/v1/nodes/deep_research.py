@@ -24,30 +24,37 @@ class DeepResearchAgent(NodeProtocol):
 
     def validate_input(self, context: dict) -> bool:
         """
-        Validate that the context contains required topic metadata.
+        Validate that the context contains at least the topic title.
 
         Args:
-            context: Must contain topic_title, topic_summary, tags, and proposal_slug
+            context: Must contain at least topic_title
 
         Returns:
-            True if context is valid, False otherwise
+            True if context has minimum required data, False otherwise
         """
-        required_fields = ["topic_title", "topic_summary", "tags", "proposal_slug"]
-        return all(field in context for field in required_fields)
+        # Only require topic_title as minimum, others can be generated/defaulted
+        return (
+            "topic_title" in context
+            and isinstance(context["topic_title"], str)
+            and len(context["topic_title"].strip()) > 0
+        )
 
     def execute(self, context: dict) -> AgentResult:
         """
         Execute deep research and generate proposal document.
         """
         if not self.validate_input(context):
-            raise ValueError(
-                "Invalid context: topic metadata (title, summary, tags, slug) required"
-            )
+            raise ValueError("Invalid context: topic_title is required")
 
         topic_title = context["topic_title"]
-        topic_summary = context["topic_summary"]
-        tags = context["tags"]
-        proposal_slug = context["proposal_slug"]
+        topic_summary = context.get("topic_summary", f"Research on {topic_title}")
+        proposal_slug = context.get(
+            "proposal_slug",
+            topic_title.lower()
+            .replace(" ", "-")
+            .replace(",", "")
+            .replace(".", "")[:50],
+        )
 
         try:
             # Call research API with topic
@@ -63,7 +70,6 @@ class DeepResearchAgent(NodeProtocol):
             markdown_content = self._generate_proposal_markdown(
                 title=topic_title,
                 summary=topic_summary,
-                tags=tags,
                 research_summary=research_result.summary,
                 sources=research_result.sources,
             )
@@ -78,7 +84,6 @@ class DeepResearchAgent(NodeProtocol):
             metadata = {
                 "proposal_filename": filename,
                 "proposal_path": file_path,
-                "tags": tags,
                 "sources_count": len(research_result.sources),
             }
 
@@ -104,7 +109,6 @@ class DeepResearchAgent(NodeProtocol):
         self,
         title: str,
         summary: str,
-        tags: list[str],
         research_summary: str,
         sources: list[str],
     ) -> str:
@@ -114,16 +118,14 @@ class DeepResearchAgent(NodeProtocol):
         Args:
             title: Research topic title
             summary: Brief topic summary
-            tags: List of tags
             research_summary: Research findings from API
             sources: List of source URLs
 
         Returns:
             Complete Markdown document string
         """
-        # YAML front matter with tags only (as specified in requirements)
-        yaml_tags = "\n".join(f"  - {tag}" for tag in tags)
-        front_matter = f"---\ntags:\n{yaml_tags}\n---\n\n"
+        # No YAML front matter needed
+        front_matter = ""
 
         # Markdown body
         body = f"# {title}\n\n"
