@@ -80,7 +80,7 @@ down-prod:
 rebuild:
     @echo "Rebuilding and restarting API service..."
     @{{DEV_COMPOSE}} down --remove-orphans
-    @{{DEV_COMPOSE}} build --no-cache obs-api
+    @{{DEV_COMPOSE}} build --no-cache
 
 # Tail logs from all development services
 logs:
@@ -91,11 +91,6 @@ logs:
 logs-service SERVICE:
     @echo "Tailing logs from {{SERVICE}}..."
     @{{DEV_COMPOSE}} logs -f {{SERVICE}}
-
-# Show status of all development containers
-status:
-    @echo "Development services status:"
-    @{{DEV_COMPOSE}} ps
 
 # ==============================================================================
 # TESTING
@@ -130,7 +125,7 @@ sqlt-test:
 # Run all Docker-based tests
 docker-test:
   @just build-test
-  @just pstg-test
+  @just psql-test
   @just e2e-test
 
 # Build Docker image for testing without leaving artifacts
@@ -142,7 +137,7 @@ build-test:
     docker rmi temp-build-test:$TEMP_IMAGE_TAG || true
 
 # Run database tests with PostgreSQL
-pstg-test:
+psql-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
     @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
     @echo "Running database tests inside api container (against PostgreSQL)..."

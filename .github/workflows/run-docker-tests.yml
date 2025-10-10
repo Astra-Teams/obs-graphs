@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_target: [build-test, pstg-test, e2e-test]
+        test_target: [build-test, psql-test, e2e-test]
     env:
       OBSIDIAN_VAULT_GITHUB_TOKEN: ${{ secrets.VAULT_GITHUB_TOKEN }}
       OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN: ${{ secrets.OLLAMA_DEEP_RESEARCHER_GITHUB_TOKEN }}

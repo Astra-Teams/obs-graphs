@@ -136,9 +136,7 @@ class DependencyContainer:
 
                 from src.protocols.research_client_protocol import ResearchResult
 
-                submodules_path = (
-                    Path(__file__).parent.parent.parent / "obs-graphs" / "submodules"
-                )
+                submodules_path = Path(__file__).parent.parent / "submodules"
                 if str(submodules_path) not in sys.path:
                     sys.path.insert(0, str(submodules_path))
 
