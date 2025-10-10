@@ -1,17 +1,17 @@
-# 仮想環境
+# Virtual environment
 .venv/
 venv/
 env/
 ENV/
 .env/
 
-# Pythonキャッシュファイル
+# Python cache files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# パッケージングと配布
+# Packaging and distribution
 build/
 dist/
 *.egg-info/
@@ -20,7 +20,7 @@ wheels/
 .Python/
 .tmp/*
 
-# インストーラーログ
+# Installer logs
 pip-log.txt
 
 # ruff
@@ -35,11 +35,11 @@ pip-log.txt
 .coverage.*
 htmlcov/
 
-# editor config
+# Editor config
 .vscode/
 .idea/
 
-# local claude settings
+# Local Claude settings
 .claude/settings.local.json
 
 # Sublime Text
@@ -50,7 +50,7 @@ htmlcov/
 profile_default/
 ipython_config.py
 
-# 環境変数ファイル
+# Environment variable files
 .env
 .env.*
 !*.env.example
@@ -65,10 +65,10 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# ログファイル
+# Log files
 *.log
 *.log.*
 
-# データベースファイル (ローカル開発用)
+# Database files (for local development)
 *.sqlite3
 *.db
