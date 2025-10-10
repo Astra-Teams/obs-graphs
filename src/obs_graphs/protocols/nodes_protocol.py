@@ -8,6 +8,8 @@ from src.obs_graphs.graphs.article_proposal.state import AgentResult
 class NodeProtocol(Protocol):
     """Protocol for node/agent operations."""
 
+    name: str  # Class attribute for node name
+
     def execute(self, context: dict) -> AgentResult:
         """
         Execute the node's task.
@@ -39,14 +41,5 @@ class NodeProtocol(Protocol):
 
         Returns:
             True if context is valid, False otherwise
-        """
-        ...
-
-    def get_name(self) -> str:
-        """
-        Get the name of this node/agent.
-
-        Returns:
-            Human-readable node/agent name
         """
         ...

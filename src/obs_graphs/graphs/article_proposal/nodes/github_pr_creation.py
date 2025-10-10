@@ -13,6 +13,8 @@ class GithubPRCreationAgent(NodeProtocol):
     CommitChangesAgent, which should run before this agent.
     """
 
+    name = "github_pr_creation"
+
     def __init__(self, github_client: GithubClientProtocol, vault_service):
         """Initialize the GitHub PR creation agent."""
         self.github_client = github_client

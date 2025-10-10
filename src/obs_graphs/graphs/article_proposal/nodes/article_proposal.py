@@ -19,6 +19,8 @@ class ArticleProposalAgent(NodeProtocol):
     proposals that will be passed to the content generation agent.
     """
 
+    name = "article_proposal"
+
     def __init__(self, llm: Ollama):
         """Initialize the article proposal agent."""
         self.llm = llm

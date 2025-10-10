@@ -13,6 +13,8 @@ class CommitChangesAgent(NodeProtocol):
     - Commits all changes atomically using bulk API operations
     """
 
+    name = "commit_changes"
+
     def __init__(self, vault_service: VaultServiceProtocol):
         """Initialize the commit changes agent."""
         self.vault_service = vault_service

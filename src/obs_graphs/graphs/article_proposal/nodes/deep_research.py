@@ -22,6 +22,8 @@ class DeepResearchAgent(NodeProtocol):
     directly to disk without additional formatting.
     """
 
+    name = "deep_research"
+
     def __init__(self, research_client: ResearchClientProtocol):
         """Initialize the deep research agent."""
         self.research_client = research_client

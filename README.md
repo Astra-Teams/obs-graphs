@@ -21,11 +21,6 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 │   ├── db/              # Database models and session management
 │   ├── graphs/          # LangGraph workflow definitions
 │   │   └── article_proposal/  # Article proposal workflow
-│   │       ├── graph.py       # Main workflow orchestration
-│   │       ├── nodes/         # Individual workflow nodes/agents
-│   │       ├── prompts/       # LLM prompt templates
-│   │       ├── schemas.py     # Pydantic models for workflow state
-│   │       └── state.py       # Workflow state definitions and dataclasses
 │   ├── protocols/       # Protocol definitions for dependency injection
 │   ├── services/        # Business logic services
 │   ├── settings.py      # Application settings

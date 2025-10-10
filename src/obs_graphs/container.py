@@ -32,30 +32,6 @@ class DependencyContainer:
         self._current_branch: Optional[str] = None
         self._vault_path: Optional[Path] = None
 
-        # Registry of node classes (module, class_name)
-        self._node_classes = {
-            "article_proposal": (
-                "src.obs_graphs.graphs.article_proposal.nodes.article_proposal",
-                "ArticleProposalAgent",
-            ),
-            "article_content_generation": (
-                "src.obs_graphs.graphs.article_proposal.nodes.article_content_generation",
-                "ArticleContentGenerationAgent",
-            ),
-            "deep_research": (
-                "src.obs_graphs.graphs.article_proposal.nodes.deep_research",
-                "DeepResearchAgent",
-            ),
-            "commit_changes": (
-                "src.obs_graphs.graphs.article_proposal.nodes.commit_changes",
-                "CommitChangesAgent",
-            ),
-            "github_pr_creation": (
-                "src.obs_graphs.graphs.article_proposal.nodes.github_pr_creation",
-                "GithubPRCreationAgent",
-            ),
-        }
-
     def get_github_client(self) -> GithubClientProtocol:
         """
         Get the GitHub client instance.
@@ -231,15 +207,39 @@ class DependencyContainer:
     def get_node(self, name: str) -> NodeProtocol:
         """Get a node instance by name."""
         if name not in self._nodes:
-            if name not in self._node_classes:
+            # Import all node classes and find the one with matching name
+            from src.obs_graphs.graphs.article_proposal.nodes.article_proposal import (
+                ArticleProposalAgent,
+            )
+            from src.obs_graphs.graphs.article_proposal.nodes.article_content_generation import (
+                ArticleContentGenerationAgent,
+            )
+            from src.obs_graphs.graphs.article_proposal.nodes.commit_changes import (
+                CommitChangesAgent,
+            )
+            from src.obs_graphs.graphs.article_proposal.nodes.deep_research import (
+                DeepResearchAgent,
+            )
+            from src.obs_graphs.graphs.article_proposal.nodes.github_pr_creation import (
+                GithubPRCreationAgent,
+            )
+
+            node_classes = [
+                ArticleProposalAgent,
+                ArticleContentGenerationAgent,
+                CommitChangesAgent,
+                DeepResearchAgent,
+                GithubPRCreationAgent,
+            ]
+
+            node_class = None
+            for cls in node_classes:
+                if hasattr(cls, 'name') and cls.name == name:
+                    node_class = cls
+                    break
+
+            if node_class is None:
                 raise ValueError(f"Unknown node: {name}")
-
-            # Import the class dynamically
-            module_name, class_name = self._node_classes[name]
-            import importlib
-
-            module = importlib.import_module(module_name)
-            node_class = getattr(module, class_name)
 
             # Instantiate with dependencies
             if name in ["article_proposal", "article_content_generation"]:

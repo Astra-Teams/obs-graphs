@@ -23,6 +23,8 @@ class ArticleContentGenerationAgent(NodeProtocol):
     full markdown content for each proposed article using LLM.
     """
 
+    name = "article_content_generation"
+
     def __init__(self, llm: Ollama):
         """Initialize the article content generation agent."""
         self.llm = llm
