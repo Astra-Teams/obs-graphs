@@ -5,24 +5,22 @@ FastAPI + LangGraph + Ollama + PostgreSQL/SQLite + Celery + Redis. Docker orches
 
 ## Architecture
 - **DI Container**: `src/container.py` (protocol-based, lazy instantiation)
-- **Service Flags**: `.env` controls DB/GitHub/LLM/Redis/ResearchAPI (mock vs real)
-- **Submodules**: `obsidian-vault` (content), `ollama-deep-researcher` (research service)
+- **Service Flags**: `.env` controls DB/GitHub/LLM/Redis (mock vs real). Research API is always mocked.
+- **Submodules**: `obsidian-vault` (content), `ollama-deep-researcher` (research service reference)
 
 ## Configuration & Orchestration
 - `.env` = single source of truth for both obs-graphs and research-api
 - Compose files:
   - `docker-compose.yml`: base (PostgreSQL, Redis, obs-api, celery-worker, backend network)
-  - `docker-compose.research.override.yml`: adds research-api with health check
   - `docker-compose.{dev,test}.override.yml`: environment-specific tweaks
-- Dev/test compose commands auto-include research overlay; production excludes it
 
 ## Testing
 - **Unit Tests (`just unit-test`)**: Single component tests with all dependencies mocked. Fast (<3s). Tests individual classes/functions in isolation.
 - **Integration Tests (`just intg-test`)**: Multiple real components working together (workflows, tasks, services). External dependencies mocked. Very fast (~0.2s).
-- **E2E Tests (`just e2e-test`)**: Full system in containers (PostgreSQL, Research API, Celery). Slow (~40s+). Tests entire workflow lifecycle via HTTP.
+- **E2E Tests (`just e2e-test`)**: Full system in containers (PostgreSQL, Celery). Research API is mocked. Slow (~40s+). Tests entire workflow lifecycle via HTTP.
 - E2E tests poll `/api/v1/workflows/{id}` until terminal status
 - Fixtures wait for container health via `docker compose ps --format json`
-- GitHub interactions always mocked in all test types
+- GitHub and Research API interactions always mocked in all test types
 
 ## DB Migrations
 1. Add models in `src/db/models/`
@@ -34,3 +32,4 @@ FastAPI + LangGraph + Ollama + PostgreSQL/SQLite + Celery + Redis. Docker orches
 - Check `src/state.py` for correct types (e.g., `FileChange.action: FileAction`)
 - Use `git submodule update --init --recursive` after clone
 - Never edit submodules directly
+- When using `sleep` in scripts, limit to 3 seconds maximum

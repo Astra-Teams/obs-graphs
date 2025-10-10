@@ -58,12 +58,6 @@ class ObsGraphsSettings(BaseSettings):
         description="Return a mocked Redis client when enabled.",
         alias="USE_MOCK_REDIS",
     )
-    use_mock_research_api: bool = Field(
-        default=False,
-        title="Use Mock Research API",
-        description="Return a mocked research API client when enabled.",
-        alias="USE_MOCK_RESEARCH_API",
-    )
 
     # --- LLM Settings ---
     llm_model: str = Field(

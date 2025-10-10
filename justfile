@@ -11,12 +11,12 @@ DEV_PROJECT_NAME := PROJECT_NAME + "-dev"
 PROD_PROJECT_NAME := PROJECT_NAME + "-prod"
 TEST_PROJECT_NAME := PROJECT_NAME + "-test"
 
-# Production uses only base compose (no research service)
+# Production uses only base compose
 PROD_COMPOSE := "docker compose -f docker-compose.yml --project-name " + PROD_PROJECT_NAME
 
-# Development and test include research service overlay
-DEV_COMPOSE  := "docker compose -f docker-compose.yml -f docker-compose.research.override.yml -f docker-compose.dev.override.yml --project-name " + DEV_PROJECT_NAME
-TEST_COMPOSE := "docker compose -f docker-compose.yml -f docker-compose.research.override.yml -f docker-compose.test.override.yml --project-name " + TEST_PROJECT_NAME
+# Development and test use environment-specific overlays
+DEV_COMPOSE  := "docker compose -f docker-compose.yml -f docker-compose.dev.override.yml --project-name " + DEV_PROJECT_NAME
+TEST_COMPOSE := "docker compose -f docker-compose.yml -f docker-compose.test.override.yml --project-name " + TEST_PROJECT_NAME
 
 # default target
 default: help

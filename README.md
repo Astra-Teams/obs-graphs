@@ -18,7 +18,6 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 ├── submodules/
 │   ├── obsidian-vault/              # Local checkout of the vault used during workflows
 │   └── ollama-deep-researcher/      # Reference implementation of the external research API
-├── docker-compose.research.override.yml  # Shared overlay that adds research-api to the stack
 └── justfile             # Helpful automation commands (setup, tests, linting)
 ```
 
@@ -51,8 +50,7 @@ just setup
 
 All configuration is centralised in `.env`. Update it to reflect your environment. Important options include:
 
-- `USE_*` toggles – enable or disable external integrations (GitHub, LLM, Redis, Research API).
-- `RESEARCH_API_URL` / `RESEARCH_API_OLLAMA_MODEL` – defaults to the in-network research container; point these at an external service for production-like deployments.
+- `USE_*` toggles – enable or disable external integrations (GitHub, LLM, Redis). Note: Research API is always mocked.
 - `OBSIDIAN_VAULT_GITHUB_TOKEN` / `OBSIDIAN_VAULT_REPOSITORY` – credentials for committing changes back to GitHub.
 - `VAULT_SUBMODULE_PATH` – filesystem path to the local Obsidian vault submodule checkout.
 
@@ -61,15 +59,14 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 Use Docker Compose via `just` recipes. The compose hierarchy works as follows:
 
 - `docker-compose.yml` defines the core services (PostgreSQL, Redis, obs-api, celery-worker).
-- `docker-compose.research.override.yml` adds the `research-api` container and marks it healthy before other services start.
 - `docker-compose.dev.override.yml` and `docker-compose.test.override.yml` add environment-specific tweaks.
 
 Common commands:
 
 ```bash
-just up          # Start development stack (obs-graphs + research-api + dependencies)
+just up          # Start development stack (obs-graphs + dependencies)
 just down        # Stop development stack
-just up-prod     # Start production-like stack (obs-graphs only; expects external research API)
+just up-prod     # Start production-like stack
 just down-prod   # Stop production-like stack
 ```
 
@@ -79,13 +76,27 @@ The `just` recipes wrap the supported test suites:
 
 ```bash
 just unit-test         # Unit tests (host, fast)
+just intg-test         # Integration tests (host, all dependencies mocked)
 just sqlt-test         # SQLite-backed DB tests (host)
-just docker-test       # Build production image, then run Postgres + mock e2e suite inside containers
-just e2e-test-mock     # Spin up stack and run pytest inside obs-api with mocked research service
-just e2e-test-real     # Spin up stack and run pytest inside obs-api against the real research service
+just docker-test       # Build production image, then run Postgres + e2e suite
+just e2e-test          # Spin up stack and run pytest with PostgreSQL and mocked research service
 ```
 
-Both E2E recipes rely on PostgreSQL and will wait for `obs-api` (and `research-api` when applicable) to report healthy before executing tests.
+E2E tests rely on PostgreSQL and will wait for `obs-api` to report healthy before executing tests.
+
+### 5. Quick API test
+
+After starting the development stack with `just up`, verify the API is running:
+
+```bash
+# Check health endpoint
+curl http://127.0.0.1:8001/health
+
+# List available workflows
+curl http://127.0.0.1:8001/api/v1/workflows
+```
+
+Note: Research API is always mocked in this project, so all research operations use `MockResearchApiClient` which returns sample data.
 
 ## Workflow model
 
@@ -96,11 +107,11 @@ This design keeps runtime execution deterministic and avoids invoking Git operat
 ## Contributing
 
 1. Create feature branches from `main`.
-2. Ensure `just format` and the test suite pass locally (`just docker-test`, `just e2e-test-real` when applicable).
+2. Ensure `just format` and the test suite pass locally (`just docker-test`).
 3. Keep the submodule changes focused on content updates—do not modify the submodule configuration directly in this repository.
 
 ## Troubleshooting
 
 - **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `submodules/obsidian-vault` and `submodules/ollama-deep-researcher`.
 - **Using a different vault?** Update the `submodules/obsidian-vault` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
-- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. For integration tests, `just e2e-test-mock` keeps PostgreSQL but stubs research responses.
+- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Research API is always mocked for simplicity.

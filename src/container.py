@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 import redis
-from langchain_community.llms import Ollama
 from langchain_core.language_models.llms import BaseLLM
+from langchain_ollama import OllamaLLM
 
 from src.clients import GithubClient, ResearchApiClient
 from src.protocols import (
@@ -125,25 +125,19 @@ class DependencyContainer:
         """
         Get the research API client instance.
 
-        Returns MockResearchApiClient if USE_MOCK_RESEARCH_API=True, otherwise ResearchApiClient.
+        Always returns MockResearchApiClient for testing purposes.
         """
         if self._research_client is None:
-            if settings.use_mock_research_api:
-                from dev.mocks_clients import MockResearchApiClient
+            from dev.mocks_clients import MockResearchApiClient
 
-                self._research_client = MockResearchApiClient()
-            else:
-                self._research_client = ResearchApiClient(
-                    base_url=settings.research_api_settings.research_api_url,
-                    timeout=settings.research_api_settings.research_api_timeout_seconds,
-                )
+            self._research_client = MockResearchApiClient()
         return self._research_client
 
     def get_llm(self) -> BaseLLM:
         """
         Get the LLM instance.
 
-        Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise Ollama.
+        Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise OllamaLLM.
         """
         if self._llm is None:
             if settings.use_mock_llm:
@@ -151,7 +145,7 @@ class DependencyContainer:
 
                 self._llm = MockOllamaClient()
             else:
-                self._llm = Ollama(
+                self._llm = OllamaLLM(
                     model=settings.llm_model, base_url=settings.ollama_host
                 )
         return self._llm
