@@ -4,4 +4,4 @@
 	branch = main
 [submodule "src/submodules/ollama-deep-researcher"]
 	path = src/submodules/ollama-deep-researcher
-	url = git@github.com:Astra-Teams/ollama-deep-researcher.git
+	url = https://github.com/Astra-Teams/ollama-deep-researcher.git

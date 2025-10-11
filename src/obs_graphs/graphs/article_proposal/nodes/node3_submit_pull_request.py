@@ -52,7 +52,7 @@ class SubmitPullRequestAgent(NodeProtocol):
                 strategy, node_results, accumulated_changes
             )
             branch_name = self._generate_branch_name()
-            base_branch = "main"
+            base_branch = self._settings.workflow_default_branch
 
             pr_url = self._github_service.commit_and_create_pr(
                 branch_name=branch_name,

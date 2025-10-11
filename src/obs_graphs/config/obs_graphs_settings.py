@@ -120,6 +120,12 @@ class ObsGraphsSettings(BaseSettings):
         description="Number of seconds before temporary workflow directories are removed.",
         alias="WORKFLOW_TEMP_DIR_CLEANUP_SECONDS",
     )
+    workflow_default_branch: str = Field(
+        default="main",
+        title="Workflow Default Branch",
+        description="The default branch to use as the base for pull requests.",
+        alias="WORKFLOW_DEFAULT_BRANCH",
+    )
 
     @field_validator("ollama_host", mode="before")
     @classmethod

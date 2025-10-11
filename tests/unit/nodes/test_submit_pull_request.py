@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.obs_graphs.graphs.article_proposal.nodes.node4_submit_pull_request import (
+from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_pull_request import (
     SubmitPullRequestAgent,
 )
 from src.obs_graphs.graphs.article_proposal.state import FileAction, FileChange

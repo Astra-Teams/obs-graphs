@@ -208,7 +208,7 @@ class DependencyContainer:
             from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
                 DeepResearchAgent,
             )
-            from src.obs_graphs.graphs.article_proposal.nodes.node4_submit_pull_request import (
+            from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_pull_request import (
                 SubmitPullRequestAgent,
             )
 
