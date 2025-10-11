@@ -6,8 +6,8 @@ from github import Github, GithubException
 from github.GitTree import GitTree
 from github.PullRequest import PullRequest
 
-from src.obs_graphs.protocols import GithubClientProtocol
 from src.obs_graphs.config import ObsGraphsSettings
+from src.obs_graphs.protocols import GithubClientProtocol
 
 
 class GithubClient(GithubClientProtocol):

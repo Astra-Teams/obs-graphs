@@ -10,9 +10,9 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from src.obs_graphs.celery.app import celery_app
+from src.obs_graphs.config import obs_graphs_settings, workflow_settings
 from src.obs_graphs.db.database import get_db
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
-from src.obs_graphs.config import obs_graphs_settings, workflow_settings
 
 logger = logging.getLogger(__name__)
 

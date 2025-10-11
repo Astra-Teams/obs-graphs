@@ -11,9 +11,9 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
+from src.obs_graphs.config import ObsGraphsSettings
 from src.obs_graphs.db.database import Base, create_db_session, get_engine
 from src.obs_graphs.main import app
-from src.obs_graphs.config import ObsGraphsSettings
 
 pytest_plugins = [
     "tests.envs",

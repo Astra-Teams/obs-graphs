@@ -13,9 +13,9 @@ from src.obs_graphs.api.schemas import (
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
+from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.db.database import get_db
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
-from src.obs_graphs.config import obs_graphs_settings
 
 router = APIRouter()
 

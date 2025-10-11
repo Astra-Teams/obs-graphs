@@ -8,6 +8,11 @@ from langchain_core.language_models.llms import BaseLLM
 from langchain_ollama import OllamaLLM
 
 from src.obs_graphs.clients import GithubClient
+from src.obs_graphs.config import (
+    obs_graphs_settings,
+    redis_settings,
+    research_api_settings,
+)
 from src.obs_graphs.protocols import (
     GithubClientProtocol,
     GithubServiceProtocol,
@@ -16,7 +21,6 @@ from src.obs_graphs.protocols import (
     VaultServiceProtocol,
 )
 from src.obs_graphs.services import GithubService, VaultService
-from src.obs_graphs.config import obs_graphs_settings, redis_settings, research_api_settings
 
 
 class DependencyContainer:
@@ -177,7 +181,8 @@ class DependencyContainer:
                 self._llm = MockOllamaClient()
             else:
                 self._llm = OllamaLLM(
-                    model=obs_graphs_settings.llm_model, base_url=obs_graphs_settings.ollama_host
+                    model=obs_graphs_settings.llm_model,
+                    base_url=obs_graphs_settings.ollama_host,
                 )
         return self._llm
 

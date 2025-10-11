@@ -26,10 +26,10 @@ class WorkflowRunRequest(BaseModel):
 
     @field_validator("prompt", mode="after")
     @classmethod
-    def validate_prompt_not_whitespace(cls, v: str) -> str:
+    def validate_prompt_not_empty(cls, v: str) -> str:
         """Validate that prompt contains non-whitespace content."""
         stripped = v.strip()
-        if not stripped and v != "":
+        if not stripped:
             raise ValueError("Prompt is required and cannot be empty")
         return stripped
 

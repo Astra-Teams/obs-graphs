@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from src.obs_graphs.config import workflow_settings
 from src.obs_graphs.graphs.article_proposal.state import (
     AgentResult,
     FileAction,
     FileChange,
 )
 from src.obs_graphs.protocols import GithubServiceProtocol, NodeProtocol
-from src.obs_graphs.config import workflow_settings
 
 
 class SubmitPullRequestAgent(NodeProtocol):
