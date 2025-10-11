@@ -116,7 +116,7 @@ class DependencyContainer:
                 )
                 mock_client_path = (
                     submodules_path
-                    / "ollama-deep-researcher"
+                    / "olm-d-rch"
                     / "sdk"
                     / "mock_ollama_deep_researcher_client"
                     / "mock_ollama_deep_researcher_client.py"

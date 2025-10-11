@@ -34,6 +34,7 @@ def create_pending_workflow(db_session, **kwargs) -> Workflow:
         Workflow instance in PENDING state
     """
     workflow = Workflow(
+        prompt=kwargs.get("prompt", "Test research prompt"),
         status=WorkflowStatus.PENDING,
         strategy=kwargs.get("strategy", None),
         started_at=None,

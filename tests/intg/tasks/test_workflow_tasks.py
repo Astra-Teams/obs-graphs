@@ -397,7 +397,7 @@ class TestRunWorkflowTask:
         request = call_args[0]
 
         assert hasattr(request, "prompt")
-        assert request.prompt == ""
+        assert request.prompt == "Default research prompt"
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")

@@ -24,7 +24,7 @@ def test_create_pending_workflow_defaults(db_session: Session) -> None:
     assert workflow.error_message is None
     assert (
         repr(workflow)
-        == f"<Workflow(id={workflow.id}, status=PENDING, strategy=None, prompt=None)>"
+        == f"<Workflow(id={workflow.id}, status=PENDING, strategy=None, prompt='Test research prompt')>"
     )
 
 

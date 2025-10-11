@@ -94,7 +94,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
         from src.obs_graphs.api.schemas import WorkflowRunRequest
 
         request = WorkflowRunRequest(
-            prompt=workflow.prompt or "",
+            prompt=workflow.prompt or "Default research prompt",
             strategy=workflow.strategy,
         )
         graph_builder = container.get_graph_builder()
