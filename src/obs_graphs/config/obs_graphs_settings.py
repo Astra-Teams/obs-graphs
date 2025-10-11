@@ -5,9 +5,6 @@ from typing import Any, Optional
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .db_settings import DBSettings
-from .redis_settings import RedisSettings
-from .research_api_settings import ResearchAPISettings
 
 
 class ObsGraphsSettings(BaseSettings):
@@ -20,7 +17,7 @@ class ObsGraphsSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    DEBUG: bool = Field(
+    debug: bool = Field(
         default=False,
         title="Debug Mode",
         description="Enable mock client mode for development and testing.",
@@ -79,13 +76,6 @@ class ObsGraphsSettings(BaseSettings):
         alias="OLLAMA_HOST",
     )
 
-    # --- Database and Redis Settings ---
-    db_settings: DBSettings = Field(default_factory=DBSettings)
-    redis_settings: RedisSettings = Field(default_factory=RedisSettings)
-    research_api_settings: ResearchAPISettings = Field(
-        default_factory=ResearchAPISettings
-    )
-
     # --- GitHub Integration ---
     github_token: str = Field(
         default="",
@@ -113,20 +103,6 @@ class ObsGraphsSettings(BaseSettings):
         alias="VAULT_SUBMODULE_PATH",
     )
 
-    # --- Workflow Settings ---
-    workflow_temp_dir_cleanup_seconds: int = Field(
-        default=86400,
-        title="Workflow Temp Directory Cleanup Interval",
-        description="Number of seconds before temporary workflow directories are removed.",
-        alias="WORKFLOW_TEMP_DIR_CLEANUP_SECONDS",
-    )
-    workflow_default_branch: str = Field(
-        default="main",
-        title="Workflow Default Branch",
-        description="The default branch to use as the base for pull requests.",
-        alias="WORKFLOW_DEFAULT_BRANCH",
-    )
-
     @field_validator("ollama_host", mode="before")
     @classmethod
     def normalize_ollama_host(cls, value: Any) -> Any:
@@ -140,10 +116,10 @@ class ObsGraphsSettings(BaseSettings):
             return trimmed.rstrip("/") + "/"
         return value
 
-    @field_validator("DEBUG", mode="before")
+    @field_validator("debug", mode="before")
     @classmethod
     def parse_debug(cls, value: Any) -> bool:
-        """Ensure DEBUG is parsed as a boolean from string."""
+        """Ensure debug is parsed as a boolean from string."""
         if isinstance(value, str):
             return value.lower() in {"true", "1", "yes", "on"}
         return bool(value)

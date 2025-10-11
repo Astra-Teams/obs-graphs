@@ -7,7 +7,7 @@ from github.GitTree import GitTree
 from github.PullRequest import PullRequest
 
 from src.obs_graphs.protocols import GithubClientProtocol
-from src.obs_graphs.settings import Settings
+from src.obs_graphs.config import ObsGraphsSettings
 
 
 class GithubClient(GithubClientProtocol):
@@ -18,7 +18,7 @@ class GithubClient(GithubClientProtocol):
     methods for repository operations via the GitHub API.
     """
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: ObsGraphsSettings):
         """Initialize the GitHub client with settings."""
         self.settings = settings
         self._github_client: Optional[Github] = None

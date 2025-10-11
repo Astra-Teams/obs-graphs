@@ -12,10 +12,9 @@ from sqlalchemy.orm import Session
 from src.obs_graphs.celery.app import celery_app
 from src.obs_graphs.db.database import get_db
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
-from src.obs_graphs.settings import get_settings
+from src.obs_graphs.config import obs_graphs_settings, workflow_settings
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_graphs" / "workflows"
@@ -23,7 +22,7 @@ WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_graphs" / "workflow
 
 def _resolve_submodule_path() -> Path:
     """Resolve the configured vault submodule path to an absolute path."""
-    raw_path = Path(settings.vault_submodule_path)
+    raw_path = Path(obs_graphs_settings.vault_submodule_path)
     source = raw_path if raw_path.is_absolute() else PROJECT_ROOT / raw_path
     return source
 
@@ -156,7 +155,7 @@ def cleanup_old_workflows() -> None:
         if temp_dir.is_dir():
             # Check if directory is older than configured time
             dir_age = current_time - temp_dir.stat().st_mtime
-            if dir_age > settings.workflow_temp_dir_cleanup_seconds:
+            if dir_age > workflow_settings.temp_dir_cleanup_seconds:
                 try:
                     shutil.rmtree(temp_dir)
                     logger.info(f"Cleaned up old workflow directory: {temp_dir}")

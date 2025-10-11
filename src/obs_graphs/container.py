@@ -16,7 +16,7 @@ from src.obs_graphs.protocols import (
     VaultServiceProtocol,
 )
 from src.obs_graphs.services import GithubService, VaultService
-from src.obs_graphs.settings import settings
+from src.obs_graphs.config import obs_graphs_settings, redis_settings, research_api_settings
 
 
 class DependencyContainer:
@@ -41,12 +41,12 @@ class DependencyContainer:
         Returns MockGithubClient if USE_MOCK_GITHUB=True, otherwise GithubClient.
         """
         if self._github_client is None:
-            if settings.use_mock_github:
+            if obs_graphs_settings.use_mock_github:
                 from dev.mocks_clients import MockGithubClient
 
                 self._github_client = MockGithubClient()
             else:
-                self._github_client = GithubClient(settings)
+                self._github_client = GithubClient(obs_graphs_settings)
         return self._github_client
 
     def set_branch(self, branch: str) -> None:
@@ -99,7 +99,7 @@ class DependencyContainer:
         the USE_MOCK_OLLAMA_DEEP_RESEARCHER setting.
         """
         if self._research_client is None:
-            if settings.use_mock_ollama_deep_researcher:
+            if obs_graphs_settings.use_mock_ollama_deep_researcher:
                 import importlib.util
                 from pathlib import Path
 
@@ -157,7 +157,7 @@ class DependencyContainer:
             else:
                 from src.obs_graphs.clients.research_api_client import ResearchApiClient
 
-                api_settings = settings.research_api_settings
+                api_settings = research_api_settings
                 self._research_client = ResearchApiClient(
                     base_url=api_settings.research_api_url,
                     timeout=api_settings.research_api_timeout_seconds,
@@ -171,13 +171,13 @@ class DependencyContainer:
         Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise OllamaLLM.
         """
         if self._llm is None:
-            if settings.use_mock_llm:
+            if obs_graphs_settings.use_mock_llm:
                 from dev.mocks_clients import MockOllamaClient
 
                 self._llm = MockOllamaClient()
             else:
                 self._llm = OllamaLLM(
-                    model=settings.llm_model, base_url=settings.ollama_host
+                    model=obs_graphs_settings.llm_model, base_url=obs_graphs_settings.ollama_host
                 )
         return self._llm
 
@@ -188,13 +188,13 @@ class DependencyContainer:
         Returns FakeRedis if USE_MOCK_REDIS=True, otherwise redis.Redis.
         """
         if self._redis_client is None:
-            if settings.use_mock_redis:
+            if obs_graphs_settings.use_mock_redis:
                 from dev.mocks_clients import MockRedisClient
 
                 self._redis_client = MockRedisClient.get_client()
             else:
                 self._redis_client = redis.Redis.from_url(
-                    settings.redis_settings.celery_broker_url, decode_responses=True
+                    redis_settings.celery_broker_url, decode_responses=True
                 )
         return self._redis_client
 

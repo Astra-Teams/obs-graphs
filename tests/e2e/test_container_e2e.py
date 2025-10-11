@@ -13,16 +13,16 @@ def container():
     return DependencyContainer()
 
 
-@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.obs_graphs_settings")
 @patch("src.obs_graphs.container.GithubClient")
 def test_get_github_client_lazy_instantiation(
     mock_github_client,
-    mock_settings,
+    mock_obs_settings,
     container: DependencyContainer,
 ):
     """Test that github client is lazily instantiated."""
     # Arrange
-    mock_settings.use_mock_github = False
+    mock_obs_settings.use_mock_github = False
     mock_instance = MagicMock()
     mock_github_client.return_value = mock_instance
 
@@ -36,16 +36,16 @@ def test_get_github_client_lazy_instantiation(
     mock_github_client.assert_called_once()
 
 
-@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.obs_graphs_settings")
 @patch("src.obs_graphs.container.OllamaLLM")
 def test_get_llm_lazy_instantiation(
-    mock_ollama, mock_settings, container: DependencyContainer
+    mock_ollama, mock_obs_settings, container: DependencyContainer
 ):
     """Test that LLM is lazily instantiated."""
     # Arrange
-    mock_settings.use_mock_llm = False
-    mock_settings.llm_model = "test-model"
-    mock_settings.ollama_host = "http://test-url"
+    mock_obs_settings.use_mock_llm = False
+    mock_obs_settings.llm_model = "test-model"
+    mock_obs_settings.ollama_host = "http://test-url"
     mock_instance = MagicMock()
     mock_ollama.return_value = mock_instance
 
@@ -59,20 +59,20 @@ def test_get_llm_lazy_instantiation(
     mock_ollama.assert_called_once_with(model="test-model", base_url="http://test-url")
 
 
-@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.obs_graphs_settings")
+@patch("src.obs_graphs.container.redis_settings")
 @patch("src.obs_graphs.container.redis.Redis")
 def test_get_redis_client_production_mode(
     mock_redis,
-    mock_settings,
+    mock_redis_settings,
+    mock_obs_settings,
     container: DependencyContainer,
 ):
     """Test that redis.Redis is returned when USE_MOCK_REDIS=False."""
     # Arrange
-    mock_settings.use_mock_redis = False
+    mock_obs_settings.use_mock_redis = False
     # Mock the redis_settings as an object with celery_broker_url attribute
-    mock_redis_settings = MagicMock()
     mock_redis_settings.celery_broker_url = "redis://localhost:6379/0"
-    mock_settings.redis_settings = mock_redis_settings
     mock_instance = MagicMock()
     mock_redis.from_url.return_value = mock_instance
 
@@ -88,18 +88,18 @@ def test_get_redis_client_production_mode(
     )
 
 
-@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.obs_graphs_settings")
 @patch("src.obs_graphs.container.OllamaLLM")
 def test_get_node_new_article_creation_with_llm(
     mock_ollama,
-    mock_settings,
+    mock_obs_settings,
     container: DependencyContainer,
 ):
     """Test that article_proposal node is instantiated with LLM."""
     # Arrange
-    mock_settings.use_mock_llm = False
-    mock_settings.llm_model = "test-model"
-    mock_settings.ollama_host = "http://test-url"
+    mock_obs_settings.use_mock_llm = False
+    mock_obs_settings.llm_model = "test-model"
+    mock_obs_settings.ollama_host = "http://test-url"
     mock_llm = MagicMock()
     mock_ollama.return_value = mock_llm
 
