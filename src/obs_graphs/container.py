@@ -118,25 +118,23 @@ class DependencyContainer:
                     submodules_path
                     / "olm-d-rch"
                     / "sdk"
-                    / "mock_ollama_deep_researcher_client"
-                    / "mock_ollama_deep_researcher_client.py"
+                    / "mock_olm_d_rch_client"
+                    / "mock_olm_d_rch_client.py"
                 )
                 spec = importlib.util.spec_from_file_location(
                     "mock_client", mock_client_path
                 )
                 mock_module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(mock_module)
-                MockOllamaDeepResearcherClient = (
-                    mock_module.MockOllamaDeepResearcherClient
-                )
+                MockOlmDRchClient = mock_module.MockOlmDRchClient
 
                 class AdaptedMockClient:
                     def __init__(self):
-                        self.client = MockOllamaDeepResearcherClient()
+                        self.client = MockOlmDRchClient()
 
                     def run_research(self, query: str) -> ResearchResult:
                         result = self.client.research(query)
-                        article = result.get("article")
+                        article = result["article"]
                         if not isinstance(article, str) or not article.strip():
                             raise ValueError(
                                 "Mock research client returned empty article"
