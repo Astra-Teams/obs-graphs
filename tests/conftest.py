@@ -15,10 +15,6 @@ from src.obs_graphs.config import ObsGraphsSettings
 from src.obs_graphs.db.database import Base, create_db_session, get_engine
 from src.obs_graphs.main import app
 
-pytest_plugins = [
-    "tests.envs",
-]
-
 
 @pytest.fixture(scope="session")
 def default_settings() -> ObsGraphsSettings:

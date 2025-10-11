@@ -5,13 +5,18 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
-from tests.envs import setup_db_test_env
 
 
 @pytest.fixture(autouse=True)
 def set_db_test_env(monkeypatch):
     """Setup environment variables for database tests."""
-    setup_db_test_env(monkeypatch)
+    # monkeypatch.setenv("USE_SQLITE", "false")  # Commented out to allow db switching tests
+    monkeypatch.setenv("USE_MOCK_GITHUB", "true")
+    monkeypatch.setenv("USE_MOCK_LLM", "true")
+    monkeypatch.setenv("USE_MOCK_REDIS", "true")
+    monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
+    monkeypatch.setenv("OBS_GRAPHS_OLLAMA_MODEL", "tinyllama:1.1b")
+    monkeypatch.setenv("RESEARCH_API_OLLAMA_MODEL", "tinyllama:1.1b")
 
 
 # Existing factory functions...
