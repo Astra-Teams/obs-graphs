@@ -7,7 +7,6 @@ from langchain_community.llms import Ollama
 from src.obs_graphs.graphs.article_proposal.prompts import render_prompt
 from src.obs_graphs.graphs.article_proposal.state import AgentResult
 from src.obs_graphs.protocols import NodeProtocol
-from src.obs_graphs.settings import get_settings
 
 
 class ArticleProposalAgent(NodeProtocol):
@@ -24,7 +23,6 @@ class ArticleProposalAgent(NodeProtocol):
     def __init__(self, llm: Ollama):
         """Initialize the article proposal agent."""
         self.llm = llm
-        self._settings = get_settings()
 
     def validate_input(self, context: dict) -> bool:
         """
@@ -134,8 +132,6 @@ class ArticleProposalAgent(NodeProtocol):
         proposal_prompt = render_prompt(
             "new_article_creation",
             total_articles=vault_summary.total_articles,
-            categories=vault_summary.categories,
-            recent_updates=vault_summary.recent_updates,
         )
 
         try:

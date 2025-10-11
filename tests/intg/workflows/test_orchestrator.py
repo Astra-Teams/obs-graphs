@@ -1,5 +1,6 @@
 """Unit tests for the ArticleProposalGraph orchestration."""
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -36,24 +37,14 @@ def mock_container():
     return mock_container
 
 
-def test_determine_workflow_plan_uses_new_article_strategy_without_prompt(
-    mock_container,
-):
-    """determine_workflow_plan should choose the new article path when no prompt is provided."""
+def test_determine_workflow_plan_requires_prompt(mock_container):
+    """determine_workflow_plan should reject empty prompts."""
     article_proposal_graph = ArticleProposalGraph()
-    request = WorkflowRunRequest(prompt="")
 
-    plan = article_proposal_graph.determine_workflow_plan(
-        mock_container.get_vault_service(), request
-    )
-
-    assert isinstance(plan, WorkflowPlan)
-    assert plan.strategy == "new_article"
-    assert plan.nodes == [
-        "article_proposal",
-        "article_content_generation",
-        "submit_pull_request",
-    ]
+    with pytest.raises(ValueError, match="Prompt is required"):
+        article_proposal_graph.determine_workflow_plan(
+            mock_container.get_vault_service(), SimpleNamespace(prompt="")
+        )
 
 
 def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
@@ -78,7 +69,7 @@ def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
 
 def test_determine_workflow_plan_validates_whitespace_only_prompt():
     """A whitespace-only prompt should raise a validation error."""
-    with pytest.raises(ValueError, match="Prompt cannot be whitespace-only"):
+    with pytest.raises(ValueError, match="Prompt is required"):
         WorkflowRunRequest(prompt="   ")
 
 
@@ -121,10 +112,10 @@ def test_execute_workflow_with_research_proposal_strategy(mock_container):
 def test_execute_workflow_with_multiple_nodes(mock_container):
     """execute_workflow should process multiple nodes sequentially."""
     plan = WorkflowPlan(
-        strategy="new_article",
+        strategy="research_proposal",
         nodes=[
             "article_proposal",
-            "article_content_generation",
+            "deep_research",
             "submit_pull_request",
         ],
     )
@@ -199,7 +190,7 @@ def test_run_workflow_handles_failure(mock_get_container):
     mock_get_container.return_value = mock_container
 
     article_proposal_graph = ArticleProposalGraph()
-    request = WorkflowRunRequest(prompt="")
+    request = WorkflowRunRequest(prompt="Test research failure path")
 
     result = article_proposal_graph.run_workflow(request)
 

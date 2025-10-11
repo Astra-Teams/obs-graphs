@@ -13,11 +13,12 @@ def container():
     return DependencyContainer()
 
 
-@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.obs_graphs_settings")
 def test_get_github_client_returns_mock_when_flag_enabled(
-    mock_settings, container: DependencyContainer, default_settings
+    mock_obs_settings, container: DependencyContainer, default_settings
 ):
     """Test that MockGithubClient is returned when USE_MOCK_GITHUB=True."""
+    mock_obs_settings.use_mock_github = True
     # Act
     client1 = container.get_github_client()
     client2 = container.get_github_client()
@@ -49,11 +50,12 @@ def test_get_vault_service_lazy_instantiation(
     mock_vault_service.assert_called_once_with(tmp_path)
 
 
-@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.obs_graphs_settings")
 def test_get_llm_returns_mock_when_flag_enabled(
-    mock_settings, container: DependencyContainer, default_settings
+    mock_obs_settings, container: DependencyContainer, default_settings
 ):
     """Test that MockOllamaClient is returned when USE_MOCK_LLM=True."""
+    mock_obs_settings.use_mock_llm = True
     # Act
     llm1 = container.get_llm()
     llm2 = container.get_llm()
@@ -111,11 +113,12 @@ def test_get_container_singleton():
     assert isinstance(container1, DependencyContainer)
 
 
-@patch("src.obs_graphs.container.settings")
+@patch("src.obs_graphs.container.obs_graphs_settings")
 def test_get_redis_client_returns_mock_when_flag_enabled(
-    mock_settings, container: DependencyContainer, default_settings
+    mock_obs_settings, container: DependencyContainer, default_settings
 ):
     """Test that FakeRedis is returned when USE_MOCK_REDIS=True."""
+    mock_obs_settings.use_mock_redis = True
     # Act
     client1 = container.get_redis_client()
     client2 = container.get_redis_client()

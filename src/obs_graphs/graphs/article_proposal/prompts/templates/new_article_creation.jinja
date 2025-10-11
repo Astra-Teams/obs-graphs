@@ -1,32 +1,40 @@
 # New Article Creation Analysis Prompt
 
-Analyze this Obsidian Vault and suggest new articles to create.
+Analyze this Obsidian Vault and suggest new articles to create. AVOID normalcy bias by considering fresh perspectives and emerging trends.
 
-## Vault Summary
+## Current Vault State
 - Total articles: {{ total_articles }}
-- Categories: {{ categories|join(', ') if categories else 'None' }}
-- Recent updates: {{ recent_updates[:5]|join(', ') if recent_updates else 'None' }}
 
 ## Instructions
-Based on this analysis, suggest 1-3 new articles that would add value to this vault.
-Consider:
-1. Gaps in coverage across categories
-2. Topics that would connect well with existing content
-3. Foundational concepts that may be missing
+Break out of existing patterns! Suggest 1 new article that introduces fresh perspectives:
 
-For each suggested article, provide:
-1. Title (clear and concise)
-2. Category (existing or new)
-3. Brief description of content focus
+### Innovation Focus Areas:
+1. **Emerging Technologies**: AI, quantum computing, biotechnology, space exploration
+2. **Cross-Disciplinary Connections**: How different fields intersect (e.g., psychology + economics)
+3. **Future Scenarios**: What might change in the next 5-10 years
+4. **Alternative Perspectives**: Non-Western viewpoints, marginalized voices, contrarian ideas
+5. **Practical Applications**: How theoretical concepts apply to real-world problems
+6. **Critical Analysis**: Questioning assumptions in existing knowledge areas
+
+### Selection Criteria:
+- **Novelty**: Topics not yet covered or underrepresented
+- **Relevance**: Connects to vault's core themes but adds new dimensions
+- **Impact**: Could significantly expand the knowledge base
+- **Feasibility**: Researchable with current tools and accessible sources
+
+For the suggested article, provide:
+1. Title (clear, engaging, and distinctive)
+2. Category (can be new or existing, but consider creating new categories for fresh topics)
+3. Brief description emphasizing what makes this unique/fresh
 4. Filename (in format: created-{article-slug}.md where article-slug is lowercase with hyphens)
 
 ## Output Format
 Format your response as a JSON array:
 [
   {
-    "title": "Article Title",
-    "category": "Category Name",
-    "description": "What this article should cover",
+    "title": "Fresh Perspective Article Title",
+    "category": "Innovative Category Name",
+    "description": "What makes this article unique and valuable",
     "filename": "created-article-slug.md"
   }
 ]

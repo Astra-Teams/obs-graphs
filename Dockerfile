@@ -63,7 +63,6 @@ COPY --chown=appuser:appgroup src/ ./src
 COPY --chown=appuser:appgroup alembic/ ./alembic
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
-
 # Initialize submodules if .git exists
 RUN if [ -d .git ]; then git submodule update --init --recursive && chown -R appuser:appgroup .; fi
 

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from src.obs_graphs.config import workflow_settings
 from src.obs_graphs.graphs.article_proposal.state import (
     AgentResult,
     FileAction,
     FileChange,
 )
 from src.obs_graphs.protocols import GithubServiceProtocol, NodeProtocol
-from src.obs_graphs.settings import get_settings
 
 
 class SubmitPullRequestAgent(NodeProtocol):
@@ -20,7 +20,7 @@ class SubmitPullRequestAgent(NodeProtocol):
 
     def __init__(self, github_service: GithubServiceProtocol):
         self._github_service = github_service
-        self._settings = get_settings()
+        self._workflow_settings = workflow_settings
 
     def validate_input(self, context: dict) -> bool:
         required_keys = ["strategy", "accumulated_changes", "node_results"]
@@ -52,7 +52,7 @@ class SubmitPullRequestAgent(NodeProtocol):
                 strategy, node_results, accumulated_changes
             )
             branch_name = self._generate_branch_name()
-            base_branch = self._settings.workflow_default_branch
+            base_branch = self._workflow_settings.default_branch
 
             pr_url = self._github_service.commit_and_create_pr(
                 branch_name=branch_name,

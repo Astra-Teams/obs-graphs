@@ -5,10 +5,6 @@ from typing import Any, Optional
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .db_settings import DBSettings
-from .redis_settings import RedisSettings
-from .research_api_settings import ResearchAPISettings
-
 
 class ObsGraphsSettings(BaseSettings):
     """The configurable fields for the obs-graphs application."""
@@ -20,7 +16,7 @@ class ObsGraphsSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    DEBUG: bool = Field(
+    debug: bool = Field(
         default=False,
         title="Debug Mode",
         description="Enable mock client mode for development and testing.",
@@ -31,6 +27,12 @@ class ObsGraphsSettings(BaseSettings):
         title="Secret Key",
         description="A secret key for signing session data.",
         alias="OBS_GRAPHS_API_SECRET_KEY",
+    )
+    api_max_page_size: int = Field(
+        default=100,
+        title="API Max Page Size",
+        description="Maximum number of items to return in paginated API responses.",
+        alias="API_MAX_PAGE_SIZE",
     )
 
     # --- Service Toggles ---
@@ -79,13 +81,6 @@ class ObsGraphsSettings(BaseSettings):
         alias="OLLAMA_HOST",
     )
 
-    # --- Database and Redis Settings ---
-    db_settings: DBSettings = Field(default_factory=DBSettings)
-    redis_settings: RedisSettings = Field(default_factory=RedisSettings)
-    research_api_settings: ResearchAPISettings = Field(
-        default_factory=ResearchAPISettings
-    )
-
     # --- GitHub Integration ---
     github_token: str = Field(
         default="",
@@ -113,38 +108,6 @@ class ObsGraphsSettings(BaseSettings):
         alias="VAULT_SUBMODULE_PATH",
     )
 
-    # --- Workflow Settings ---
-    workflow_default_branch: str = Field(
-        default="main",
-        title="Workflow Default Branch",
-        description="Default branch used when creating pull requests.",
-        alias="WORKFLOW_DEFAULT_BRANCH",
-    )
-    workflow_temp_dir_cleanup_seconds: int = Field(
-        default=86400,
-        title="Workflow Temp Directory Cleanup Interval",
-        description="Number of seconds before temporary workflow directories are removed.",
-        alias="WORKFLOW_TEMP_DIR_CLEANUP_SECONDS",
-    )
-    cross_reference_min_shared_keywords: int = Field(
-        default=2,
-        title="Cross Reference Minimum Shared Keywords",
-        description="Minimum number of shared keywords required to cross reference notes.",
-        alias="CROSS_REFERENCE_MIN_SHARED_KEYWORDS",
-    )
-    max_new_articles_per_run: int = Field(
-        default=3,
-        title="Maximum New Articles Per Run",
-        description="Maximum number of new articles to propose during a workflow run.",
-        alias="MAX_NEW_ARTICLES_PER_RUN",
-    )
-    api_max_page_size: int = Field(
-        default=100,
-        title="API Maximum Page Size",
-        description="Maximum number of results that can be returned per API page.",
-        alias="API_MAX_PAGE_SIZE",
-    )
-
     @field_validator("ollama_host", mode="before")
     @classmethod
     def normalize_ollama_host(cls, value: Any) -> Any:
@@ -158,10 +121,10 @@ class ObsGraphsSettings(BaseSettings):
             return trimmed.rstrip("/") + "/"
         return value
 
-    @field_validator("DEBUG", mode="before")
+    @field_validator("debug", mode="before")
     @classmethod
     def parse_debug(cls, value: Any) -> bool:
-        """Ensure DEBUG is parsed as a boolean from string."""
+        """Ensure debug is parsed as a boolean from string."""
         if isinstance(value, str):
             return value.lower() in {"true", "1", "yes", "on"}
         return bool(value)

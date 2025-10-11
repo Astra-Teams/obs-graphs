@@ -10,6 +10,7 @@ from src.obs_graphs.graphs.article_proposal.state import (
     AgentResult,
     FileChange,
     GraphState,
+    WorkflowStrategy,
 )
 
 
@@ -20,7 +21,7 @@ class WorkflowPlan:
 
     Attributes:
         nodes: Ordered list of node names to execute
-        strategy: Workflow strategy (new_article or improvement)
+        strategy: Workflow strategy identifier
     """
 
     nodes: list[str]
@@ -111,8 +112,7 @@ class ArticleProposalGraph:
         """
         Analyze vault and request to determine which nodes to run and in what order.
 
-        If a prompt is provided, uses research_proposal strategy.
-        Otherwise, uses new_article strategy.
+        The workflow now requires a prompt and always uses the research_proposal strategy.
 
         Args:
             vault_service: Vault service instance
@@ -121,22 +121,15 @@ class ArticleProposalGraph:
         Returns:
             WorkflowPlan with ordered list of nodes and strategy
         """
-        # Check if this is a research workflow (prompt provided)
-        if request.prompt and request.prompt.strip():
-            strategy = "research_proposal"
-            nodes = [
-                "article_proposal",
-                "deep_research",
-                "submit_pull_request",
-            ]
-        else:
-            # Default: new article creation strategy
-            strategy = "new_article"
-            nodes = [
-                "article_proposal",
-                "article_content_generation",
-                "submit_pull_request",
-            ]
+        if not (request.prompt and request.prompt.strip()):
+            raise ValueError("Prompt is required to run the article proposal workflow")
+
+        strategy = WorkflowStrategy.RESEARCH_PROPOSAL.value
+        nodes = [
+            "article_proposal",
+            "deep_research",
+            "submit_pull_request",
+        ]
 
         return WorkflowPlan(nodes=nodes, strategy=strategy)
 

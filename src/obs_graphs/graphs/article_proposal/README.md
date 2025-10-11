@@ -8,12 +8,10 @@ This directory contains the LangGraph workflow implementation for article propos
 article_proposal/
 ├── graph.py           # Main workflow orchestration and state graph definition
 ├── nodes/             # Individual workflow nodes/agents
-│   ├── article_proposal.py          # Analyzes vault and proposes new articles
-│   ├── article_content_generation.py # Generates full article content from proposals
-│   ├── deep_research.py             # Conducts deep research using external API
-│   └── submit_pull_request.py       # Commits changes and opens pull requests
+│   ├── node1_article_proposal.py    # Analyzes vault and proposes new articles
+│   ├── node2_deep_research.py       # Conducts deep research using external API
+│   └── node3_submit_pull_request.py # Commits changes and opens pull requests
 ├── prompts/           # LLM prompt templates
-│   ├── new_article_content.md       # Template for generating article content
 │   ├── new_article_creation.md      # Template for proposing new articles
 │   └── research_topic_proposal.md   # Template for research topic proposals
 ├── schemas.py         # Pydantic models for workflow state validation
@@ -26,7 +24,7 @@ The article proposal graph supports two main strategies:
 
 ### 1. New Article Creation Strategy
 - **Trigger**: No user prompt provided
-- **Flow**: `article_proposal` → `article_content_generation` → `submit_pull_request`
+- **Flow**: `article_proposal` → `submit_pull_request`
 - **Purpose**: Analyzes vault structure and generates new articles to fill gaps
 
 ### 2. Research Proposal Strategy
@@ -41,11 +39,6 @@ The article proposal graph supports two main strategies:
 - For new articles: Identifies gaps and proposes content
 - For research: Generates topic proposals from user prompts
 - Outputs article proposals or research topics
-
-### ArticleContentGenerationAgent (`article_content_generation`)
-- Takes article proposals and generates full markdown content
-- Uses LLM to create comprehensive articles with frontmatter
-- Creates file changes for new articles
 
 ### DeepResearchAgent (`deep_research`)
 - Calls external research API for in-depth analysis

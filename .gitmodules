@@ -2,6 +2,6 @@
 	path = src/submodules/obsidian-vault
 	url = https://github.com/Astra-Teams/constellations.git
 	branch = main
-[submodule "src/submodules/ollama-deep-researcher"]
-	path = src/submodules/ollama-deep-researcher
-	url = git@github.com:Astra-Teams/ollama-deep-researcher.git
+[submodule "src/submodules/olm-d-rch"]
+	path = src/submodules/olm-d-rch
+	url = https://github.com/Astra-Teams/olm-d-rch

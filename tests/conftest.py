@@ -11,20 +11,16 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
+from src.obs_graphs.config import ObsGraphsSettings
 from src.obs_graphs.db.database import Base, create_db_session, get_engine
 from src.obs_graphs.main import app
-from src.obs_graphs.settings import Settings
-
-pytest_plugins = [
-    "tests.envs",
-]
 
 
 @pytest.fixture(scope="session")
-def default_settings() -> Settings:
+def default_settings() -> ObsGraphsSettings:
     """Provide a default Settings instance for tests."""
 
-    return Settings()
+    return ObsGraphsSettings()
 
 
 # Fixture paths
@@ -37,7 +33,7 @@ MOCKS_ROOT = Path("dev/mocks")
 
 
 @pytest.fixture(scope="session")
-def db_engine(default_settings: Settings):
+def db_engine(default_settings: ObsGraphsSettings):
     """
     Fixture that provides DB engine for the entire test session.
 
@@ -121,7 +117,7 @@ async def client(db_session: Session) -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest.fixture
-def vault_fixture(tmp_path: Path, default_settings: Settings):
+def vault_fixture(tmp_path: Path, default_settings: ObsGraphsSettings):
     """Copy the configured vault submodule (or a subpath) into a temp directory."""
 
     project_root = Path(__file__).resolve().parents[1]

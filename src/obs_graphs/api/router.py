@@ -13,9 +13,9 @@ from src.obs_graphs.api.schemas import (
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
+from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.db.database import get_db
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
-from src.obs_graphs.settings import get_settings
 
 router = APIRouter()
 
@@ -82,8 +82,6 @@ async def run_workflow(
             from src.obs_graphs.container import get_container
 
             container = get_container()
-            settings = get_settings()
-
             # Find project root by searching for pyproject.toml
             current_path = Path(__file__).resolve().parent
             project_root = current_path
@@ -92,7 +90,7 @@ async def run_workflow(
                     break
                 project_root = project_root.parent
 
-            raw_path = Path(settings.vault_submodule_path)
+            raw_path = Path(obs_graphs_settings.vault_submodule_path)
             vault_path = raw_path if raw_path.is_absolute() else project_root / raw_path
             container.set_vault_path(vault_path)
 
@@ -192,7 +190,7 @@ async def list_workflows(
     limit: int = Query(
         10,
         ge=1,
-        le=get_settings().api_max_page_size,
+        le=obs_graphs_settings.api_max_page_size,
         description="Maximum number of workflows to return",
     ),
     offset: int = Query(
@@ -209,7 +207,7 @@ async def list_workflows(
 
     Args:
         status: Optional status filter (pending, running, completed, failed)
-        limit: Maximum number of results (1-100, default 10)
+        limit: Maximum number of results (default 10)
         offset: Number of results to skip (default 0)
         db: Database session dependency
 

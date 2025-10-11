@@ -5,13 +5,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.obs_graphs.clients import GithubClient
-from src.obs_graphs.settings import Settings
+from src.obs_graphs.config import ObsGraphsSettings
 
 
 @pytest.fixture
 def github_client():
     """Return a GithubClient instance with mocked credentials."""
-    settings = Settings(
+    settings = ObsGraphsSettings(
         OBSIDIAN_VAULT_GITHUB_TOKEN="fake-pat",
         OBSIDIAN_VAULT_REPOSITORY="user/repo",
         VAULT_GITHUB_API_TIMEOUT_SECONDS=30,

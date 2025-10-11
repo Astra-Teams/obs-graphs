@@ -12,14 +12,6 @@ from typing import Generator
 import httpx
 import pytest
 
-from tests.envs import setup_e2e_test_env
-
-
-@pytest.fixture(autouse=True)
-def set_e2e_test_env(monkeypatch):
-    """Setup environment variables for E2E tests."""
-    setup_e2e_test_env(monkeypatch)
-
 
 @pytest.fixture(scope="session")
 def api_base_url() -> str:
@@ -79,13 +71,21 @@ def e2e_setup() -> Generator[None, None, None]:
         docker_command + compose_common_args + ["down", "-v", "--remove-orphans"]
     )
 
+    # Prepare environment variables for subprocess
+    env = os.environ.copy()
+    env["USE_SQLITE"] = "false"
+    env["USE_MOCK_GITHUB"] = "true"  # Use mock GitHub to avoid external calls
+    env["USE_MOCK_LLM"] = "false"
+    env["USE_MOCK_REDIS"] = "false"  # E2E uses real Redis
+    env["USE_MOCK_OLLAMA_DEEP_RESEARCHER"] = "false"
+
     host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")
     host_port = os.getenv("TEST_PORT", "8002")
     api_health_url = f"http://{host_bind_ip}:{host_port}/health"
 
     try:
         print("\n🚀 Starting E2E test services with docker compose...")
-        subprocess.run(compose_up_command, check=True, timeout=300)
+        subprocess.run(compose_up_command, check=True, timeout=300, env=env)
 
         print("⏳ Waiting for service 'obs-api' to become healthy...")
         _wait_for_health_check(api_health_url)
@@ -94,8 +94,8 @@ def e2e_setup() -> Generator[None, None, None]:
         yield
     except (subprocess.CalledProcessError, TimeoutError) as exc:
         print(f"\n🛑 E2E setup failed: {exc}")
-        subprocess.run(compose_down_command, check=False)
+        subprocess.run(compose_down_command, check=False, env=env)
         pytest.fail(f"E2E setup failed: {exc}")
     finally:
         print("\n🛑 Stopping E2E services...")
-        subprocess.run(compose_down_command, check=False)
+        subprocess.run(compose_down_command, check=False, env=env)

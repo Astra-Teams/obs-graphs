@@ -8,6 +8,11 @@ from langchain_core.language_models.llms import BaseLLM
 from langchain_ollama import OllamaLLM
 
 from src.obs_graphs.clients import GithubClient
+from src.obs_graphs.config import (
+    obs_graphs_settings,
+    redis_settings,
+    research_api_settings,
+)
 from src.obs_graphs.protocols import (
     GithubClientProtocol,
     GithubServiceProtocol,
@@ -16,7 +21,6 @@ from src.obs_graphs.protocols import (
     VaultServiceProtocol,
 )
 from src.obs_graphs.services import GithubService, VaultService
-from src.obs_graphs.settings import settings
 
 
 class DependencyContainer:
@@ -41,12 +45,12 @@ class DependencyContainer:
         Returns MockGithubClient if USE_MOCK_GITHUB=True, otherwise GithubClient.
         """
         if self._github_client is None:
-            if settings.use_mock_github:
+            if obs_graphs_settings.use_mock_github:
                 from dev.mocks_clients import MockGithubClient
 
                 self._github_client = MockGithubClient()
             else:
-                self._github_client = GithubClient(settings)
+                self._github_client = GithubClient(obs_graphs_settings)
         return self._github_client
 
     def set_branch(self, branch: str) -> None:
@@ -99,7 +103,7 @@ class DependencyContainer:
         the USE_MOCK_OLLAMA_DEEP_RESEARCHER setting.
         """
         if self._research_client is None:
-            if settings.use_mock_ollama_deep_researcher:
+            if obs_graphs_settings.use_mock_ollama_deep_researcher:
                 import importlib.util
                 from pathlib import Path
 
@@ -112,27 +116,25 @@ class DependencyContainer:
                 )
                 mock_client_path = (
                     submodules_path
-                    / "ollama-deep-researcher"
+                    / "olm-d-rch"
                     / "sdk"
-                    / "mock_ollama_deep_researcher_client"
-                    / "mock_ollama_deep_researcher_client.py"
+                    / "mock_olm_d_rch_client"
+                    / "mock_olm_d_rch_client.py"
                 )
                 spec = importlib.util.spec_from_file_location(
                     "mock_client", mock_client_path
                 )
                 mock_module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(mock_module)
-                MockOllamaDeepResearcherClient = (
-                    mock_module.MockOllamaDeepResearcherClient
-                )
+                MockOlmDRchClient = mock_module.MockOlmDRchClient
 
                 class AdaptedMockClient:
                     def __init__(self):
-                        self.client = MockOllamaDeepResearcherClient()
+                        self.client = MockOlmDRchClient()
 
                     def run_research(self, query: str) -> ResearchResult:
                         result = self.client.research(query)
-                        article = result.get("article")
+                        article = result["article"]
                         if not isinstance(article, str) or not article.strip():
                             raise ValueError(
                                 "Mock research client returned empty article"
@@ -157,7 +159,7 @@ class DependencyContainer:
             else:
                 from src.obs_graphs.clients.research_api_client import ResearchApiClient
 
-                api_settings = settings.research_api_settings
+                api_settings = research_api_settings
                 self._research_client = ResearchApiClient(
                     base_url=api_settings.research_api_url,
                     timeout=api_settings.research_api_timeout_seconds,
@@ -171,13 +173,14 @@ class DependencyContainer:
         Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise OllamaLLM.
         """
         if self._llm is None:
-            if settings.use_mock_llm:
+            if obs_graphs_settings.use_mock_llm:
                 from dev.mocks_clients import MockOllamaClient
 
                 self._llm = MockOllamaClient()
             else:
                 self._llm = OllamaLLM(
-                    model=settings.llm_model, base_url=settings.ollama_host
+                    model=obs_graphs_settings.llm_model,
+                    base_url=obs_graphs_settings.ollama_host,
                 )
         return self._llm
 
@@ -188,13 +191,13 @@ class DependencyContainer:
         Returns FakeRedis if USE_MOCK_REDIS=True, otherwise redis.Redis.
         """
         if self._redis_client is None:
-            if settings.use_mock_redis:
+            if obs_graphs_settings.use_mock_redis:
                 from dev.mocks_clients import MockRedisClient
 
                 self._redis_client = MockRedisClient.get_client()
             else:
                 self._redis_client = redis.Redis.from_url(
-                    settings.redis_settings.celery_broker_url, decode_responses=True
+                    redis_settings.celery_broker_url, decode_responses=True
                 )
         return self._redis_client
 
@@ -202,22 +205,18 @@ class DependencyContainer:
         """Get a node instance by name."""
         if name not in self._nodes:
             # Import all node classes and find the one with matching name
-            from src.obs_graphs.graphs.article_proposal.nodes.article_content_generation import (
-                ArticleContentGenerationAgent,
-            )
-            from src.obs_graphs.graphs.article_proposal.nodes.article_proposal import (
+            from src.obs_graphs.graphs.article_proposal.nodes.node1_article_proposal import (
                 ArticleProposalAgent,
             )
-            from src.obs_graphs.graphs.article_proposal.nodes.deep_research import (
+            from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
                 DeepResearchAgent,
             )
-            from src.obs_graphs.graphs.article_proposal.nodes.submit_pull_request import (
+            from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_pull_request import (
                 SubmitPullRequestAgent,
             )
 
             node_classes = [
                 ArticleProposalAgent,
-                ArticleContentGenerationAgent,
                 DeepResearchAgent,
                 SubmitPullRequestAgent,
             ]
@@ -232,7 +231,7 @@ class DependencyContainer:
                 raise ValueError(f"Unknown node: {name}")
 
             # Instantiate with dependencies
-            if name in ["article_proposal", "article_content_generation"]:
+            if name == "article_proposal":
                 self._nodes[name] = node_class(self.get_llm())
             elif name == "submit_pull_request":
                 self._nodes[name] = node_class(self.get_github_service())
