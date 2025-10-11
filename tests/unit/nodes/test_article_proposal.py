@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.obs_graphs.graphs.article_proposal.nodes.article_proposal import (
+from src.obs_graphs.graphs.article_proposal.nodes.node1_article_proposal import (
     ArticleProposalAgent,
 )
 from src.obs_graphs.graphs.article_proposal.state import AgentResult

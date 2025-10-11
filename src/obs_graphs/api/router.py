@@ -192,7 +192,7 @@ async def list_workflows(
     limit: int = Query(
         10,
         ge=1,
-        le=get_settings().api_max_page_size,
+        le=100,
         description="Maximum number of workflows to return",
     ),
     offset: int = Query(

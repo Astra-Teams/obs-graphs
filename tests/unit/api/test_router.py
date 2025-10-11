@@ -87,10 +87,8 @@ def test_workflow_run_with_valid_prompt(client, mock_celery_task):
     assert workflow.prompt == "Research the impact of transformers on NLP"
 
 
-def test_workflow_run_accepts_empty_prompt_for_backward_compatibility(
-    client, mock_celery_task
-):
-    """Test that empty prompt is accepted for backward compatibility (internal use)."""
+def test_workflow_run_rejects_empty_prompt(client):
+    """Test that an empty prompt is rejected."""
     response = client.post(
         "/api/workflows/run",
         json={
@@ -99,14 +97,9 @@ def test_workflow_run_accepts_empty_prompt_for_backward_compatibility(
         },
     )
 
-    assert response.status_code == 201
-    data = response.json()
-
-    # Verify workflow was created with empty prompt
-    db = next(override_get_db())
-    workflow = db.query(Workflow).filter(Workflow.id == data["id"]).first()
-    assert workflow is not None
-    assert workflow.prompt == ""
+    assert response.status_code == 422
+    error_detail = response.json()["detail"]
+    assert any("prompt" in str(error).lower() for error in error_detail)
 
 
 def test_workflow_run_rejects_whitespace_only_prompt(client):

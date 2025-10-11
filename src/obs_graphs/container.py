@@ -202,22 +202,18 @@ class DependencyContainer:
         """Get a node instance by name."""
         if name not in self._nodes:
             # Import all node classes and find the one with matching name
-            from src.obs_graphs.graphs.article_proposal.nodes.article_content_generation import (
-                ArticleContentGenerationAgent,
-            )
-            from src.obs_graphs.graphs.article_proposal.nodes.article_proposal import (
+            from src.obs_graphs.graphs.article_proposal.nodes.node1_article_proposal import (
                 ArticleProposalAgent,
             )
-            from src.obs_graphs.graphs.article_proposal.nodes.deep_research import (
+            from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
                 DeepResearchAgent,
             )
-            from src.obs_graphs.graphs.article_proposal.nodes.submit_pull_request import (
+            from src.obs_graphs.graphs.article_proposal.nodes.node4_submit_pull_request import (
                 SubmitPullRequestAgent,
             )
 
             node_classes = [
                 ArticleProposalAgent,
-                ArticleContentGenerationAgent,
                 DeepResearchAgent,
                 SubmitPullRequestAgent,
             ]
@@ -232,7 +228,7 @@ class DependencyContainer:
                 raise ValueError(f"Unknown node: {name}")
 
             # Instantiate with dependencies
-            if name in ["article_proposal", "article_content_generation"]:
+            if name == "article_proposal":
                 self._nodes[name] = node_class(self.get_llm())
             elif name == "submit_pull_request":
                 self._nodes[name] = node_class(self.get_github_service())

@@ -114,35 +114,11 @@ class ObsGraphsSettings(BaseSettings):
     )
 
     # --- Workflow Settings ---
-    workflow_default_branch: str = Field(
-        default="main",
-        title="Workflow Default Branch",
-        description="Default branch used when creating pull requests.",
-        alias="WORKFLOW_DEFAULT_BRANCH",
-    )
     workflow_temp_dir_cleanup_seconds: int = Field(
         default=86400,
         title="Workflow Temp Directory Cleanup Interval",
         description="Number of seconds before temporary workflow directories are removed.",
         alias="WORKFLOW_TEMP_DIR_CLEANUP_SECONDS",
-    )
-    cross_reference_min_shared_keywords: int = Field(
-        default=2,
-        title="Cross Reference Minimum Shared Keywords",
-        description="Minimum number of shared keywords required to cross reference notes.",
-        alias="CROSS_REFERENCE_MIN_SHARED_KEYWORDS",
-    )
-    max_new_articles_per_run: int = Field(
-        default=3,
-        title="Maximum New Articles Per Run",
-        description="Maximum number of new articles to propose during a workflow run.",
-        alias="MAX_NEW_ARTICLES_PER_RUN",
-    )
-    api_max_page_size: int = Field(
-        default=100,
-        title="API Maximum Page Size",
-        description="Maximum number of results that can be returned per API page.",
-        alias="API_MAX_PAGE_SIZE",
     )
 
     @field_validator("ollama_host", mode="before")
