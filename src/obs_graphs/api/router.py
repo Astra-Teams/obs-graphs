@@ -190,7 +190,7 @@ async def list_workflows(
     limit: int = Query(
         10,
         ge=1,
-        le=100,
+        le=obs_graphs_settings.api_max_page_size,
         description="Maximum number of workflows to return",
     ),
     offset: int = Query(
@@ -207,7 +207,7 @@ async def list_workflows(
 
     Args:
         status: Optional status filter (pending, running, completed, failed)
-        limit: Maximum number of results (1-100, default 10)
+        limit: Maximum number of results (default 10)
         offset: Number of results to skip (default 0)
         db: Database session dependency
 

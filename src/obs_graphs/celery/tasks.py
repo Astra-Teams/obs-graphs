@@ -92,10 +92,19 @@ def run_workflow_task(self, workflow_id: int) -> None:
 
         # 4. Create ArticleProposalGraph and run workflow
         from src.obs_graphs.api.schemas import WorkflowRunRequest
+        from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
+
+        # Handle legacy strategies by coercing unknown values to RESEARCH_PROPOSAL
+        try:
+            strategy = (
+                WorkflowStrategy(workflow.strategy) if workflow.strategy else None
+            )
+        except ValueError:
+            strategy = WorkflowStrategy.RESEARCH_PROPOSAL
 
         request = WorkflowRunRequest(
             prompt=workflow.prompt or "Default research prompt",
-            strategy=workflow.strategy,
+            strategy=strategy,
         )
         graph_builder = container.get_graph_builder()
         result = graph_builder.run_workflow(request)

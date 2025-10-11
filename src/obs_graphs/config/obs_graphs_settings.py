@@ -28,6 +28,12 @@ class ObsGraphsSettings(BaseSettings):
         description="A secret key for signing session data.",
         alias="OBS_GRAPHS_API_SECRET_KEY",
     )
+    api_max_page_size: int = Field(
+        default=100,
+        title="API Max Page Size",
+        description="Maximum number of items to return in paginated API responses.",
+        alias="API_MAX_PAGE_SIZE",
+    )
 
     # --- Service Toggles ---
     use_sqlite: bool = Field(

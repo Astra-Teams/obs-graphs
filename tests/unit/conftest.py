@@ -6,7 +6,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def set_unit_test_env(monkeypatch):
     """Setup environment variables for unit tests.
-    
+
     Note: Monkeypatch only works for in-process execution.
     For subprocess-based tests, use subprocess env parameter.
     """
