@@ -68,11 +68,8 @@ def test_get_gateway_client_returns_mock_when_flag_enabled(
     client1 = container.get_gateway_client()
     client2 = container.get_gateway_client()
 
-    from dev.mocks_clients import MockObsGatewayClient
-
     assert hasattr(client1, "create_draft_branch")
     assert client1 is client2
-    assert isinstance(client1._client, MockObsGatewayClient)
 
 
 def test_get_node_valid_name(container: DependencyContainer):

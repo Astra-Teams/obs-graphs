@@ -80,27 +80,54 @@ class DependencyContainer:
     def get_gateway_client(self) -> GatewayClientProtocol:
         """Return the obs-gtwy gateway client implementation."""
         if self._gateway_client is None:
+            gateway_base = str(gateway_settings.base_url).rstrip("/")
+            gateway_timeout = gateway_settings.timeout_seconds
+
             if obs_graphs_settings.use_mock_obs_gateway:
-                from dev.mocks_clients import MockObsGatewayClient
+                import importlib.util
+
+                client_path = (
+                    Path(__file__).resolve().parents[1]
+                    / "submodules"
+                    / "obs-gtwy"
+                    / "sdk"
+                    / "mock_obs_gtwy_client"
+                    / "mock_obs_gtwy_client.py"
+                )
+                spec = importlib.util.spec_from_file_location(
+                    "mock_obs_gtwy_client", client_path
+                )
+                if spec is None or spec.loader is None:
+                    raise ImportError("Unable to load mock_obs_gtwy_client module")
+
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                MockObsGtwyClient = module.MockObsGtwyClient
 
                 class AdaptedMockGateway(GatewayClientProtocol):
                     def __init__(self):
-                        self._client = MockObsGatewayClient()
+                        self._client = MockObsGtwyClient()
 
                     def create_draft_branch(
                         self, *, file_name: str, content: str, branch_name: str
                     ) -> str:
-                        return self._client.create_draft_branch(
-                            file_name=file_name,
-                            content=content,
-                            branch_name=branch_name,
-                        )
+                        if branch_name:
+                            return branch_name
+                        response = self._client.create_draft(file_name, content)
+                        derived = response.get("branch_name")
+                        if not isinstance(derived, str) or not derived.strip():
+                            slug = (
+                                Path(file_name).stem.replace(" ", "-").lower()
+                                or "draft"
+                            )
+                            return f"draft/{slug}"
+                        return derived.strip()
 
                 self._gateway_client = AdaptedMockGateway()
             else:
                 self._gateway_client = ObsGatewayClient(
-                    base_url=gateway_settings.base_url,
-                    timeout_seconds=gateway_settings.timeout_seconds,
+                    base_url=gateway_base,
+                    timeout_seconds=gateway_timeout,
                 )
         return self._gateway_client
 
