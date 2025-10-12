@@ -40,7 +40,14 @@ jobs:
         run: pipx install uv
 
       - name: Configure Git for private repositories
-        run: git config --global url."https://oauth2:${{ secrets.OBS_GRAPHS_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        env:
+          AUTH_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
+        run: |
+          if [ -z "$AUTH_TOKEN" ]; then
+            echo "OBS_GRAPHS_TOKEN secret is required to access private repositories." >&2
+            exit 1
+          fi
+          git config --global url."https://oauth2:${AUTH_TOKEN}@github.com/".insteadOf "https://github.com/"
 
       - name: Install dependencies
         run: uv sync --frozen

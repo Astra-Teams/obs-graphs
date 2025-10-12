@@ -127,6 +127,7 @@ class DependencyContainer:
                 from mock_olm_d_rch_client.mock_olm_d_rch_client import (
                     MockOlmDRchClient,
                 )
+
                 from src.obs_graphs.protocols.research_client_protocol import (
                     ResearchResult,
                 )
