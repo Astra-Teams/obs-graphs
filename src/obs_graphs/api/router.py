@@ -110,7 +110,7 @@ async def run_workflow(
             # Update workflow based on result
             if result.success:
                 workflow.status = WorkflowStatus.COMPLETED
-                workflow.pr_url = result.pr_url
+                workflow.branch_name = result.branch_name
                 metadata = workflow.workflow_metadata or {}
                 metadata.update(
                     {
@@ -159,7 +159,7 @@ async def get_workflow(
     """
     Get details of a specific workflow.
 
-    Returns the workflow status, PR URL if completed, error message if failed,
+    Returns the workflow status, branch name if completed, error message if failed,
     and other workflow metadata.
 
     Args:
@@ -188,7 +188,7 @@ async def get_workflow(
         completed_at=(
             workflow.completed_at.isoformat() if workflow.completed_at else None
         ),
-        pr_url=workflow.pr_url,
+        branch_name=workflow.branch_name,
         error_message=workflow.error_message,
         celery_task_id=workflow.celery_task_id,
         created_at=workflow.created_at.isoformat(),
@@ -261,7 +261,7 @@ async def list_workflows(
             strategy=w.strategy,
             started_at=w.started_at.isoformat() if w.started_at else None,
             completed_at=w.completed_at.isoformat() if w.completed_at else None,
-            pr_url=w.pr_url,
+            branch_name=w.branch_name,
             error_message=w.error_message,
             celery_task_id=w.celery_task_id,
             created_at=w.created_at.isoformat(),

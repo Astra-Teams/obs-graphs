@@ -160,8 +160,8 @@ def test_execute_workflow_passes_backend_to_nodes(mock_container):
 
 
 @patch("src.obs_graphs.graphs.article_proposal.graph.get_container")
-def test_run_workflow_collects_pr_metadata(mock_get_container):
-    """run_workflow should propagate PR metadata from the submit node."""
+def test_run_workflow_collects_branch_metadata(mock_get_container):
+    """run_workflow should propagate branch metadata from the submit node."""
     mock_container = MagicMock()
     mock_vault_service = MagicMock()
     mock_vault_service.get_vault_summary.return_value = MagicMock()
@@ -178,7 +178,6 @@ def test_run_workflow_collects_pr_metadata(mock_get_container):
                     message="Submitted",
                     metadata={
                         "branch_name": "obsidian-agents/workflow-123",
-                        "pr_url": "https://github.com/test/pr/1",
                     },
                 )
 
@@ -196,7 +195,6 @@ def test_run_workflow_collects_pr_metadata(mock_get_container):
 
     assert isinstance(result, WorkflowResult)
     assert result.success
-    assert result.pr_url == "https://github.com/test/pr/1"
     assert result.branch_name == "obsidian-agents/workflow-123"
 
 

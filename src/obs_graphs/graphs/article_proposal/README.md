@@ -10,7 +10,7 @@ article_proposal/
 ├── nodes/             # Individual workflow nodes/agents
 │   ├── node1_article_proposal.py    # Analyzes vault and proposes new articles
 │   ├── node2_deep_research.py       # Conducts deep research using external API
-│   └── node3_submit_pull_request.py # Commits changes and opens pull requests
+│   └── node3_submit_pull_request.py # Submits markdown drafts to obs-gtwy
 ├── prompts/           # LLM prompt templates
 │   ├── new_article_creation.md      # Template for proposing new articles
 │   └── research_topic_proposal.md   # Template for research topic proposals
@@ -47,7 +47,7 @@ The article proposal graph supports two main strategies:
 
 ### SubmitPullRequestAgent (`submit_pull_request`)
 - Generates commit messages and PR content from accumulated results
-- Creates workflow branches, commits changes, and opens GitHub pull requests via `GithubService`
+- Creates workflow branches via obs-gtwy and records metadata for operators
 - Stores PR metadata (URL, branch) for downstream consumers
 
 ## State Management

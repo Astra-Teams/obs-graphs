@@ -38,6 +38,8 @@ dev = [
     "ruff>=0.12.10",
     "testcontainers[postgres]>=4.6.0",
     "watchdog[watchmedo]>=4.0.1",
+    "obs-gtwy-sdk @ git+https://github.com/asterismhq/obs-gtwy.git#subdirectory=sdk/mock_obs_gtwy_client",
+    "olm-d-rch-sdk @ git+https://github.com/asterismhq/olm-d-rch.git#subdirectory=sdk/mock_olm_d_rch_client",
 ]
 
 [build-system]
