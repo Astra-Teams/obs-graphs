@@ -1,10 +1,10 @@
 [submodule "src/submodules/obsidian-vault"]
 	path = src/submodules/obsidian-vault
-	url = https://github.com/Astra-Teams/constellations.git
+	url = https://github.com/asterismhq/constellations.git
 	branch = main
 [submodule "src/submodules/olm-d-rch"] # v1.6.2
 	path = src/submodules/olm-d-rch
-	url = https://github.com/Astra-Teams/olm-d-rch
+	url = https://github.com/asterismhq/olm-d-rch
 [submodule "src/submodules/obs-gtwy"] # v1.0.0
 	path = src/submodules/obs-gtwy
 	url = https://github.com/asterismhq/obs-gtwy
