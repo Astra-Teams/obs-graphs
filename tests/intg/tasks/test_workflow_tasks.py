@@ -497,11 +497,17 @@ class TestRunWorkflowTask:
         mock_builder_instance.run_workflow.return_value = mock_result
         mock_container.get_graph_builder.return_value = mock_builder_instance
 
-        run_workflow_task(workflow.id)
+        workflow_id = workflow.id
+
+        run_workflow_task(workflow_id)
 
         mock_builder_instance.run_workflow.assert_called_once()
         request = mock_builder_instance.run_workflow.call_args[0][0]
         assert request.backend == "mlx"
 
-        updated_metadata = workflow.workflow_metadata or {}
+        # Re-query workflow from database to access updated metadata
+        updated_workflow = (
+            test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
+        )
+        updated_metadata = updated_workflow.workflow_metadata or {}
         assert updated_metadata.get("backend") == "mlx"

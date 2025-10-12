@@ -51,7 +51,7 @@ def test_get_vault_service_lazy_instantiation(
     mock_vault_service.assert_called_once_with(tmp_path)
 
 
-@patch("src.obs_graphs.container.MockOllamaClient")
+@patch("dev.mocks_clients.MockOllamaClient")
 @patch("src.obs_graphs.container.obs_graphs_settings")
 def test_get_llm_returns_mock_when_flag_enabled(
     mock_obs_settings,
@@ -61,6 +61,7 @@ def test_get_llm_returns_mock_when_flag_enabled(
 ):
     """Test that a wrapped MockOllamaClient is returned when USE_MOCK_LLM=True."""
     mock_obs_settings.use_mock_llm = True
+    mock_obs_settings.llm_backend = "ollama"
     mock_instance = MagicMock()
     mock_instance.invoke.return_value = "mock-response"
     mock_mock_ollama.return_value = mock_instance
