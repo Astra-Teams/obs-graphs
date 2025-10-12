@@ -39,15 +39,13 @@ class WorkflowResult:
         changes: Aggregated list of all file changes from nodes
         summary: Human-readable summary of what was done
         node_results: Dictionary mapping node names to their results
-        pr_url: URL of the created pull request
-        branch_name: Name of the created branch
+        branch_name: Name of the branch registered by obs-gtwy
     """
 
     success: bool
     changes: list[FileChange]
     summary: str
     node_results: dict = field(default_factory=dict)
-    pr_url: str = ""
     branch_name: str = ""
 
 
@@ -61,7 +59,7 @@ class ArticleProposalGraph:
 
     def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
         """
-        Run the complete workflow via GitHub API: create branch, execute nodes, create PR.
+        Run the complete workflow: execute nodes and submit the draft via obs-gtwy.
 
         Args:
             request: Workflow run request with optional strategy override
@@ -95,7 +93,6 @@ class ArticleProposalGraph:
 
             pr_result = workflow_result.node_results.get("submit_pull_request", {})
             pr_metadata = pr_result.get("metadata", {})
-            workflow_result.pr_url = pr_metadata.get("pr_url", "")
             workflow_result.branch_name = pr_metadata.get("branch_name", "")
 
             return workflow_result

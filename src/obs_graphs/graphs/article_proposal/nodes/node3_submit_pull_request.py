@@ -1,26 +1,25 @@
-"""Agent responsible for committing changes and creating a GitHub pull request."""
+"""Agent responsible for delegating draft creation to the obs-gtwy gateway."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import re
+from pathlib import Path
 
-from src.obs_graphs.config import workflow_settings
 from src.obs_graphs.graphs.article_proposal.state import (
     AgentResult,
     FileAction,
     FileChange,
 )
-from src.obs_graphs.protocols import GithubServiceProtocol, NodeProtocol
+from src.obs_graphs.protocols import GatewayClientProtocol, NodeProtocol
 
 
 class SubmitPullRequestAgent(NodeProtocol):
-    """Aggregate node that pushes workflow changes to GitHub."""
+    """Transforms accumulated changes into a draft branch via obs-gtwy."""
 
     name = "submit_pull_request"
 
-    def __init__(self, github_service: GithubServiceProtocol):
-        self._github_service = github_service
-        self._workflow_settings = workflow_settings
+    def __init__(self, gateway_client: GatewayClientProtocol):
+        self._gateway_client = gateway_client
 
     def validate_input(self, context: dict) -> bool:
         required_keys = ["strategy", "accumulated_changes", "node_results"]
@@ -32,7 +31,6 @@ class SubmitPullRequestAgent(NodeProtocol):
                 "Invalid context: strategy, accumulated_changes, and node_results are required"
             )
 
-        strategy: str = context["strategy"]
         accumulated_changes: list[FileChange] = context["accumulated_changes"]
         node_results: dict = context["node_results"]
 
@@ -40,44 +38,31 @@ class SubmitPullRequestAgent(NodeProtocol):
             return AgentResult(
                 success=True,
                 changes=[],
-                message="No changes detected; skipping GitHub submission",
-                metadata={"branch_name": "", "pr_url": ""},
+                message="No changes detected; skipping gateway submission",
+                metadata={"branch_name": ""},
             )
 
         try:
-            commit_message = self._generate_commit_message(
-                strategy, node_results, accumulated_changes
-            )
-            pr_title, pr_body = self._generate_pr_content(
-                strategy, node_results, accumulated_changes
-            )
-            branch_name = self._generate_branch_name()
-            base_branch = self._workflow_settings.default_branch
+            draft_change = self._select_draft_change(accumulated_changes)
+            file_name = Path(draft_change.path).name
+            content = draft_change.content or ""
 
-            pr_url = self._github_service.commit_and_create_pr(
-                branch_name=branch_name,
-                base_branch=base_branch,
-                changes=accumulated_changes,
-                commit_message=commit_message,
-                pr_title=pr_title,
-                pr_body=pr_body,
+            suggested_branch = self._derive_branch_name(file_name, node_results)
+            created_branch = self._gateway_client.create_draft_branch(
+                file_name=file_name,
+                content=content,
+                branch_name=suggested_branch,
             )
 
-            message = (
-                f"Pull request created successfully: {pr_url}"
-                if pr_url
-                else "GitHub submission completed without PR creation"
-            )
+            message = f"Draft branch created successfully: {created_branch}"
 
             return AgentResult(
                 success=True,
                 changes=[],
                 message=message,
                 metadata={
-                    "branch_name": branch_name,
-                    "pr_url": pr_url,
-                    "commit_message": commit_message,
-                    "pr_title": pr_title,
+                    "branch_name": created_branch,
+                    "draft_file": draft_change.path,
                 },
             )
 
@@ -85,129 +70,34 @@ class SubmitPullRequestAgent(NodeProtocol):
             return AgentResult(
                 success=False,
                 changes=[],
-                message=f"Failed to submit pull request: {exc}",
+                message=f"Failed to submit draft branch: {exc}",
                 metadata={"error": str(exc)},
             )
 
-    def _generate_branch_name(self) -> str:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-        return f"obsidian-agents/workflow-{timestamp}"
+    def _select_draft_change(self, changes: list[FileChange]) -> FileChange:
+        create_changes = [c for c in changes if c.action is FileAction.CREATE]
+        if not create_changes:
+            raise ValueError("No draft creation detected in accumulated changes.")
+        if len(create_changes) > 1:
+            raise ValueError("Multiple draft files detected; expected a single draft.")
 
-    def _generate_commit_message(
-        self, strategy: str, node_results: dict, changes: list[FileChange]
-    ) -> str:
-        summary_parts = []
-        for node_name, result in node_results.items():
-            if result.get("success") and node_name != self.name:
-                summary_parts.append(f"- {node_name}: {result['message']}")
+        draft_change = create_changes[0]
+        if not draft_change.content:
+            raise ValueError("Draft content is missing for gateway submission.")
 
-        summary = "\n".join(summary_parts) if summary_parts else "Workflow completed"
+        return draft_change
 
-        creates = sum(1 for change in changes if change.action is FileAction.CREATE)
-        updates = sum(1 for change in changes if change.action is FileAction.UPDATE)
-        deletes = sum(1 for change in changes if change.action is FileAction.DELETE)
+    def _derive_branch_name(self, file_name: str, node_results: dict) -> str:
+        metadata_filename = (
+            node_results.get("deep_research", {})
+            .get("metadata", {})
+            .get("proposal_filename")
+        )
 
-        op_counts = {
-            "created": creates,
-            "updated": updates,
-            "deleted": deletes,
-        }
-        operations = [f"{count} {op}" for op, count in op_counts.items() if count]
-        operations_str = ", ".join(operations) if operations else "no changes"
+        stem_source = metadata_filename or file_name
+        stem = Path(stem_source).stem.lower()
+        slug = re.sub(r"[^a-z0-9]+", "-", stem).strip("-")
+        if not slug:
+            slug = "draft"
 
-        return f"""Automated vault improvements via {strategy} strategy
-
-{summary}
-
-Files: {operations_str}
-
-🤖 Generated by Obsidian Agents Workflow
-"""
-
-    def _generate_pr_content(
-        self, strategy: str, node_results: dict, changes: list[FileChange]
-    ) -> tuple[str, str]:
-        if strategy == "research_proposal":
-            deep_research_result = node_results.get("deep_research", {})
-            proposal_metadata = deep_research_result.get("metadata", {})
-            proposal_filename = proposal_metadata.get(
-                "proposal_filename", "research proposal"
-            )
-            title = (
-                "Research Proposal: "
-                f"{proposal_filename.replace('.md', '').replace('-', ' ').title()}"
-            )
-        else:
-            title = f"Automated vault improvements ({strategy})"
-
-        excluded_nodes = {self.name}
-        user_facing_results = {
-            name: res
-            for name, res in node_results.items()
-            if name not in excluded_nodes
-        }
-
-        summary_parts = []
-        for node_name, result in user_facing_results.items():
-            if result.get("success"):
-                summary_parts.append(f"- {node_name}: {result['message']}")
-        summary = "\n".join(summary_parts)
-
-        if strategy == "research_proposal":
-            body_parts = [
-                "## Research Proposal",
-                "\n### Overview",
-                "This PR contains a new research proposal generated from a user prompt.",
-            ]
-
-            article_proposal_result = node_results.get("article_proposal", {})
-            article_metadata = article_proposal_result.get("metadata", {})
-
-            if "topic_title" in article_metadata:
-                body_parts.append(f"\n**Topic**: {article_metadata['topic_title']}")
-            if "tags" in article_metadata:
-                tags_str = ", ".join(article_metadata["tags"])
-                body_parts.append(f"**Tags**: {tags_str}")
-
-            deep_metadata = proposal_metadata
-            if "sources_count" in deep_metadata:
-                body_parts.append(
-                    f"**Sources**: {deep_metadata['sources_count']} references"
-                )
-
-            body_parts.extend(
-                [
-                    "\n### Summary",
-                    summary,
-                    "\n### Details",
-                    f"- **Proposal File**: {deep_metadata.get('proposal_path', 'N/A')}",
-                    f"- **Total Changes**: {len(changes)} file operation(s)",
-                    f"- **Nodes Executed**: {len(user_facing_results)}",
-                ]
-            )
-        else:
-            body_parts = [
-                "## Automated Vault Improvements",
-                f"\n**Strategy**: {strategy}",
-                "\n### Summary",
-                summary,
-                "\n### Details",
-                f"- **Total Changes**: {len(changes)} file operations",
-                f"- **Nodes Executed**: {len(user_facing_results)}",
-            ]
-
-        body_parts.append("\n### Node Results")
-
-        for node_name, result in user_facing_results.items():
-            body_parts.append(f"\n#### {node_name}")
-            body_parts.append(
-                f"- Status: {'✅ Success' if result.get('success') else '❌ Failed'}"
-            )
-            body_parts.append(f"- Message: {result.get('message')}")
-            body_parts.append(f"- Changes: {result.get('changes_count')}")
-
-        body_parts.append("\n---\n*Generated by Obsidian Nodes Workflow Automation*")
-
-        body = "\n".join(body_parts)
-
-        return title, body
+        return f"draft/{slug}"

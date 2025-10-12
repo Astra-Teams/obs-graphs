@@ -53,9 +53,8 @@ def run_workflow_task(self, workflow_id: int) -> None:
     2. Copy vault submodule to a temporary working directory
     3. Analyze vault and execute agents via dependency container
     4. Apply changes through the VaultService/GitHub API
-    5. Commit and push changes via GithubClient
-    6. Create pull request on GitHub
-    7. Update workflow status and store results
+    5. Submit draft content through obs-gtwy and record branch metadata
+    6. Update workflow status and store results
     8. Clean up temporary directory
 
     Args:
@@ -119,7 +118,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
         # Update workflow based on result
         if result.success:
             workflow.status = WorkflowStatus.COMPLETED
-            workflow.pr_url = result.pr_url
+            workflow.branch_name = result.branch_name
             workflow_metadata.update(
                 {
                     "node_results": result.node_results,

@@ -59,7 +59,7 @@ class WorkflowResponse(BaseModel):
     strategy: Optional[WorkflowStrategy]
     started_at: Optional[str]
     completed_at: Optional[str]
-    pr_url: Optional[str]
+    branch_name: Optional[str]
     error_message: Optional[str]
     celery_task_id: Optional[str]
     created_at: str

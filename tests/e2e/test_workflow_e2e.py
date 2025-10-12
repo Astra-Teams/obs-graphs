@@ -98,7 +98,7 @@ class TestWorkflowE2E:
             # Verify completion
             assert workflow_data["id"] == workflow_id
             assert workflow_data["status"] == "COMPLETED"
-            assert workflow_data["pr_url"] is not None
+            assert workflow_data["branch_name"] is not None
             assert workflow_data["error_message"] is None
             assert "strategy" in workflow_data
 
@@ -138,7 +138,7 @@ class TestWorkflowE2E:
             assert workflow_data["status"] == "FAILED"
             assert workflow_data["error_message"] is not None
             assert len(workflow_data["error_message"]) > 0
-            assert workflow_data["pr_url"] is None
+            assert workflow_data["branch_name"] is None
 
             # Verify it appears in the failed workflows list
             failed_list = client.get(

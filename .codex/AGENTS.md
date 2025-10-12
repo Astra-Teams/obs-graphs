@@ -2,7 +2,7 @@
 
 ## 🚀 Overview
 
-**Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes via **GitHub pull requests**.
+**Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes by delegating draft branches to the **obs-gtwy** gateway service.
 
 **Core Tech**: FastAPI, LangGraph, Ollama, PostgreSQL/SQLite, Celery, Redis, Docker.
 
@@ -28,7 +28,7 @@
 -   **Workflow Engine (`graphs/`)**: LangGraph for stateful workflow orchestration using modular agent nodes.
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models and repository pattern for DB interactions.
--   **Clients (`clients/`)**: External service clients (GitHub, Research APIs) plus unified LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`.
+-   **Clients (`clients/`)**: External service clients (obs-gtwy gateway, Research APIs) plus unified LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`.
 -   **Async Tasks (`celery/`)**: Background task execution with Redis.
 -   **Configuration (`config/`)**: Environment-based settings and feature flags (e.g., `OBS_GRAPHS_LLM_BACKEND`). Backend-specific parameters live in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py`.
 -   **DI (`container.py`)**: Protocol-based Dependency Injection for loose coupling.

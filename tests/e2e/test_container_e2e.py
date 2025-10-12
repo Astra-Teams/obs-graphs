@@ -13,27 +13,30 @@ def container():
     return DependencyContainer()
 
 
+@patch("src.obs_graphs.container.gateway_settings")
+@patch("src.obs_graphs.container.ObsGatewayClient")
 @patch("src.obs_graphs.container.obs_graphs_settings")
-@patch("src.obs_graphs.container.GithubClient")
-def test_get_github_client_lazy_instantiation(
-    mock_github_client,
+def test_get_gateway_client_production_mode(
     mock_obs_settings,
+    mock_obs_gateway_client,
+    mock_gateway_settings,
     container: DependencyContainer,
 ):
-    """Test that github client is lazily instantiated."""
-    # Arrange
-    mock_obs_settings.use_mock_github = False
+    """Gateway client should instantiate the real HTTP client when mocks are disabled."""
+    mock_obs_settings.use_mock_obs_gateway = False
+    mock_gateway_settings.base_url = "http://gateway"
+    mock_gateway_settings.timeout_seconds = 12.5
     mock_instance = MagicMock()
-    mock_github_client.return_value = mock_instance
+    mock_obs_gateway_client.return_value = mock_instance
 
-    # Act
-    client1 = container.get_github_client()
-    client2 = container.get_github_client()
+    client1 = container.get_gateway_client()
+    client2 = container.get_gateway_client()
 
-    # Assert
-    assert client1 is client2
-    assert client1 is mock_instance
-    mock_github_client.assert_called_once()
+    assert client1 is client2 is mock_instance
+    mock_obs_gateway_client.assert_called_once_with(
+        base_url="http://gateway",
+        timeout_seconds=12.5,
+    )
 
 
 @patch("src.obs_graphs.container.ollama_settings")
