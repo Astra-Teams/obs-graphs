@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from langgraph.graph import END, StateGraph
 
 from src.obs_graphs.api.schemas import WorkflowRunRequest
+from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.container import DependencyContainer, get_container
 from src.obs_graphs.graphs.article_proposal.state import (
     AgentResult,
@@ -83,7 +84,10 @@ class ArticleProposalGraph:
 
             # Execute workflow
             workflow_result = self.execute_workflow(
-                workflow_plan, container, request.prompt
+                workflow_plan,
+                container,
+                prompt=request.prompt,
+                backend=request.backend,
             )
 
             if not workflow_result.success:
@@ -138,6 +142,7 @@ class ArticleProposalGraph:
         workflow_plan: WorkflowPlan,
         container: DependencyContainer,
         prompt: str = "",
+        backend: str | None = None,
     ) -> WorkflowResult:
         """
         Execute workflow using LangGraph state graph.
@@ -154,10 +159,13 @@ class ArticleProposalGraph:
         vault_service = container.get_vault_service()
         vault_summary = vault_service.get_vault_summary()
 
+        selected_backend = (backend or obs_graphs_settings.llm_backend).strip().lower()
+
         initial_state: GraphState = {
             "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
             "prompt": prompt,
+            "backend": selected_backend,
             "accumulated_changes": [],
             "node_results": {},
             "messages": [],
@@ -246,6 +254,7 @@ class ArticleProposalGraph:
                 "vault_summary": state["vault_summary"],
                 "strategy": state["strategy"],
                 "prompt": state["prompt"],
+                "backend": state["backend"],
                 "accumulated_changes": state["accumulated_changes"],
                 "node_results": state["node_results"],
             }

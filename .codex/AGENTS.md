@@ -28,9 +28,9 @@
 -   **Workflow Engine (`graphs/`)**: LangGraph for stateful workflow orchestration using modular agent nodes.
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models and repository pattern for DB interactions.
--   **Clients (`clients/`)**: External service clients (GitHub, Research APIs).
+-   **Clients (`clients/`)**: External service clients (GitHub, Research APIs) plus unified LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`.
 -   **Async Tasks (`celery/`)**: Background task execution with Redis.
--   **Configuration (`config/`)**: Environment-based settings and feature flags.
+-   **Configuration (`config/`)**: Environment-based settings and feature flags (e.g., `OBS_GRAPHS_LLM_BACKEND`, Ollama/MLX model parameters).
 -   **DI (`container.py`)**: Protocol-based Dependency Injection for loose coupling.
 -   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions.
 
@@ -46,7 +46,7 @@
 ## ⚖️ Architectural Principles
 
 -   **Separation of Concerns**: Clear boundaries between API, business logic, data, and infrastructure.
--   **Dependency Injection**: Protocol-based DI for testability and flexibility.
+-   **Dependency Injection**: Protocol-based DI for testability and flexibility; container resolves LLM backend per request.
 -   **Schema Separation**: Pydantic for API validation, distinct types for internal state.
 -   **Node-Based Agents**: Modular, single-responsibility agents registered by name.
 -   **Comprehensive Testing**: Multi-layered testing strategy (Unit → Integration → E2E).

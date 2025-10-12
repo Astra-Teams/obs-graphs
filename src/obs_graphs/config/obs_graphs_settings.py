@@ -68,6 +68,12 @@ class ObsGraphsSettings(BaseSettings):
     )
 
     # --- LLM Settings ---
+    llm_backend: str = Field(
+        default="ollama",
+        title="Default LLM Backend",
+        description="LLM backend to use for article proposal generation (ollama or mlx).",
+        alias="OBS_GRAPHS_LLM_BACKEND",
+    )
     llm_model: str = Field(
         default="llama3.2:3b",
         title="LLM Model Name",
@@ -128,3 +134,12 @@ class ObsGraphsSettings(BaseSettings):
         if isinstance(value, str):
             return value.lower() in {"true", "1", "yes", "on"}
         return bool(value)
+
+    @field_validator("llm_backend", mode="after")
+    @classmethod
+    def validate_llm_backend(cls, value: str) -> str:
+        """Normalize and validate the configured LLM backend."""
+        normalized = value.strip().lower()
+        if normalized not in {"ollama", "mlx"}:
+            raise ValueError("LLM backend must be either 'ollama' or 'mlx'")
+        return normalized

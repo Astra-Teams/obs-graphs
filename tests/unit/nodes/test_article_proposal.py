@@ -12,9 +12,8 @@ from src.obs_graphs.graphs.article_proposal.state import AgentResult
 
 @pytest.fixture
 def mock_llm():
-    """Create a mock LLM instance."""
+    """Create a mock LLM client instance."""
     llm = MagicMock()
-    # Return JSON format for topic proposal as string (BaseLLM.invoke returns str)
     llm.invoke.return_value = """
     {
         "title": "Impact of Transformer Models on NLP",
@@ -27,9 +26,16 @@ def mock_llm():
 
 
 @pytest.fixture
-def agent(mock_llm):
+def llm_provider(mock_llm):
+    """Provide a callable that returns the mock LLM client."""
+    provider = MagicMock(return_value=mock_llm)
+    return provider
+
+
+@pytest.fixture
+def agent(llm_provider):
     """Create ArticleProposalAgent instance."""
-    return ArticleProposalAgent(mock_llm)
+    return ArticleProposalAgent(llm_provider)
 
 
 @pytest.fixture
@@ -77,6 +83,31 @@ def test_execute_with_valid_prompt(agent, vault_path):
     assert result.metadata["topic_title"] == "Impact of Transformer Models on NLP"
     assert len(result.metadata["tags"]) == 4
     assert result.metadata["tags"][0] == "transformers"
+
+
+def test_execute_passes_backend_to_provider(agent, llm_provider):
+    """Ensure the backend from context is forwarded to the provider."""
+    context = {
+        "prompt": "Investigate MLX performance",
+        "strategy": "research_proposal",
+        "backend": "mlx",
+    }
+
+    agent.execute(context)
+
+    llm_provider.assert_called_once_with("mlx")
+
+
+def test_execute_without_backend_uses_default(agent, llm_provider):
+    """Provider should be called with None when backend not supplied."""
+    context = {
+        "prompt": "Investigate default backend",
+        "strategy": "research_proposal",
+    }
+
+    agent.execute(context)
+
+    llm_provider.assert_called_once_with(None)
 
 
 def test_execute_with_malformed_json(agent, vault_path, mock_llm):

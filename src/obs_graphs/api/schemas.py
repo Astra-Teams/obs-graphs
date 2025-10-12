@@ -19,6 +19,10 @@ class WorkflowRunRequest(BaseModel):
         None,
         description="Optional strategy to force specific workflow type",
     )
+    backend: Optional[str] = Field(
+        None,
+        description="Optional override for the LLM backend ('ollama' or 'mlx').",
+    )
     async_execution: bool = Field(
         False,
         description="Whether to execute workflow asynchronously using Celery",
@@ -32,6 +36,17 @@ class WorkflowRunRequest(BaseModel):
         if not stripped:
             raise ValueError("Prompt is required and cannot be empty")
         return stripped
+
+    @field_validator("backend", mode="after")
+    @classmethod
+    def validate_backend(cls, value: Optional[str]) -> Optional[str]:
+        """Validate and normalize the optional backend value."""
+        if value is None:
+            return None
+        normalized = value.strip().lower()
+        if normalized not in {"ollama", "mlx"}:
+            raise ValueError("Backend must be either 'ollama' or 'mlx'")
+        return normalized
 
 
 class WorkflowResponse(BaseModel):

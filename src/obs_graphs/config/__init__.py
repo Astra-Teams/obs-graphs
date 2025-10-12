@@ -1,13 +1,17 @@
 """Configuration module for the obs-graphs project."""
 
 from .db_settings import DBSettings
+from .mlx_settings import MLXSettings
 from .obs_graphs_settings import ObsGraphsSettings
+from .ollama_settings import OllamaSettings
 from .redis_settings import RedisSettings
 from .research_api_settings import ResearchAPISettings
 from .workflow_settings import WorkflowSettings
 
 # Singleton instances for direct access
 obs_graphs_settings = ObsGraphsSettings()
+ollama_settings = OllamaSettings()
+mlx_settings = MLXSettings()
 db_settings = DBSettings()
 redis_settings = RedisSettings()
 research_api_settings = ResearchAPISettings()
@@ -17,11 +21,15 @@ __all__ = [
     # Classes
     "DBSettings",
     "ObsGraphsSettings",
+    "OllamaSettings",
+    "MLXSettings",
     "RedisSettings",
     "ResearchAPISettings",
     "WorkflowSettings",
     # Singleton instances
     "obs_graphs_settings",
+    "ollama_settings",
+    "mlx_settings",
     "db_settings",
     "redis_settings",
     "research_api_settings",

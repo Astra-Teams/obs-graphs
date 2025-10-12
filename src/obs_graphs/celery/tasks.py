@@ -102,9 +102,16 @@ def run_workflow_task(self, workflow_id: int) -> None:
         except ValueError:
             strategy = WorkflowStrategy.RESEARCH_PROPOSAL
 
+        workflow_metadata = workflow.workflow_metadata or {}
+        backend_value = (
+            workflow_metadata.get("backend") or obs_graphs_settings.llm_backend
+        )
+        backend_value = backend_value.strip().lower()
+
         request = WorkflowRunRequest(
             prompt=workflow.prompt or "Default research prompt",
             strategy=strategy,
+            backend=backend_value,
         )
         graph_builder = container.get_graph_builder()
         result = graph_builder.run_workflow(request)
@@ -113,14 +120,20 @@ def run_workflow_task(self, workflow_id: int) -> None:
         if result.success:
             workflow.status = WorkflowStatus.COMPLETED
             workflow.pr_url = result.pr_url
-            workflow.workflow_metadata = {
-                "node_results": result.node_results,
-                "total_changes": len(result.changes),
-                "branch_name": result.branch_name,
-            }
+            workflow_metadata.update(
+                {
+                    "node_results": result.node_results,
+                    "total_changes": len(result.changes),
+                    "branch_name": result.branch_name,
+                    "backend": backend_value,
+                }
+            )
+            workflow.workflow_metadata = workflow_metadata
         else:
             workflow.status = WorkflowStatus.FAILED
             workflow.error_message = result.summary
+            workflow_metadata.setdefault("backend", backend_value)
+            workflow.workflow_metadata = workflow_metadata
 
         workflow.completed_at = datetime.now(timezone.utc)
         db.commit()

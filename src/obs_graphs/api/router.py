@@ -45,11 +45,16 @@ async def run_workflow(
     """
     try:
         # Create new workflow record with PENDING status
+        selected_backend = (
+            (request.backend or obs_graphs_settings.llm_backend).strip().lower()
+        )
+
         workflow = Workflow(
             prompt=request.prompt.strip(),
             status=WorkflowStatus.PENDING,
             strategy=request.strategy,
         )
+        workflow.workflow_metadata = {"backend": selected_backend}
         db.add(workflow)
         db.commit()
         db.refresh(workflow)
@@ -106,11 +111,16 @@ async def run_workflow(
             if result.success:
                 workflow.status = WorkflowStatus.COMPLETED
                 workflow.pr_url = result.pr_url
-                workflow.workflow_metadata = {
-                    "node_results": result.node_results,
-                    "total_changes": len(result.changes),
-                    "branch_name": result.branch_name,
-                }
+                metadata = workflow.workflow_metadata or {}
+                metadata.update(
+                    {
+                        "node_results": result.node_results,
+                        "total_changes": len(result.changes),
+                        "branch_name": result.branch_name,
+                        "backend": selected_backend,
+                    }
+                )
+                workflow.workflow_metadata = metadata
             else:
                 workflow.status = WorkflowStatus.FAILED
                 workflow.error_message = result.summary

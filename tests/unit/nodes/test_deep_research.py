@@ -127,7 +127,7 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
 
     # Verify research client was called
     mock_research_client.run_research.assert_called_once_with(
-        "Impact of Transformers on NLP"
+        "Impact of Transformers on NLP", backend=None
     )
 
 

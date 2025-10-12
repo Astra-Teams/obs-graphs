@@ -17,12 +17,17 @@ class ResearchResult(BaseModel):
 class ResearchClientProtocol(Protocol):
     """Protocol for research API client."""
 
-    def run_research(self, query: str) -> ResearchResult:
+    def run_research(
+        self,
+        query: str,
+        backend: Optional[str] = None,
+    ) -> ResearchResult:
         """
         Run research on the given query.
 
         Args:
             query: Search query to investigate
+            backend: Optional identifier for the LLM backend to use
 
         Returns:
             ResearchResult containing the generated article and metadata

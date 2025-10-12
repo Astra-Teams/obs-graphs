@@ -1,12 +1,11 @@
 """Agent for proposing new articles based on vault analysis."""
 
 import json
-
-from langchain_community.llms import Ollama
+from typing import Callable, Optional
 
 from src.obs_graphs.graphs.article_proposal.prompts import render_prompt
 from src.obs_graphs.graphs.article_proposal.state import AgentResult
-from src.obs_graphs.protocols import NodeProtocol
+from src.obs_graphs.protocols import LLMClientProtocol, NodeProtocol
 
 
 class ArticleProposalAgent(NodeProtocol):
@@ -20,9 +19,9 @@ class ArticleProposalAgent(NodeProtocol):
 
     name = "article_proposal"
 
-    def __init__(self, llm: Ollama):
+    def __init__(self, llm_provider: Callable[[Optional[str]], LLMClientProtocol]):
         """Initialize the article proposal agent."""
-        self.llm = llm
+        self._llm_provider = llm_provider
 
     def validate_input(self, context: dict) -> bool:
         """
@@ -58,13 +57,17 @@ class ArticleProposalAgent(NodeProtocol):
             raise ValueError("required fields missing")
 
         strategy = context.get("strategy", "new_article")
+        backend = context.get("backend")
+        llm_client = self._llm_provider(backend)
 
         if strategy == "research_proposal":
-            return self._execute_research_topic_proposal(context)
+            return self._execute_research_topic_proposal(context, llm_client)
         else:
-            return self._execute_new_article_proposal(context)
+            return self._execute_new_article_proposal(context, llm_client)
 
-    def _execute_research_topic_proposal(self, context: dict) -> AgentResult:
+    def _execute_research_topic_proposal(
+        self, context: dict, llm_client: LLMClientProtocol
+    ) -> AgentResult:
         """
         Execute research topic proposal based on user prompt.
 
@@ -82,7 +85,7 @@ class ArticleProposalAgent(NodeProtocol):
         try:
             # Get LLM response with JSON topic proposal
             # BaseLLM.invoke() returns a string directly, not an AIMessage
-            response = self.llm.invoke(topic_prompt)
+            response = llm_client.invoke(topic_prompt)
             topic_data = self._parse_topic_proposal(response)
 
             if topic_data is None:
@@ -116,7 +119,9 @@ class ArticleProposalAgent(NodeProtocol):
                 metadata={"error": str(e)},
             )
 
-    def _execute_new_article_proposal(self, context: dict) -> AgentResult:
+    def _execute_new_article_proposal(
+        self, context: dict, llm_client: LLMClientProtocol
+    ) -> AgentResult:
         """
         Execute new article proposal based on vault analysis.
 
@@ -137,7 +142,7 @@ class ArticleProposalAgent(NodeProtocol):
         try:
             # Get LLM response with JSON article proposals
             # BaseLLM.invoke() returns a string directly, not an AIMessage
-            response = self.llm.invoke(proposal_prompt)
+            response = llm_client.invoke(proposal_prompt)
             proposals = self._parse_article_proposals(response)
 
             if proposals is None:
