@@ -30,7 +30,7 @@
 -   **Data Access (`db/`)**: SQLAlchemy models and repository pattern for DB interactions.
 -   **Clients (`clients/`)**: External service clients (GitHub, Research APIs) plus unified LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`.
 -   **Async Tasks (`celery/`)**: Background task execution with Redis.
--   **Configuration (`config/`)**: Environment-based settings and feature flags (e.g., `OBS_GRAPHS_LLM_BACKEND`, Ollama/MLX model parameters).
+-   **Configuration (`config/`)**: Environment-based settings and feature flags (e.g., `OBS_GRAPHS_LLM_BACKEND`). Backend-specific parameters live in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py`.
 -   **DI (`container.py`)**: Protocol-based Dependency Injection for loose coupling.
 -   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions.
 
