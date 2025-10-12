@@ -1,6 +1,7 @@
 """HTTP client for ollama-deep-researcher service."""
 
 import logging
+from typing import Optional
 
 import httpx
 
@@ -27,12 +28,13 @@ class ResearchApiClient:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
 
-    def run_research(self, query: str) -> ResearchResult:
+    def run_research(self, query: str, backend: Optional[str] = None) -> ResearchResult:
         """
         Run research on the given query.
 
         Args:
             query: Search query or topic description
+            backend: Optional identifier for the LLM backend to use
 
         Returns:
             ResearchResult containing generated article and metadata
@@ -46,8 +48,12 @@ class ResearchApiClient:
             if not endpoint.endswith("/research"):
                 endpoint = f"{endpoint}/research"
 
+            payload = {"query": query}
+            if backend:
+                payload["backend"] = backend
+
             with httpx.Client(timeout=self.timeout) as client:
-                response = client.post(endpoint, json={"query": query})
+                response = client.post(endpoint, json=payload)
                 response.raise_for_status()
 
                 data = response.json()

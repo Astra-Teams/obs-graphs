@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.obs_graphs.clients import OllamaClient
 from src.obs_graphs.container import DependencyContainer, get_container
 
 
@@ -50,21 +51,28 @@ def test_get_vault_service_lazy_instantiation(
     mock_vault_service.assert_called_once_with(tmp_path)
 
 
+@patch("dev.mocks_clients.MockOllamaClient")
 @patch("src.obs_graphs.container.obs_graphs_settings")
 def test_get_llm_returns_mock_when_flag_enabled(
-    mock_obs_settings, container: DependencyContainer, default_settings
+    mock_obs_settings,
+    mock_mock_ollama,
+    container: DependencyContainer,
+    default_settings,
 ):
-    """Test that MockOllamaClient is returned when USE_MOCK_LLM=True."""
+    """Test that a wrapped MockOllamaClient is returned when USE_MOCK_LLM=True."""
     mock_obs_settings.use_mock_llm = True
-    # Act
+    mock_obs_settings.llm_backend = "ollama"
+    mock_instance = MagicMock()
+    mock_instance.invoke.return_value = "mock-response"
+    mock_mock_ollama.return_value = mock_instance
+
     llm1 = container.get_llm()
     llm2 = container.get_llm()
 
-    # Assert
-    from dev.mocks_clients import MockOllamaClient
-
-    assert isinstance(llm1, MockOllamaClient)
+    assert isinstance(llm1, OllamaClient)
     assert llm1 is llm2  # Should be cached
+    assert llm1.invoke("prompt") == mock_instance.invoke.return_value
+    mock_mock_ollama.assert_called_once()
 
 
 @patch("src.obs_graphs.container.GithubService")
@@ -100,6 +108,12 @@ def test_get_node_invalid_name(container: DependencyContainer):
     # Act & Assert
     with pytest.raises(ValueError, match="Unknown node: invalid_node"):
         container.get_node("invalid_node")
+
+
+def test_provide_llm_client_unsupported_backend(container: DependencyContainer):
+    """Requesting an unsupported backend should raise an error."""
+    with pytest.raises(ValueError):
+        container.provide_llm_client("invalid-backend")
 
 
 def test_get_container_singleton():

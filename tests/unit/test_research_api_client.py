@@ -73,6 +73,28 @@ def test_run_research_success(mock_client_class, client):
 
 
 @patch("httpx.Client")
+def test_run_research_with_backend(mock_client_class, client):
+    """Backend parameter should be forwarded in the request payload."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "success": True,
+        "article": "# Article\n\nContent",
+    }
+    mock_client = MagicMock()
+    mock_client.post.return_value = mock_response
+    mock_client.__enter__.return_value = mock_client
+    mock_client.__exit__.return_value = None
+    mock_client_class.return_value = mock_client
+
+    client.run_research("Graph architectures", backend="mlx")
+
+    mock_client.post.assert_called_once_with(
+        "http://test-api:8000/research",
+        json={"query": "Graph architectures", "backend": "mlx"},
+    )
+
+
+@patch("httpx.Client")
 def test_run_research_defaults(mock_client_class, client):
     """Test research API call handles missing optional fields."""
     mock_response = MagicMock()

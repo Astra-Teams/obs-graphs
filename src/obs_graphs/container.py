@@ -1,21 +1,23 @@
 """Dependency injection container for the Obsidian Vault workflow application."""
 
+import platform
 from pathlib import Path
 from typing import Dict, Optional, Union
 
 import redis
-from langchain_core.language_models.llms import BaseLLM
-from langchain_ollama import OllamaLLM
 
-from src.obs_graphs.clients import GithubClient
+from src.obs_graphs.clients import GithubClient, MLXClient, OllamaClient
 from src.obs_graphs.config import (
+    mlx_settings,
     obs_graphs_settings,
+    ollama_settings,
     redis_settings,
     research_api_settings,
 )
 from src.obs_graphs.protocols import (
     GithubClientProtocol,
     GithubServiceProtocol,
+    LLMClientProtocol,
     NodeProtocol,
     ResearchClientProtocol,
     VaultServiceProtocol,
@@ -33,7 +35,9 @@ class DependencyContainer:
         self._vault_service: Optional[VaultServiceProtocol] = None
         self._research_client: Optional[ResearchClientProtocol] = None
         self._nodes: Dict[str, NodeProtocol] = {}
-        self._llm: Optional[BaseLLM] = None
+        self._ollama_client: Optional[LLMClientProtocol] = None
+        self._mlx_client: Optional[LLMClientProtocol] = None
+        self._mock_llm_client: Optional[LLMClientProtocol] = None
         self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
         self._current_branch: Optional[str] = None
         self._vault_path: Optional[Path] = None
@@ -132,7 +136,9 @@ class DependencyContainer:
                     def __init__(self):
                         self.client = MockOlmDRchClient()
 
-                    def run_research(self, query: str) -> ResearchResult:
+                    def run_research(
+                        self, query: str, backend: Optional[str] = None
+                    ) -> ResearchResult:
                         result = self.client.research(query)
                         article = result["article"]
                         if not isinstance(article, str) or not article.strip():
@@ -166,23 +172,66 @@ class DependencyContainer:
                 )
         return self._research_client
 
-    def get_llm(self) -> BaseLLM:
+    def provide_llm_client(self, backend: Optional[str] = None) -> LLMClientProtocol:
         """
-        Get the LLM instance.
+        Get an LLM client for the requested backend.
 
-        Returns MockOllamaClient if USE_MOCK_LLM=True, otherwise OllamaLLM.
+        Args:
+            backend: Optional backend identifier ("ollama" or "mlx").
+
+        Returns:
+            An LLM client implementing LLMClientProtocol.
         """
-        if self._llm is None:
-            if obs_graphs_settings.use_mock_llm:
-                from dev.mocks_clients import MockOllamaClient
+        target_backend = (backend or obs_graphs_settings.llm_backend).strip().lower()
+        if target_backend not in {"ollama", "mlx"}:
+            raise ValueError(f"Unsupported LLM backend: {target_backend}")
 
-                self._llm = MockOllamaClient()
-            else:
-                self._llm = OllamaLLM(
-                    model=obs_graphs_settings.llm_model,
-                    base_url=obs_graphs_settings.ollama_host,
-                )
-        return self._llm
+        if obs_graphs_settings.use_mock_llm:
+            return self._get_mock_llm_client()
+
+        if target_backend == "mlx":
+            return self._get_mlx_client()
+
+        return self._get_ollama_client()
+
+    def get_llm(self) -> LLMClientProtocol:
+        """Return the default LLM client configured for the application."""
+        return self.provide_llm_client()
+
+    def _get_mock_llm_client(self) -> LLMClientProtocol:
+        if self._mock_llm_client is None:
+            from dev.mocks_clients import MockOllamaClient
+
+            self._mock_llm_client = OllamaClient(
+                model=ollama_settings.model,
+                base_url=ollama_settings.base_url,
+                llm=MockOllamaClient(),
+            )
+        return self._mock_llm_client
+
+    def _get_ollama_client(self) -> LLMClientProtocol:
+        if self._ollama_client is None:
+            self._ollama_client = OllamaClient(
+                model=ollama_settings.model,
+                base_url=ollama_settings.base_url,
+            )
+        return self._ollama_client
+
+    def _get_mlx_client(self) -> LLMClientProtocol:
+        machine = platform.machine().lower()
+        if machine not in {"arm64", "aarch64"}:
+            raise RuntimeError(
+                "MLX backend is only supported on Apple Silicon (ARM64/AArch64)."
+            )
+
+        if self._mlx_client is None:
+            self._mlx_client = MLXClient(
+                model=mlx_settings.model,
+                max_tokens=mlx_settings.max_tokens,
+                temperature=mlx_settings.temperature,
+                top_p=mlx_settings.top_p,
+            )
+        return self._mlx_client
 
     def get_redis_client(self) -> Union[redis.Redis, "redis.FakeRedis"]:
         """
@@ -232,7 +281,7 @@ class DependencyContainer:
 
             # Instantiate with dependencies
             if name == "article_proposal":
-                self._nodes[name] = node_class(self.get_llm())
+                self._nodes[name] = node_class(self.provide_llm_client)
             elif name == "submit_pull_request":
                 self._nodes[name] = node_class(self.get_github_service())
             elif name == "deep_research":

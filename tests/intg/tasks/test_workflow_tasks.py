@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.obs_graphs.celery.tasks import run_workflow_task
+from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.db.database import Base
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 from tests.db.conftest import create_pending_workflow
@@ -346,6 +347,7 @@ class TestRunWorkflowTask:
 
         assert hasattr(request, "prompt")
         assert request.prompt == "Test research prompt for propagation"
+        assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -398,6 +400,7 @@ class TestRunWorkflowTask:
 
         assert hasattr(request, "prompt")
         assert request.prompt == "Default research prompt"
+        assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -452,3 +455,59 @@ class TestRunWorkflowTask:
 
         assert request.prompt == "Research quantum computing"
         assert request.strategy == WorkflowStrategy.RESEARCH_PROPOSAL
+        assert request.backend == obs_graphs_settings.llm_backend
+
+    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
+    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.container.get_container")
+    def test_task_uses_backend_from_metadata(
+        self,
+        mock_get_container,
+        mock_get_db,
+        mock_prepare_dir,
+        test_db,
+    ):
+        """Task should respect backend stored in workflow metadata."""
+        mock_prepare_dir.return_value = Path("/tmp/vault")
+
+        workflow = Workflow(
+            prompt="Backend specific prompt",
+            status=WorkflowStatus.PENDING,
+            strategy=None,
+            workflow_metadata={"backend": "mlx"},
+        )
+        test_db.add(workflow)
+        test_db.commit()
+        test_db.refresh(workflow)
+
+        mock_get_db.return_value = iter([test_db])
+
+        mock_container = MagicMock()
+        mock_get_container.return_value = mock_container
+        mock_container.set_vault_path = MagicMock()
+
+        mock_builder_instance = MagicMock()
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.changes = []
+        mock_result.summary = "Success"
+        mock_result.pr_url = ""
+        mock_result.branch_name = "test-branch"
+        mock_result.node_results = {}
+        mock_builder_instance.run_workflow.return_value = mock_result
+        mock_container.get_graph_builder.return_value = mock_builder_instance
+
+        workflow_id = workflow.id
+
+        run_workflow_task(workflow_id)
+
+        mock_builder_instance.run_workflow.assert_called_once()
+        request = mock_builder_instance.run_workflow.call_args[0][0]
+        assert request.backend == "mlx"
+
+        # Re-query workflow from database to access updated metadata
+        updated_workflow = (
+            test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
+        )
+        updated_metadata = updated_workflow.workflow_metadata or {}
+        assert updated_metadata.get("backend") == "mlx"

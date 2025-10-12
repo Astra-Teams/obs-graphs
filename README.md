@@ -7,6 +7,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 - **FastAPI** application that exposes workflow orchestration endpoints.
 - **LangGraph** powered agents for article improvements, classification, cross-referencing, and vault quality audits.
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
+- **Pluggable LLM backends** (Ollama or MLX) with a unified client protocol for agent prompts.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
 
 ## Directory Structure
@@ -15,7 +16,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 ├── src/obs_graphs/       # Main application package
 │   ├── api/             # FastAPI endpoints and schemas
 │   ├── celery/          # Celery tasks for async workflow execution
-│   ├── clients/         # External service clients (GitHub, research API)
+│   ├── clients/         # External service clients (GitHub, research API, LLM adapters)
 │   ├── config/          # Configuration modules
 │   ├── container.py     # Dependency injection container
 │   ├── db/              # Database models and session management
@@ -29,7 +30,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 ├── dev/                 # Development fixtures and mocks
 ├── submodules/          # Git submodules for external dependencies
 │   ├── obsidian-vault/              # Local checkout of the vault used during workflows
-│   └── ollama-deep-researcher/      # Reference implementation of the external research API
+│   └── olm-d-rch/                   # Reference implementation of the external research API
 └── justfile             # Helpful automation commands (setup, tests, linting)
 ```
 
@@ -62,9 +63,11 @@ just setup
 
 All configuration is centralised in `.env`. Update it to reflect your environment. Important options include:
 
-- `USE_*` toggles – enable or disable external integrations (GitHub, LLM, Redis). Note: Research API is always mocked.
+- `USE_*` toggles – enable or disable external integrations (GitHub, LLM, Redis, research API mocks). By default `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true`, but you can point to a live service by setting it to `false`.
 - `OBSIDIAN_VAULT_GITHUB_TOKEN` / `OBSIDIAN_VAULT_REPOSITORY` – credentials for committing changes back to GitHub.
 - `VAULT_SUBMODULE_PATH` – filesystem path to the local Obsidian vault submodule checkout.
+- `OBS_GRAPHS_LLM_BACKEND` – default LLM backend (`ollama` or `mlx`) used by workflow nodes. Backend-specific options are defined in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py` (for example `OBS_GRAPHS_OLLAMA_MODEL`, `OLLAMA_HOST`, `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, etc.).
+- `RESEARCH_API_URL` / related settings under `src/obs_graphs/config/research_api_settings.py` – connection details for the external deep-research API (served by the `olm-d-rch` submodule when mocks are disabled).
 
 ### 3. Run the application stack
 
@@ -96,6 +99,16 @@ just e2e-test          # Spin up stack and run pytest with PostgreSQL and mocked
 
 E2E tests rely on PostgreSQL and will wait for `obs-api` to report healthy before executing tests.
 
+### Selecting an LLM backend
+
+Workflows obtain their language model through the dependency container. You can switch between Ollama and MLX without code changes:
+
+- Set `OBS_GRAPHS_LLM_BACKEND=ollama` (default) to use an Ollama server. Configure the Ollama-specific settings in `src/obs_graphs/config/ollama_settings.py` (e.g. `OLLAMA_HOST`, `OBS_GRAPHS_OLLAMA_MODEL`).
+- Set `OBS_GRAPHS_LLM_BACKEND=mlx` to use the MLX runtime on Apple Silicon. Configure MLX-specific settings in `src/obs_graphs/config/mlx_settings.py` (e.g. `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, `OBS_GRAPHS_MLX_TEMPERATURE`, `OBS_GRAPHS_MLX_TOP_P`). The runtime requires the `mlx-lm` package and an ARM64 Mac; the container raises a clear error on unsupported hardware.
+- For development, enable `USE_MOCK_LLM=true` to wrap the existing mock responses behind the same protocol.
+
+Individual workflow requests (API or Celery) can override the backend via the `backend` field; the choice is propagated to both the Article Proposal agent and the deep research client.
+
 ### 5. Quick API test
 
 After starting the development stack with `just up`, verify the API is running:
@@ -108,7 +121,7 @@ curl http://127.0.0.1:8001/health
 curl http://127.0.0.1:8001/api/v1/workflows
 ```
 
-Note: Research API is always mocked in this project, so all research operations use `MockResearchApiClient` which returns sample data.
+By default the research API client uses the in-repo mock. To exercise the real service, run the `olm-d-rch` submodule (or another compatible deployment), set `USE_MOCK_OLLAMA_DEEP_RESEARCHER=false`, and ensure the research API settings point to that endpoint.
 
 ## Workflow model
 
@@ -124,6 +137,6 @@ This design keeps runtime execution deterministic and avoids invoking Git operat
 
 ## Troubleshooting
 
-- **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `src/submodules/obsidian-vault` and `src/submodules/ollama-deep-researcher`.
+- **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `src/submodules/obsidian-vault` and `src/submodules/olm-d-rch`.
 - **Using a different vault?** Update the `src/submodules/obsidian-vault` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
-- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Research API is always mocked for simplicity.
+- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Leave `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true` for local mocks, or flip it to `false` and point the research client at a live `olm-d-rch` deployment.

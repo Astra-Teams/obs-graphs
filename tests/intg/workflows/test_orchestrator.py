@@ -129,6 +129,36 @@ def test_execute_workflow_with_multiple_nodes(mock_container):
     assert mock_container.get_node.call_count == 3
 
 
+def test_execute_workflow_passes_backend_to_nodes(mock_container):
+    """The backend selection should appear in the node execution context."""
+
+    captured_backends: list[str] = []
+
+    class RecordingAgent(MockAgent):
+        def execute(self, context: dict) -> AgentResult:  # type: ignore[override]
+            captured_backends.append(context.get("backend"))
+            return super().execute(context)
+
+    def node_factory(name: str):
+        return RecordingAgent()
+
+    mock_container.get_node.side_effect = node_factory
+
+    plan = WorkflowPlan(
+        strategy="test_plan", nodes=["article_proposal", "deep_research"]
+    )
+    article_proposal_graph = ArticleProposalGraph()
+
+    article_proposal_graph.execute_workflow(
+        plan,
+        mock_container,
+        prompt="Backend propagation test",
+        backend="mlx",
+    )
+
+    assert captured_backends == ["mlx", "mlx"]
+
+
 @patch("src.obs_graphs.graphs.article_proposal.graph.get_container")
 def test_run_workflow_collects_pr_metadata(mock_get_container):
     """run_workflow should propagate PR metadata from the submit node."""

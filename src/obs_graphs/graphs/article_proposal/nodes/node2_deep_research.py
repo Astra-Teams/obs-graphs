@@ -64,7 +64,11 @@ class DeepResearchAgent(NodeProtocol):
         try:
             # Call research API with topic
             logger.info(f"Starting research for topic: {topic_title}")
-            research_result = self.research_client.run_research(topic_title)
+            backend = context.get("backend")
+            research_result = self.research_client.run_research(
+                topic_title,
+                backend=backend,
+            )
 
             # Generate unique filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
