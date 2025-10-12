@@ -61,6 +61,7 @@ RUN chown appuser:appgroup /app
 # Copy application code and submodules
 COPY --chown=appuser:appgroup src/ ./src
 COPY --chown=appuser:appgroup alembic/ ./alembic
+COPY --chown=appuser:appgroup submodules/obsidian-vault/ ./submodules/obsidian-vault/
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
 # Initialize submodules if .git exists
