@@ -124,6 +124,10 @@ async def run_workflow(
             else:
                 workflow.status = WorkflowStatus.FAILED
                 workflow.error_message = result.summary
+                # Ensure backend is recorded in metadata on failure as well
+                metadata = workflow.workflow_metadata or {}
+                metadata.setdefault("backend", selected_backend)
+                workflow.workflow_metadata = metadata
 
             workflow.completed_at = datetime.now(timezone.utc)
             db.commit()

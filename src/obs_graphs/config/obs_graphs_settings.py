@@ -1,6 +1,6 @@
 """Main application configuration for the obs-graphs project."""
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -74,18 +74,6 @@ class ObsGraphsSettings(BaseSettings):
         description="LLM backend to use for article proposal generation (ollama or mlx).",
         alias="OBS_GRAPHS_LLM_BACKEND",
     )
-    llm_model: str = Field(
-        default="llama3.2:3b",
-        title="LLM Model Name",
-        description="Name of the LLM model to use.",
-        alias="OBS_GRAPHS_OLLAMA_MODEL",
-    )
-    ollama_host: Optional[str] = Field(
-        default=None,
-        title="Ollama Base URL",
-        description="Base URL for the Ollama API.",
-        alias="OLLAMA_HOST",
-    )
 
     # --- GitHub Integration ---
     github_token: str = Field(
@@ -114,18 +102,9 @@ class ObsGraphsSettings(BaseSettings):
         alias="VAULT_SUBMODULE_PATH",
     )
 
-    @field_validator("ollama_host", mode="before")
-    @classmethod
-    def normalize_ollama_host(cls, value: Any) -> Any:
-        """Normalize ollama_host by trimming whitespace and ensuring trailing slash."""
-        if value is None:
-            return None
-        if isinstance(value, str):
-            trimmed = value.strip()
-            if not trimmed:
-                return None
-            return trimmed.rstrip("/") + "/"
-        return value
+    # Note: Ollama/MLX backend-specific configuration lives in
+    # `src.obs_graphs.config.ollama_settings` and `src.obs_graphs.config.mlx_settings`.
+    # This class only defines the default backend selector (`llm_backend`).
 
     @field_validator("debug", mode="before")
     @classmethod
