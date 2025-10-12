@@ -42,12 +42,6 @@ class ObsGraphsSettings(BaseSettings):
         description="Toggle between SQLite (True) and PostgreSQL (False) databases.",
         alias="USE_SQLITE",
     )
-    use_mock_github: bool = Field(
-        default=False,
-        title="Use Mock GitHub",
-        description="Return a mocked GitHub client when enabled.",
-        alias="USE_MOCK_GITHUB",
-    )
     use_mock_llm: bool = Field(
         default=False,
         title="Use Mock LLM",
@@ -66,6 +60,12 @@ class ObsGraphsSettings(BaseSettings):
         description="Return a mocked ollama deep researcher client when enabled.",
         alias="USE_MOCK_OLLAMA_DEEP_RESEARCHER",
     )
+    use_mock_obs_gateway: bool = Field(
+        default=True,
+        title="Use Mock obs-gtwy Gateway",
+        description="Return a mocked obs-gtwy client when enabled.",
+        alias="USE_MOCK_OBS_GTWY",
+    )
 
     # --- LLM Settings ---
     llm_backend: str = Field(
@@ -75,26 +75,6 @@ class ObsGraphsSettings(BaseSettings):
         alias="OBS_GRAPHS_LLM_BACKEND",
     )
 
-    # --- GitHub Integration ---
-    github_token: str = Field(
-        default="",
-        title="GitHub Token",
-        description="Personal Access Token for GitHub API.",
-        alias="OBSIDIAN_VAULT_GITHUB_TOKEN",
-    )
-
-    github_repository: str = Field(
-        default="Astra-Teams/constellations",
-        title="GitHub Repository",
-        description="The target repository for creating pull requests.",
-        alias="OBSIDIAN_VAULT_REPOSITORY",
-    )
-    github_api_timeout_seconds: int = Field(
-        default=30,
-        title="GitHub API Timeout",
-        description="Timeout in seconds for GitHub API requests.",
-        alias="VAULT_GITHUB_API_TIMEOUT_SECONDS",
-    )
     vault_submodule_path: str = Field(
         default="src/submodules/obsidian-vault",
         title="Vault Submodule Path",

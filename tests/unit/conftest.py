@@ -11,7 +11,7 @@ def set_unit_test_env(monkeypatch):
     For subprocess-based tests, use subprocess env parameter.
     """
     monkeypatch.setenv("USE_SQLITE", "true")
-    monkeypatch.setenv("USE_MOCK_GITHUB", "true")
     monkeypatch.setenv("USE_MOCK_LLM", "true")
     monkeypatch.setenv("USE_MOCK_REDIS", "true")
     monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
+    monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")

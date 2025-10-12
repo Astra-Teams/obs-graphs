@@ -65,7 +65,6 @@ class TestRunWorkflowTask:
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
         mock_result.success = True
-        mock_result.pr_url = "https://github.com/test/repo/pull/1"
         mock_result.changes = []
         mock_result.summary = "Test summary"
         mock_result.branch_name = "test-branch"
@@ -85,7 +84,7 @@ class TestRunWorkflowTask:
         )
         assert updated_workflow is not None
         assert updated_workflow.status == WorkflowStatus.COMPLETED
-        assert updated_workflow.pr_url == "https://github.com/test/repo/pull/1"
+        assert updated_workflow.branch_name == "test-branch"
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -140,7 +139,6 @@ class TestRunWorkflowTask:
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
         mock_result.success = True
-        mock_result.pr_url = "https://github.com/test/repo/pull/1"
         mock_result.changes = []
         mock_result.summary = "Test"
         mock_result.branch_name = "test-branch"
@@ -164,14 +162,14 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.container.get_container")
-    def test_task_creates_pull_request(
+    def test_task_records_branch_name(
         self,
         mock_get_container,
         mock_get_db,
         mock_prepare_dir,
         test_db,
     ):
-        """Test that task stores PR URL in database."""
+        """Test that task stores branch name in the database."""
         mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
@@ -186,7 +184,6 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Improved articles"
-        mock_result.pr_url = "https://github.com/test/repo/pull/42"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
@@ -196,11 +193,11 @@ class TestRunWorkflowTask:
 
         run_workflow_task(workflow_id)
 
-        # Verify PR URL was stored
+        # Verify branch name was stored
         updated_workflow = (
             test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
         )
-        assert updated_workflow.pr_url == "https://github.com/test/repo/pull/42"
+        assert updated_workflow.branch_name == "test-branch"
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -227,7 +224,6 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.pr_url = "https://github.com/test/repo/pull/1"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
@@ -330,7 +326,6 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.pr_url = ""
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
@@ -383,7 +378,6 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.pr_url = ""
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
@@ -438,7 +432,6 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.pr_url = ""
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
@@ -491,7 +484,6 @@ class TestRunWorkflowTask:
         mock_result.success = True
         mock_result.changes = []
         mock_result.summary = "Success"
-        mock_result.pr_url = ""
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result

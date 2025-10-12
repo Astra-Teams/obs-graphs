@@ -6,8 +6,9 @@ from typing import Dict, Optional, Union
 
 import redis
 
-from src.obs_graphs.clients import GithubClient, MLXClient, OllamaClient
+from src.obs_graphs.clients import MLXClient, ObsGatewayClient, OllamaClient
 from src.obs_graphs.config import (
+    gateway_settings,
     mlx_settings,
     obs_graphs_settings,
     ollama_settings,
@@ -15,14 +16,13 @@ from src.obs_graphs.config import (
     research_api_settings,
 )
 from src.obs_graphs.protocols import (
-    GithubClientProtocol,
-    GithubServiceProtocol,
+    GatewayClientProtocol,
     LLMClientProtocol,
     NodeProtocol,
     ResearchClientProtocol,
     VaultServiceProtocol,
 )
-from src.obs_graphs.services import GithubService, VaultService
+from src.obs_graphs.services import VaultService
 
 
 class DependencyContainer:
@@ -30,8 +30,6 @@ class DependencyContainer:
 
     def __init__(self):
         """Initialize the container with empty caches."""
-        self._github_client: Optional[GithubClientProtocol] = None
-        self._github_service: Optional[GithubServiceProtocol] = None
         self._vault_service: Optional[VaultServiceProtocol] = None
         self._research_client: Optional[ResearchClientProtocol] = None
         self._nodes: Dict[str, NodeProtocol] = {}
@@ -41,21 +39,7 @@ class DependencyContainer:
         self._redis_client: Optional[Union[redis.Redis, "redis.FakeRedis"]] = None
         self._current_branch: Optional[str] = None
         self._vault_path: Optional[Path] = None
-
-    def get_github_client(self) -> GithubClientProtocol:
-        """
-        Get the GitHub client instance.
-
-        Returns MockGithubClient if USE_MOCK_GITHUB=True, otherwise GithubClient.
-        """
-        if self._github_client is None:
-            if obs_graphs_settings.use_mock_github:
-                from dev.mocks_clients import MockGithubClient
-
-                self._github_client = MockGithubClient()
-            else:
-                self._github_client = GithubClient(obs_graphs_settings)
-        return self._github_client
+        self._gateway_client: Optional[GatewayClientProtocol] = None
 
     def set_branch(self, branch: str) -> None:
         """
@@ -93,11 +77,32 @@ class DependencyContainer:
             self._vault_service = VaultService(self._vault_path)
         return self._vault_service
 
-    def get_github_service(self) -> GithubServiceProtocol:
-        """Get the high-level GitHub service instance."""
-        if self._github_service is None:
-            self._github_service = GithubService(self.get_github_client())
-        return self._github_service
+    def get_gateway_client(self) -> GatewayClientProtocol:
+        """Return the obs-gtwy gateway client implementation."""
+        if self._gateway_client is None:
+            if obs_graphs_settings.use_mock_obs_gateway:
+                from dev.mocks_clients import MockObsGatewayClient
+
+                class AdaptedMockGateway(GatewayClientProtocol):
+                    def __init__(self):
+                        self._client = MockObsGatewayClient()
+
+                    def create_draft_branch(
+                        self, *, file_name: str, content: str, branch_name: str
+                    ) -> str:
+                        return self._client.create_draft_branch(
+                            file_name=file_name,
+                            content=content,
+                            branch_name=branch_name,
+                        )
+
+                self._gateway_client = AdaptedMockGateway()
+            else:
+                self._gateway_client = ObsGatewayClient(
+                    base_url=gateway_settings.base_url,
+                    timeout_seconds=gateway_settings.timeout_seconds,
+                )
+        return self._gateway_client
 
     def get_research_client(self) -> ResearchClientProtocol:
         """
@@ -283,7 +288,7 @@ class DependencyContainer:
             if name == "article_proposal":
                 self._nodes[name] = node_class(self.provide_llm_client)
             elif name == "submit_pull_request":
-                self._nodes[name] = node_class(self.get_github_service())
+                self._nodes[name] = node_class(self.get_gateway_client())
             elif name == "deep_research":
                 self._nodes[name] = node_class(self.get_research_client())
             else:

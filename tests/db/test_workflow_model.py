@@ -20,7 +20,7 @@ def test_create_pending_workflow_defaults(db_session: Session) -> None:
     assert workflow.created_at is not None
     assert workflow.started_at is None
     assert workflow.completed_at is None
-    assert workflow.pr_url is None
+    assert workflow.branch_name is None
     assert workflow.error_message is None
     assert (
         repr(workflow)
@@ -36,7 +36,7 @@ def test_workflow_transition_to_completed(db_session: Session) -> None:
     completed_at = datetime.now(timezone.utc)
     workflow.status = WorkflowStatus.COMPLETED
     workflow.completed_at = completed_at
-    workflow.pr_url = "https://github.com/test/repo/pull/99"
+    workflow.branch_name = "draft/sample"
     workflow.workflow_metadata = {
         "agent_results": {"new_article": {"success": True, "changes_count": 1}},
         "total_changes": 1,
@@ -45,7 +45,7 @@ def test_workflow_transition_to_completed(db_session: Session) -> None:
     db_session.refresh(workflow)
 
     assert workflow.status is WorkflowStatus.COMPLETED
-    assert workflow.pr_url == "https://github.com/test/repo/pull/99"
+    assert workflow.branch_name == "draft/sample"
     assert workflow.workflow_metadata["total_changes"] == 1
     assert workflow.workflow_metadata["agent_results"]["new_article"]["success"] is True
     assert workflow.started_at == original_started_at

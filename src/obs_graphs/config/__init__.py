@@ -1,6 +1,7 @@
 """Configuration module for the obs-graphs project."""
 
 from .db_settings import DBSettings
+from .gateway_settings import GatewaySettings
 from .mlx_settings import MLXSettings
 from .obs_graphs_settings import ObsGraphsSettings
 from .ollama_settings import OllamaSettings
@@ -12,6 +13,7 @@ from .workflow_settings import WorkflowSettings
 obs_graphs_settings = ObsGraphsSettings()
 ollama_settings = OllamaSettings()
 mlx_settings = MLXSettings()
+gateway_settings = GatewaySettings()
 db_settings = DBSettings()
 redis_settings = RedisSettings()
 research_api_settings = ResearchAPISettings()
@@ -23,6 +25,7 @@ __all__ = [
     "ObsGraphsSettings",
     "OllamaSettings",
     "MLXSettings",
+    "GatewaySettings",
     "RedisSettings",
     "ResearchAPISettings",
     "WorkflowSettings",
@@ -30,6 +33,7 @@ __all__ = [
     "obs_graphs_settings",
     "ollama_settings",
     "mlx_settings",
+    "gateway_settings",
     "db_settings",
     "redis_settings",
     "research_api_settings",

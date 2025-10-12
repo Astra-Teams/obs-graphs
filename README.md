@@ -1,6 +1,6 @@
 # Obsidian Graphs
 
-Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through GitHub pull requests.
+Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through obs-gtwy managed draft branches.
 
 ## What's in the box?
 
@@ -16,7 +16,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 ├── src/obs_graphs/       # Main application package
 │   ├── api/             # FastAPI endpoints and schemas
 │   ├── celery/          # Celery tasks for async workflow execution
-│   ├── clients/         # External service clients (GitHub, research API, LLM adapters)
+│   ├── clients/         # External service clients (obs-gtwy, research API, LLM adapters)
 │   ├── config/          # Configuration modules
 │   ├── container.py     # Dependency injection container
 │   ├── db/              # Database models and session management
@@ -63,8 +63,9 @@ just setup
 
 All configuration is centralised in `.env`. Update it to reflect your environment. Important options include:
 
-- `USE_*` toggles – enable or disable external integrations (GitHub, LLM, Redis, research API mocks). By default `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true`, but you can point to a live service by setting it to `false`.
-- `OBSIDIAN_VAULT_GITHUB_TOKEN` / `OBSIDIAN_VAULT_REPOSITORY` – credentials for committing changes back to GitHub.
+- `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true`, but you can point to a live service by setting it to `false`.
+- `USE_MOCK_OBS_GTWY` – when `true`, obs-graphs uses an in-process mock of the obs-gtwy gateway while the real API is not deployed.
+- `OBS_GTWY_API_URL` / `OBS_GTWY_TIMEOUT_SECONDS` – connection details for the gateway responsible for materialising draft branches.
 - `VAULT_SUBMODULE_PATH` – filesystem path to the local Obsidian vault submodule checkout.
 - `OBS_GRAPHS_LLM_BACKEND` – default LLM backend (`ollama` or `mlx`) used by workflow nodes. Backend-specific options are defined in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py` (for example `OBS_GRAPHS_OLLAMA_MODEL`, `OLLAMA_HOST`, `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, etc.).
 - `RESEARCH_API_URL` / related settings under `src/obs_graphs/config/research_api_settings.py` – connection details for the external deep-research API (served by the `olm-d-rch` submodule when mocks are disabled).

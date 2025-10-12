@@ -11,10 +11,10 @@ from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 def set_db_test_env(monkeypatch):
     """Setup environment variables for database tests."""
     # monkeypatch.setenv("USE_SQLITE", "false")  # Commented out to allow db switching tests
-    monkeypatch.setenv("USE_MOCK_GITHUB", "true")
     monkeypatch.setenv("USE_MOCK_LLM", "true")
     monkeypatch.setenv("USE_MOCK_REDIS", "true")
     monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
+    monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
     monkeypatch.setenv("OBS_GRAPHS_OLLAMA_MODEL", "tinyllama:1.1b")
     monkeypatch.setenv("RESEARCH_API_OLLAMA_MODEL", "tinyllama:1.1b")
 
@@ -39,7 +39,7 @@ def create_pending_workflow(db_session, **kwargs) -> Workflow:
         strategy=kwargs.get("strategy", None),
         started_at=None,
         completed_at=None,
-        pr_url=None,
+        branch_name=None,
         error_message=None,
         celery_task_id=kwargs.get("celery_task_id", None),
         workflow_metadata=kwargs.get("workflow_metadata", None),
@@ -69,7 +69,7 @@ def create_running_workflow(db_session, **kwargs) -> Workflow:
         strategy=kwargs.get("strategy", "new_article"),
         started_at=kwargs.get("started_at", datetime.now(timezone.utc)),
         completed_at=None,
-        pr_url=None,
+        branch_name=None,
         error_message=None,
         celery_task_id=kwargs.get("celery_task_id", "test-task-id-123"),
         workflow_metadata=kwargs.get("workflow_metadata", {"nodes_executed": []}),
@@ -86,22 +86,22 @@ def create_running_workflow(db_session, **kwargs) -> Workflow:
 
 
 def create_completed_workflow(
-    db_session, with_pr_url: bool = True, **kwargs
+    db_session, with_branch: bool = True, **kwargs
 ) -> Workflow:
     """
     Create a workflow in COMPLETED state.
 
     Args:
         db_session: SQLAlchemy database session
-        with_pr_url: Whether to include a PR URL
+        with_branch: Whether to include a branch name
         **kwargs: Optional fields to override defaults
 
     Returns:
         Workflow instance in COMPLETED state
     """
-    pr_url = None
-    if with_pr_url:
-        pr_url = kwargs.get("pr_url", "https://github.com/test-user/test-vault/pull/42")
+    branch_name = None
+    if with_branch:
+        branch_name = kwargs.get("branch_name", "draft/sample-draft")
 
     created_at = kwargs.get(
         "created_at", datetime.now(timezone.utc) - timedelta(hours=1)
@@ -114,7 +114,7 @@ def create_completed_workflow(
         strategy=kwargs.get("strategy", "new_article"),
         started_at=started_at,
         completed_at=completed_at,
-        pr_url=pr_url,
+        branch_name=branch_name,
         error_message=None,
         celery_task_id=kwargs.get("celery_task_id", "test-task-completed-456"),
         workflow_metadata=kwargs.get(
@@ -173,7 +173,7 @@ def create_failed_workflow(
         strategy=kwargs.get("strategy", "improvement"),
         started_at=started_at,
         completed_at=completed_at,
-        pr_url=None,
+        branch_name=None,
         error_message=error_message,
         celery_task_id=kwargs.get("celery_task_id", "test-task-failed-789"),
         workflow_metadata=kwargs.get(
@@ -210,7 +210,7 @@ def create_workflow_with_custom_metadata(
         strategy=kwargs.get("strategy", "custom"),
         started_at=kwargs.get("started_at", datetime.now(timezone.utc)),
         completed_at=kwargs.get("completed_at", None),
-        pr_url=kwargs.get("pr_url", None),
+        branch_name=kwargs.get("branch_name", None),
         error_message=kwargs.get("error_message", None),
         celery_task_id=kwargs.get("celery_task_id", "test-task-custom-999"),
         workflow_metadata=metadata,

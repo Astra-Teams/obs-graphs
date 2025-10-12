@@ -23,6 +23,6 @@ class WorkflowSettings(BaseSettings):
     default_branch: str = Field(
         default="main",
         title="Workflow Default Branch",
-        description="The default branch to use as the base for pull requests.",
+        description="Base branch reference used when preparing draft submissions.",
         alias="WORKFLOW_DEFAULT_BRANCH",
     )

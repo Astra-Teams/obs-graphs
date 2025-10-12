@@ -14,23 +14,6 @@ def container():
     return DependencyContainer()
 
 
-@patch("src.obs_graphs.container.obs_graphs_settings")
-def test_get_github_client_returns_mock_when_flag_enabled(
-    mock_obs_settings, container: DependencyContainer, default_settings
-):
-    """Test that MockGithubClient is returned when USE_MOCK_GITHUB=True."""
-    mock_obs_settings.use_mock_github = True
-    # Act
-    client1 = container.get_github_client()
-    client2 = container.get_github_client()
-
-    # Assert
-    from dev.mocks_clients import MockGithubClient
-
-    assert isinstance(client1, MockGithubClient)
-    assert client1 is client2  # Should be cached
-
-
 @patch("src.obs_graphs.container.VaultService")
 def test_get_vault_service_lazy_instantiation(
     mock_vault_service, container: DependencyContainer, tmp_path
@@ -75,20 +58,21 @@ def test_get_llm_returns_mock_when_flag_enabled(
     mock_mock_ollama.assert_called_once()
 
 
-@patch("src.obs_graphs.container.GithubService")
-def test_get_github_service_lazy_instantiation(
-    mock_github_service, container: DependencyContainer
+@patch("src.obs_graphs.container.obs_graphs_settings")
+def test_get_gateway_client_returns_mock_when_flag_enabled(
+    mock_obs_settings, container: DependencyContainer
 ):
-    """Test that GithubService is lazily instantiated and cached."""
-    mock_instance = MagicMock()
-    mock_github_service.return_value = mock_instance
-    container.get_github_client = MagicMock(return_value=MagicMock())
+    """Gateway client should return the mock implementation when flag enabled."""
+    mock_obs_settings.use_mock_obs_gateway = True
 
-    service1 = container.get_github_service()
-    service2 = container.get_github_service()
+    client1 = container.get_gateway_client()
+    client2 = container.get_gateway_client()
 
-    assert service1 is service2 is mock_instance
-    mock_github_service.assert_called_once()
+    from dev.mocks_clients import MockObsGatewayClient
+
+    assert hasattr(client1, "create_draft_branch")
+    assert client1 is client2
+    assert isinstance(client1._client, MockObsGatewayClient)
 
 
 def test_get_node_valid_name(container: DependencyContainer):
