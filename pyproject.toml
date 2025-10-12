@@ -13,7 +13,7 @@ dependencies = [
     "jinja2>=3.1.4,<4.0.0",
     "langchain>=0.1.0,<0.4.0",
     "langchain-community>=0.3.0,<0.4.0",
-    "langchain-ollama>=0.1.0,<0.3.0",
+    "langchain-ollama>=0.3.6,<0.4.0",
     "langchain-openai>=0.0.5,<0.3.0",
     "langgraph>=0.0.20,<0.3.0",
     "ollama>=0.5.3,<0.6.0",
@@ -38,8 +38,8 @@ dev = [
     "ruff>=0.12.10",
     "testcontainers[postgres]>=4.6.0",
     "watchdog[watchmedo]>=4.0.1",
-    "obs-gtwy-sdk @ git+https://github.com/asterismhq/obs-gtwy.git#subdirectory=sdk/mock_obs_gtwy_client",
-    "olm-d-rch-sdk @ git+https://github.com/asterismhq/olm-d-rch.git#subdirectory=sdk/mock_olm_d_rch_client",
+    "obs-gtwy-api @ git+https://github.com/asterismhq/obs-gtwy.git",
+    "olm-d-rch @ git+https://github.com/asterismhq/olm-d-rch.git",
 ]
 
 [build-system]
