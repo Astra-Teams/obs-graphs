@@ -84,25 +84,9 @@ class DependencyContainer:
             gateway_timeout = gateway_settings.timeout_seconds
 
             if obs_graphs_settings.use_mock_obs_gateway:
-                import importlib.util
-
-                client_path = (
-                    Path(__file__).resolve().parents[1]
-                    / "submodules"
-                    / "obs-gtwy"
-                    / "sdk"
-                    / "mock_obs_gtwy_client"
-                    / "mock_obs_gtwy_client.py"
+                from mock_obs_gtwy_client.mock_obs_gtwy_client import (
+                    MockObsGtwyClient,
                 )
-                spec = importlib.util.spec_from_file_location(
-                    "mock_obs_gtwy_client", client_path
-                )
-                if spec is None or spec.loader is None:
-                    raise ImportError("Unable to load mock_obs_gtwy_client module")
-
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                MockObsGtwyClient = module.MockObsGtwyClient
 
                 class AdaptedMockGateway(GatewayClientProtocol):
                     def __init__(self):
@@ -140,29 +124,13 @@ class DependencyContainer:
         """
         if self._research_client is None:
             if obs_graphs_settings.use_mock_ollama_deep_researcher:
-                import importlib.util
-                from pathlib import Path
+                from mock_olm_d_rch_client.mock_olm_d_rch_client import (
+                    MockOlmDRchClient,
+                )
 
                 from src.obs_graphs.protocols.research_client_protocol import (
                     ResearchResult,
                 )
-
-                submodules_path = (
-                    Path(__file__).parent.parent.parent / "src" / "submodules"
-                )
-                mock_client_path = (
-                    submodules_path
-                    / "olm-d-rch"
-                    / "sdk"
-                    / "mock_olm_d_rch_client"
-                    / "mock_olm_d_rch_client.py"
-                )
-                spec = importlib.util.spec_from_file_location(
-                    "mock_client", mock_client_path
-                )
-                mock_module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(mock_module)
-                MockOlmDRchClient = mock_module.MockOlmDRchClient
 
                 class AdaptedMockClient:
                     def __init__(self):

@@ -126,7 +126,7 @@ By default the research API client uses the in-repo mock. To exercise the real s
 
 ## Workflow model
 
-Workflows create a temporary directory, copy the contents of `src/submodules/obsidian-vault` into it, and then execute agents against that isolated copy. Agents interact with the local workspace through `VaultService`, which exposes helpers for summarising the vault and committing changes back via the GitHub API.
+Workflows create a temporary directory, copy the contents of `submodules/obsidian-vault` into it, and then execute agents against that isolated copy. Agents interact with the local workspace through `VaultService`, which exposes helpers for summarising the vault and committing changes back via the GitHub API.
 
 This design keeps runtime execution deterministic and avoids invoking Git operations inside the workflow beyond the initial submodule checkout.
 
@@ -138,6 +138,6 @@ This design keeps runtime execution deterministic and avoids invoking Git operat
 
 ## Troubleshooting
 
-- **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `src/submodules/obsidian-vault` and `src/submodules/olm-d-rch`.
-- **Using a different vault?** Update the `src/submodules/obsidian-vault` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
+- **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `submodules/obsidian-vault` and `submodules/olm-d-rch`.
+- **Using a different vault?** Update the `submodules/obsidian-vault` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
 - **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Leave `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true` for local mocks, or flip it to `false` and point the research client at a live `olm-d-rch` deployment.
