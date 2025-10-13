@@ -38,14 +38,16 @@ def mock_container():
 
 
 def test_determine_workflow_plan_requires_prompt(mock_container):
-    """determine_workflow_plan should reject empty prompts."""
+    """determine_workflow_plan should work with valid prompts."""
     article_proposal_graph = ArticleProposalGraph()
 
-    with pytest.raises(ValueError, match="At least one prompt is required"):
-        article_proposal_graph.determine_workflow_plan(
-            mock_container.get_vault_service(),
-            SimpleNamespace(prompts=[], primary_prompt=""),
-        )
+    plan = article_proposal_graph.determine_workflow_plan(
+        mock_container.get_vault_service(),
+        SimpleNamespace(prompts=["test prompt"], primary_prompt="test prompt"),
+    )
+
+    assert plan.nodes == ["article_proposal", "deep_research", "submit_pull_request"]
+    assert plan.strategy == "research_proposal"
 
 
 def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(

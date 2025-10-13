@@ -25,7 +25,7 @@ def test_create_pending_workflow_defaults(db_session: Session) -> None:
     assert workflow.prompt == ["Test research prompt"]
     assert (
         repr(workflow)
-        == f"<Workflow(id={workflow.id}, status=PENDING, strategy=None, prompt='Test research prompt')>"
+        == f"<Workflow(id={workflow.id}, type=article-proposal, status=PENDING, strategy=None, prompt='Test research prompt')>"
     )
 
 

@@ -122,13 +122,6 @@ class ArticleProposalGraph:
         Returns:
             WorkflowPlan with ordered list of nodes and strategy
         """
-        if not request.prompts:
-            raise ValueError("At least one prompt is required to run the workflow")
-
-        primary_prompt = request.primary_prompt
-        if not primary_prompt:
-            raise ValueError("The first prompt cannot be empty")
-
         strategy = WorkflowStrategy.RESEARCH_PROPOSAL.value
         nodes = [
             "article_proposal",

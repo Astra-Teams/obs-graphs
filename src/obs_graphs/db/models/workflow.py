@@ -71,4 +71,4 @@ class Workflow(Base):
                 if self.prompt and len(self.prompt) > 50
                 else self.prompt
             )
-        return f"<Workflow(id={self.id}, type={self.workflow_type}, status={self.status.value}, prompt={prompt_preview!r})>"
+        return f"<Workflow(id={self.id}, type={self.workflow_type}, status={self.status.value}, strategy={self.strategy}, prompt={prompt_preview!r})>"
