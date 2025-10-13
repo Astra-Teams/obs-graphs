@@ -107,8 +107,16 @@ def run_workflow_task(self, workflow_id: int) -> None:
         )
         backend_value = backend_value.strip().lower()
 
+        # Handle prompt: convert to list if needed for backward compatibility
+        prompt_value = workflow.prompt
+        if prompt_value is None:
+            prompt_value = ["Default research prompt"]
+        elif isinstance(prompt_value, str):
+            # Legacy string prompt - convert to list
+            prompt_value = [prompt_value]
+
         request = WorkflowRunRequest(
-            prompt=workflow.prompt or "Default research prompt",
+            prompts=prompt_value,
             strategy=strategy,
             backend=backend_value,
         )

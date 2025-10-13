@@ -124,6 +124,29 @@ curl http://127.0.0.1:8001/api/v1/workflows
 
 By default the research API client uses the in-repo mock. To exercise the real service, run the `olm-d-rch` submodule (or another compatible deployment), set `USE_MOCK_OLLAMA_DEEP_RESEARCHER=false`, and ensure the research API settings point to that endpoint.
 
+### Workflow run payload
+
+To launch a workflow, submit a `POST /api/v1/workflows/run` request with an ordered list of prompts. The first entry is treated as the primary instruction, while subsequent entries represent follow-up steps the agents should consider. Each prompt is trimmed server-side and must contain non-whitespace content.
+
+```bash
+curl -X POST http://127.0.0.1:8001/api/v1/workflows/run \
+  -H "Content-Type: application/json" \
+  -d '{
+        "prompts": [
+          "Generate research topic ideas for retrieval-augmented generation",
+          "Select the most actionable topic",
+          "Draft a 2 paragraph article outline"
+        ],
+        "async_execution": true
+      }'
+```
+
+Validation rules:
+
+- The `prompts` array must contain at least one item.
+- Every entry is normalised with `str.strip()` and must remain non-empty after trimming.
+- Optional fields such as `strategy` and `backend` continue to work as before.
+
 ## Workflow model
 
 Workflows create a temporary directory, copy the contents of `submodules/obsidian-vault` into it, and then execute agents against that isolated copy. Agents interact with the local workspace through `VaultService`, which exposes helpers for summarising the vault and committing changes back via the GitHub API.

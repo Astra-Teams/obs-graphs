@@ -306,7 +306,7 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         # Create workflow with prompt
         workflow = Workflow(
-            prompt="Test research prompt for propagation",
+            prompt=["Test research prompt for propagation"],
             status=WorkflowStatus.PENDING,
             strategy=None,
         )
@@ -340,8 +340,9 @@ class TestRunWorkflowTask:
         call_args = mock_builder_instance.run_workflow.call_args[0]
         request = call_args[0]
 
-        assert hasattr(request, "prompt")
-        assert request.prompt == "Test research prompt for propagation"
+        assert hasattr(request, "prompts")
+        assert request.prompts == ["Test research prompt for propagation"]
+        assert request.primary_prompt == "Test research prompt for propagation"
         assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
@@ -392,8 +393,9 @@ class TestRunWorkflowTask:
         call_args = mock_builder_instance.run_workflow.call_args[0]
         request = call_args[0]
 
-        assert hasattr(request, "prompt")
-        assert request.prompt == "Default research prompt"
+        assert hasattr(request, "prompts")
+        assert request.prompts == ["Default research prompt"]
+        assert request.primary_prompt == "Default research prompt"
         assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
@@ -412,7 +414,7 @@ class TestRunWorkflowTask:
 
         # Create workflow with prompt and strategy
         workflow = Workflow(
-            prompt="Research quantum computing",
+            prompt=["Research quantum computing"],
             status=WorkflowStatus.PENDING,
             strategy=WorkflowStrategy.RESEARCH_PROPOSAL,
         )
@@ -446,7 +448,8 @@ class TestRunWorkflowTask:
         call_args = mock_builder_instance.run_workflow.call_args[0]
         request = call_args[0]
 
-        assert request.prompt == "Research quantum computing"
+        assert request.prompts == ["Research quantum computing"]
+        assert request.primary_prompt == "Research quantum computing"
         assert request.strategy == WorkflowStrategy.RESEARCH_PROPOSAL
         assert request.backend == obs_graphs_settings.llm_backend
 
@@ -464,7 +467,7 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
 
         workflow = Workflow(
-            prompt="Backend specific prompt",
+            prompt=["Backend specific prompt"],
             status=WorkflowStatus.PENDING,
             strategy=None,
             workflow_metadata={"backend": "mlx"},

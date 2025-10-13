@@ -48,7 +48,7 @@ def vault_path(tmp_path):
 
 def test_validate_input_valid(agent):
     """Test that validate_input accepts valid context with prompt."""
-    context = {"prompt": "Research transformers in NLP"}
+    context = {"prompt": ["Research transformers in NLP"]}
     assert agent.validate_input(context) is True
 
 
@@ -60,14 +60,14 @@ def test_validate_input_missing_prompt(agent):
 
 def test_validate_input_empty_prompt(agent):
     """Test that validate_input rejects empty prompt."""
-    context = {"prompt": "   "}
+    context = {"prompt": ["   "]}
     assert agent.validate_input(context) is False
 
 
 def test_execute_with_valid_prompt(agent, vault_path):
     """Test that execute returns topic proposal successfully."""
     context = {
-        "prompt": "Research the impact of transformers on NLP",
+        "prompt": ["Research the impact of transformers on NLP"],
         "strategy": "research_proposal",
     }
 
@@ -88,7 +88,7 @@ def test_execute_with_valid_prompt(agent, vault_path):
 def test_execute_passes_backend_to_provider(agent, llm_provider):
     """Ensure the backend from context is forwarded to the provider."""
     context = {
-        "prompt": "Investigate MLX performance",
+        "prompt": ["Investigate MLX performance"],
         "strategy": "research_proposal",
         "backend": "mlx",
     }
@@ -101,7 +101,7 @@ def test_execute_passes_backend_to_provider(agent, llm_provider):
 def test_execute_without_backend_uses_default(agent, llm_provider):
     """Provider should be called with None when backend not supplied."""
     context = {
-        "prompt": "Investigate default backend",
+        "prompt": ["Investigate default backend"],
         "strategy": "research_proposal",
     }
 
@@ -114,7 +114,7 @@ def test_execute_with_malformed_json(agent, vault_path, mock_llm):
     """Test that execute handles malformed JSON response."""
     mock_llm.invoke.return_value = "This is not valid JSON"
 
-    context = {"prompt": "Test prompt", "strategy": "research_proposal"}
+    context = {"prompt": ["Test prompt"], "strategy": "research_proposal"}
 
     result = agent.execute(context)
 
@@ -135,7 +135,7 @@ def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
     }
     """
 
-    context = {"prompt": "Test prompt", "strategy": "research_proposal"}
+    context = {"prompt": ["Test prompt"], "strategy": "research_proposal"}
 
     result = agent.execute(context)
 
@@ -163,7 +163,7 @@ def test_execute_tags_lowercase(agent, vault_path, mock_llm):
     }
     """
 
-    context = {"prompt": "Test prompt", "strategy": "research_proposal"}
+    context = {"prompt": ["Test prompt"], "strategy": "research_proposal"}
 
     result = agent.execute(context)
 

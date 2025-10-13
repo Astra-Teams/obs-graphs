@@ -49,8 +49,11 @@ async def run_workflow(
             (request.backend or obs_graphs_settings.llm_backend).strip().lower()
         )
 
+        prompts = request.prompts
+
+        # Persist workflow with full prompt history
         workflow = Workflow(
-            prompt=request.prompt.strip(),
+            prompt=prompts,
             status=WorkflowStatus.PENDING,
             strategy=request.strategy,
         )

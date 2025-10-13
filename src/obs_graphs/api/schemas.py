@@ -11,9 +11,13 @@ from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
 class WorkflowRunRequest(BaseModel):
     """Request body for running a new workflow."""
 
-    prompt: str = Field(
+    prompts: List[str] = Field(
         ...,
-        description="Research prompt or keywords to investigate. Required for initiating research workflows.",
+        description=(
+            "Ordered list of prompts or workflow instructions. The first prompt "
+            "represents the entry point and subsequent prompts provide follow-up "
+            "instructions."
+        ),
     )
     strategy: Optional[WorkflowStrategy] = Field(
         None,
@@ -28,14 +32,24 @@ class WorkflowRunRequest(BaseModel):
         description="Whether to execute workflow asynchronously using Celery",
     )
 
-    @field_validator("prompt", mode="after")
+    @field_validator("prompts", mode="after")
     @classmethod
-    def validate_prompt_not_empty(cls, v: str) -> str:
-        """Validate that prompt contains non-whitespace content."""
-        stripped = v.strip()
-        if not stripped:
-            raise ValueError("Prompt is required and cannot be empty")
-        return stripped
+    def validate_prompts(cls, prompts: List[str]) -> List[str]:
+        """Ensure prompts are provided and contain non-empty strings."""
+
+        if not prompts:
+            raise ValueError("At least one prompt is required")
+
+        cleaned: List[str] = []
+        for index, prompt in enumerate(prompts):
+            stripped = prompt.strip()
+            if not stripped:
+                raise ValueError(
+                    f"Prompts cannot contain empty strings; index {index} is empty."
+                )
+            cleaned.append(stripped)
+
+        return cleaned
 
     @field_validator("backend", mode="after")
     @classmethod
@@ -47,6 +61,12 @@ class WorkflowRunRequest(BaseModel):
         if normalized not in {"ollama", "mlx"}:
             raise ValueError("Backend must be either 'ollama' or 'mlx'")
         return normalized
+
+    @property
+    def primary_prompt(self) -> str:
+        """Return the first prompt, which acts as the entry point for workflows."""
+
+        return self.prompts[0]
 
 
 class WorkflowResponse(BaseModel):

@@ -28,7 +28,7 @@ The article proposal graph supports two main strategies:
 - **Purpose**: Analyzes vault structure and generates new articles to fill gaps
 
 ### 2. Research Proposal Strategy
-- **Trigger**: User provides a research prompt
+- **Trigger**: User provides one or more research prompts
 - **Flow**: `article_proposal` → `deep_research` → `submit_pull_request`
 - **Purpose**: Creates research articles based on user-specified topics
 
@@ -37,7 +37,7 @@ The article proposal graph supports two main strategies:
 ### ArticleProposalAgent (`article_proposal`)
 - Analyzes vault structure and content
 - For new articles: Identifies gaps and proposes content
-- For research: Generates topic proposals from user prompts
+- For research: Uses the first prompt from the ordered list to generate topic proposals while preserving the remaining prompts for downstream agents
 - Outputs article proposals or research topics
 
 ### DeepResearchAgent (`deep_research`)
@@ -54,7 +54,7 @@ The article proposal graph supports two main strategies:
 
 The workflow uses a typed state graph with the following key components:
 
-- **GraphState**: Main state object with vault summary, strategy, prompt, and execution results
+- **GraphState**: Main state object with vault summary, strategy, prompts list, and execution results
 - **AgentResult**: Standardized result format from all nodes
 - **FileChange**: Represents file operations (create/update/delete)
 - **Pydantic Models**: Validation schemas in `schemas.py`

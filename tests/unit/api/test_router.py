@@ -63,80 +63,67 @@ def mock_celery_task():
         yield mock_task
 
 
-def test_workflow_run_with_valid_prompt(client, mock_celery_task):
-    """Test that valid prompt is accepted and persisted to database."""
-    response = client.post(
-        "/api/workflows/run",
-        json={
-            "prompt": "Research the impact of transformers on NLP",
-            "async_execution": True,
-        },
-    )
+def test_workflow_run_with_valid_prompts(client, mock_celery_task):
+    """Test that a list of prompts is accepted and persisted to the database."""
+
+    payload = {
+        "prompts": [
+            "Research the impact of transformers on NLP",
+            "Summarise the findings",
+        ],
+        "async_execution": True,
+    }
+
+    response = client.post("/api/workflows/run", json=payload)
 
     assert response.status_code == 201
     data = response.json()
+    assert {"id", "status"}.issubset(data)
 
-    # Verify response structure
-    assert "id" in data
-    assert "status" in data
-
-    # Verify workflow was created in database with prompt
     db = next(override_get_db())
     workflow = db.query(Workflow).filter(Workflow.id == data["id"]).first()
     assert workflow is not None
-    assert workflow.prompt == "Research the impact of transformers on NLP"
+    assert workflow.prompt == [prompt.strip() for prompt in payload["prompts"]]
 
 
-def test_workflow_run_rejects_empty_prompt(client):
-    """Test that an empty prompt is rejected."""
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"prompts": [], "async_execution": True},
+        {"prompts": ["   "], "async_execution": False},
+        {"prompts": ["Valid", "  "], "async_execution": True},
+    ],
+)
+def test_workflow_run_rejects_invalid_prompt_lists(client, payload):
+    """Prompt lists must be non-empty and contain only non-empty strings."""
+
+    response = client.post("/api/workflows/run", json=payload)
+
+    assert response.status_code == 422
+    error_detail = response.json()["detail"]
+    assert any("prompts" in str(error).lower() for error in error_detail)
+
+
+def test_workflow_run_rejects_missing_prompts(client):
+    """Test that omitting the prompts field is rejected."""
+
     response = client.post(
         "/api/workflows/run",
-        json={
-            "prompt": "",
-            "async_execution": True,
-        },
+        json={"async_execution": False},
     )
 
     assert response.status_code == 422
     error_detail = response.json()["detail"]
-    assert any("prompt" in str(error).lower() for error in error_detail)
+    assert any("prompts" in str(error).lower() for error in error_detail)
 
 
-def test_workflow_run_rejects_whitespace_only_prompt(client):
-    """Test that whitespace-only prompt is rejected."""
+def test_workflow_run_prompts_strip_whitespace(client, mock_celery_task):
+    """Prompts should be normalised by stripping surrounding whitespace."""
+
     response = client.post(
         "/api/workflows/run",
         json={
-            "prompt": "   ",
-            "async_execution": False,
-        },
-    )
-
-    assert response.status_code == 422
-    error_detail = response.json()["detail"]
-    assert any("prompt" in str(error).lower() for error in error_detail)
-
-
-def test_workflow_run_rejects_missing_prompt(client):
-    """Test that missing prompt field is rejected."""
-    response = client.post(
-        "/api/workflows/run",
-        json={
-            "async_execution": False,
-        },
-    )
-
-    assert response.status_code == 422
-    error_detail = response.json()["detail"]
-    assert any("prompt" in str(error).lower() for error in error_detail)
-
-
-def test_workflow_run_prompt_strips_whitespace(client, mock_celery_task):
-    """Test that prompt whitespace is stripped before storage."""
-    response = client.post(
-        "/api/workflows/run",
-        json={
-            "prompt": "  Research topic with spaces  ",
+            "prompts": ["  Research topic with spaces  ", " follow up on insights  "],
             "async_execution": True,
         },
     )
@@ -144,18 +131,21 @@ def test_workflow_run_prompt_strips_whitespace(client, mock_celery_task):
     assert response.status_code == 201
     data = response.json()
 
-    # Verify prompt was stripped in database
     db = next(override_get_db())
     workflow = db.query(Workflow).filter(Workflow.id == data["id"]).first()
-    assert workflow.prompt == "Research topic with spaces"
+    assert workflow.prompt == [
+        "Research topic with spaces",
+        "follow up on insights",
+    ]
 
 
 def test_workflow_run_with_strategy_override(client, mock_celery_task):
-    """Test that prompt works with strategy override."""
+    """Strategy overrides should work alongside prompt lists."""
+
     response = client.post(
         "/api/workflows/run",
         json={
-            "prompt": "Research transformers",
+            "prompts": ["Research transformers"],
             "strategy": WorkflowStrategy.RESEARCH_PROPOSAL.value,
             "async_execution": True,
         },
@@ -164,19 +154,19 @@ def test_workflow_run_with_strategy_override(client, mock_celery_task):
     assert response.status_code == 201
     data = response.json()
 
-    # Verify both prompt and strategy are stored
     db = next(override_get_db())
     workflow = db.query(Workflow).filter(Workflow.id == data["id"]).first()
-    assert workflow.prompt == "Research transformers"
+    assert workflow.prompt == ["Research transformers"]
     assert workflow.strategy == WorkflowStrategy.RESEARCH_PROPOSAL
 
 
-def test_workflow_run_prompt_in_metadata(client, mock_celery_task):
-    """Test that prompt appears in workflow response metadata."""
+def test_workflow_run_prompts_in_repr(client, mock_celery_task):
+    """The stored prompts should appear in the workflow representation."""
+
     response = client.post(
         "/api/workflows/run",
         json={
-            "prompt": "Test research prompt",
+            "prompts": ["Test research prompt"],
             "async_execution": True,
         },
     )
@@ -184,24 +174,22 @@ def test_workflow_run_prompt_in_metadata(client, mock_celery_task):
     assert response.status_code == 201
     data = response.json()
 
-    # Verify prompt is accessible in workflow record
     db = next(override_get_db())
     workflow = db.query(Workflow).filter(Workflow.id == data["id"]).first()
-    assert workflow.prompt == "Test research prompt"
+    assert workflow.prompt == ["Test research prompt"]
 
-    # Verify __repr__ includes prompt preview
     repr_str = repr(workflow)
     assert "Test research prompt" in repr_str
 
 
 def test_workflow_run_long_prompt_truncated_in_repr(client, mock_celery_task):
-    """Test that long prompts are truncated in __repr__ for readability."""
-    long_prompt = "A" * 100  # 100 character prompt
+    """Long prompts should be truncated in the model representation."""
 
+    long_prompt = "A" * 100
     response = client.post(
         "/api/workflows/run",
         json={
-            "prompt": long_prompt,
+            "prompts": [long_prompt],
             "async_execution": True,
         },
     )
@@ -209,27 +197,25 @@ def test_workflow_run_long_prompt_truncated_in_repr(client, mock_celery_task):
     assert response.status_code == 201
     data = response.json()
 
-    # Verify full prompt is stored
     db = next(override_get_db())
     workflow = db.query(Workflow).filter(Workflow.id == data["id"]).first()
-    assert workflow.prompt == long_prompt
-    assert len(workflow.prompt) == 100
+    assert workflow.prompt == [long_prompt]
+    assert len(workflow.prompt[0]) == 100
 
-    # Verify __repr__ truncates to 50 chars + "..."
     repr_str = repr(workflow)
     assert "A" * 50 in repr_str
     assert "..." in repr_str
 
 
-def test_workflow_run_async_propagates_prompt(client, mock_celery_task):
-    """Test that async execution propagates prompt to Celery task."""
-    response = client.post(
-        "/api/workflows/run",
-        json={
-            "prompt": "Async research prompt",
-            "async_execution": True,
-        },
-    )
+def test_workflow_run_async_propagates_prompts(client, mock_celery_task):
+    """Async execution should queue workflows with the full prompt list."""
+
+    payload = {
+        "prompts": ["Async research prompt", "Follow up"],
+        "async_execution": True,
+    }
+
+    response = client.post("/api/workflows/run", json=payload)
 
     assert response.status_code == 201
 
@@ -240,4 +226,4 @@ def test_workflow_run_async_propagates_prompt(client, mock_celery_task):
     # Verify workflow has prompt stored
     db = next(override_get_db())
     workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
-    assert workflow.prompt == "Async research prompt"
+    assert workflow.prompt == [prompt.strip() for prompt in payload["prompts"]]

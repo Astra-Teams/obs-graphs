@@ -65,7 +65,7 @@ class TestWorkflowE2E:
             response = client.post(
                 "/api/v1/workflows/run",
                 json={
-                    "prompt": "Create a new article about testing",
+                    "prompts": ["Create a new article about testing"],
                     "async_execution": True,
                 },
             )
@@ -122,7 +122,7 @@ class TestWorkflowE2E:
             response = client.post(
                 "/api/v1/workflows/run",
                 json={
-                    "prompt": "fail intentionally",
+                    "prompts": ["fail intentionally"],
                     "async_execution": True,
                 },
             )
@@ -161,7 +161,7 @@ class TestWorkflowE2E:
                 response = client.post(
                     "/api/v1/workflows/run",
                     json={
-                        "prompt": "Concurrent test workflow",
+                        "prompts": ["Concurrent test workflow"],
                         "async_execution": True,
                     },
                 )

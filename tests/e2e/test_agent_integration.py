@@ -24,7 +24,8 @@ class TestAgentIntegration:
         # Create vault service and request
         vault_service = container.get_vault_service()
         prompt = "Research opportunities in empty vault"
-        request = WorkflowRunRequest(prompt=prompt)
+        prompts = [prompt]
+        request = WorkflowRunRequest(prompts=prompts)
 
         plan = orchestrator.determine_workflow_plan(vault_service, request)
         assert plan.strategy == "research_proposal"
@@ -35,7 +36,7 @@ class TestAgentIntegration:
             "submit_pull_request",
         ]
 
-        result = orchestrator.execute_workflow(plan, container, prompt)
+        result = orchestrator.execute_workflow(plan, container, prompts=prompts)
         assert result.success is True
         # The important assertion is that we got CREATE changes, not the internal prompts
 
@@ -61,13 +62,14 @@ class TestAgentIntegration:
         # Create vault service and request
         vault_service = container.get_vault_service()
         prompt = "Emerging research topics"
-        request = WorkflowRunRequest(prompt=prompt)
+        prompts = [prompt]
+        request = WorkflowRunRequest(prompts=prompts)
 
         plan = orchestrator.determine_workflow_plan(vault_service, request)
         assert plan.strategy == "research_proposal"
         assert plan.nodes[0] == "article_proposal"
 
-        result = orchestrator.execute_workflow(plan, container, prompt)
+        result = orchestrator.execute_workflow(plan, container, prompts=prompts)
         assert result.success is True
         assert set(result.node_results.keys()) == set(plan.nodes)
         assert result.summary.startswith("Workflow completed with 'research_proposal'")

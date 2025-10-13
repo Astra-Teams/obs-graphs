@@ -33,8 +33,12 @@ def create_pending_workflow(db_session, **kwargs) -> Workflow:
     Returns:
         Workflow instance in PENDING state
     """
+    prompt_value = kwargs.get("prompt", ["Test research prompt"])
+    if isinstance(prompt_value, str):
+        prompt_value = [prompt_value]
+
     workflow = Workflow(
-        prompt=kwargs.get("prompt", "Test research prompt"),
+        prompt=prompt_value,
         status=WorkflowStatus.PENDING,
         strategy=kwargs.get("strategy", None),
         started_at=None,
@@ -64,7 +68,12 @@ def create_running_workflow(db_session, **kwargs) -> Workflow:
     Returns:
         Workflow instance in RUNNING state
     """
+    prompt_value = kwargs.get("prompt", ["Test research prompt"])
+    if isinstance(prompt_value, str):
+        prompt_value = [prompt_value]
+
     workflow = Workflow(
+        prompt=prompt_value,
         status=WorkflowStatus.RUNNING,
         strategy=kwargs.get("strategy", "new_article"),
         started_at=kwargs.get("started_at", datetime.now(timezone.utc)),
@@ -109,7 +118,12 @@ def create_completed_workflow(
     started_at = kwargs.get("started_at", created_at + timedelta(seconds=30))
     completed_at = kwargs.get("completed_at", started_at + timedelta(minutes=10))
 
+    prompt_value = kwargs.get("prompt", ["Test research prompt"])
+    if isinstance(prompt_value, str):
+        prompt_value = [prompt_value]
+
     workflow = Workflow(
+        prompt=prompt_value,
         status=WorkflowStatus.COMPLETED,
         strategy=kwargs.get("strategy", "new_article"),
         started_at=started_at,
@@ -168,7 +182,12 @@ def create_failed_workflow(
     started_at = kwargs.get("started_at", created_at + timedelta(seconds=30))
     completed_at = kwargs.get("completed_at", started_at + timedelta(minutes=2))
 
+    prompt_value = kwargs.get("prompt", ["Test research prompt"])
+    if isinstance(prompt_value, str):
+        prompt_value = [prompt_value]
+
     workflow = Workflow(
+        prompt=prompt_value,
         status=WorkflowStatus.FAILED,
         strategy=kwargs.get("strategy", "improvement"),
         started_at=started_at,

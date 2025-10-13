@@ -22,6 +22,7 @@ def test_create_pending_workflow_defaults(db_session: Session) -> None:
     assert workflow.completed_at is None
     assert workflow.branch_name is None
     assert workflow.error_message is None
+    assert workflow.prompt == ["Test research prompt"]
     assert (
         repr(workflow)
         == f"<Workflow(id={workflow.id}, status=PENDING, strategy=None, prompt='Test research prompt')>"

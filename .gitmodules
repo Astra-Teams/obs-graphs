@@ -5,6 +5,6 @@
 [submodule "submodules/olm-d-rch"] # v1.6.2
 	path = submodules/olm-d-rch
 	url = https://github.com/asterismhq/olm-d-rch
-[submodule "submodules/obs-gtwy"] # v1.0.0
+[submodule "submodules/obs-gtwy"] # v2.0.0
 	path = submodules/obs-gtwy
 	url = https://github.com/asterismhq/obs-gtwy

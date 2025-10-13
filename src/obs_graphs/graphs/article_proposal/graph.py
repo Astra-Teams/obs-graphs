@@ -84,7 +84,7 @@ class ArticleProposalGraph:
             workflow_result = self.execute_workflow(
                 workflow_plan,
                 container,
-                prompt=request.prompt,
+                prompts=request.prompts,
                 backend=request.backend,
             )
 
@@ -122,8 +122,12 @@ class ArticleProposalGraph:
         Returns:
             WorkflowPlan with ordered list of nodes and strategy
         """
-        if not (request.prompt and request.prompt.strip()):
-            raise ValueError("Prompt is required to run the article proposal workflow")
+        if not request.prompts:
+            raise ValueError("At least one prompt is required to run the workflow")
+
+        primary_prompt = request.primary_prompt
+        if not primary_prompt:
+            raise ValueError("The first prompt cannot be empty")
 
         strategy = WorkflowStrategy.RESEARCH_PROPOSAL.value
         nodes = [
@@ -138,7 +142,7 @@ class ArticleProposalGraph:
         self,
         workflow_plan: WorkflowPlan,
         container: DependencyContainer,
-        prompt: str = "",
+        prompts: list[str] | None = None,
         backend: str | None = None,
     ) -> WorkflowResult:
         """
@@ -147,7 +151,7 @@ class ArticleProposalGraph:
         Args:
             workflow_plan: Plan specifying which nodes to run
             container: Dependency container
-            prompt: User prompt for research workflows
+            prompts: User prompts for research workflows (list of strings)
 
         Returns:
             WorkflowResult with aggregated changes and results
@@ -158,10 +162,12 @@ class ArticleProposalGraph:
 
         selected_backend = (backend or obs_graphs_settings.llm_backend).strip().lower()
 
+        prompt_list = prompts or []
+
         initial_state: GraphState = {
             "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
-            "prompt": prompt,
+            "prompt": prompt_list,
             "backend": selected_backend,
             "accumulated_changes": [],
             "node_results": {},
