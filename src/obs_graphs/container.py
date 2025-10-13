@@ -225,12 +225,7 @@ class DependencyContainer:
             )
 
         if self._mlx_client is None:
-            self._mlx_client = MLXClient(
-                model=mlx_settings.model,
-                max_tokens=mlx_settings.max_tokens,
-                temperature=mlx_settings.temperature,
-                top_p=mlx_settings.top_p,
-            )
+            self._mlx_client = MLXClient(mlx_settings)
         return self._mlx_client
 
     def get_redis_client(self) -> Union[redis.Redis, "redis.FakeRedis"]:

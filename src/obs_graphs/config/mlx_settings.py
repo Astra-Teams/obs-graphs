@@ -15,7 +15,7 @@ class MLXSettings(BaseSettings):
     )
 
     model: str = Field(
-        default="mlx-community/Llama-3.1-8B-Instruct-4bit",
+        default="mlx-community/TinyLlama-1.1B-Chat-v1.0-4bit",
         description="Default MLX model identifier.",
         alias="OBS_GRAPHS_MLX_MODEL",
     )

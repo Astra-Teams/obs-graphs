@@ -9,6 +9,7 @@ from typing import Optional, Tuple, Type, TypeVar
 from pydantic import BaseModel
 
 from src.obs_graphs.clients._llm_utils import parse_structured_response
+from src.obs_graphs.config.mlx_settings import MLXSettings
 from src.obs_graphs.protocols.llm_client_protocol import LLMClientProtocol
 
 logger = logging.getLogger(__name__)
@@ -19,18 +20,11 @@ StructuredModelT = TypeVar("StructuredModelT", bound=BaseModel)
 class MLXClient(LLMClientProtocol):
     """Client that generates completions using the MLX local runtime."""
 
-    def __init__(
-        self,
-        model: str,
-        *,
-        max_tokens: int,
-        temperature: float,
-        top_p: float,
-    ) -> None:
-        self._model_name = model
-        self._max_tokens = max_tokens
-        self._temperature = temperature
-        self._top_p = top_p
+    def __init__(self, mlx_settings: MLXSettings) -> None:
+        self._model_name = mlx_settings.model
+        self._max_tokens = mlx_settings.max_tokens
+        self._temperature = mlx_settings.temperature
+        self._top_p = mlx_settings.top_p
         self._model_lock = Lock()
         self._model_bundle: Optional[Tuple[object, object]] = None
 
