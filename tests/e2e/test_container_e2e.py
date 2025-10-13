@@ -122,7 +122,7 @@ def test_get_node_new_article_creation_with_llm(
     # Act
     node = container.get_node("article_proposal")
     result = node.execute(
-        {"prompt": ["Test prompt"], "strategy": "research_proposal"}
+        {"prompts": ["Test prompt"], "strategy": "research_proposal"}
     )
 
     # Assert

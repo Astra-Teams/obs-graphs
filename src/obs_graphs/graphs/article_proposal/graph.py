@@ -167,7 +167,7 @@ class ArticleProposalGraph:
         initial_state: GraphState = {
             "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
-            "prompt": prompt_list,
+            "prompts": prompt_list,
             "backend": selected_backend,
             "accumulated_changes": [],
             "node_results": {},
@@ -256,7 +256,7 @@ class ArticleProposalGraph:
             context = {
                 "vault_summary": state["vault_summary"],
                 "strategy": state["strategy"],
-                "prompt": state["prompt"],
+                "prompts": state["prompts"],
                 "backend": state["backend"],
                 "accumulated_changes": state["accumulated_changes"],
                 "node_results": state["node_results"],

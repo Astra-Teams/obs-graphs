@@ -91,7 +91,7 @@ class GraphState(TypedDict):
 
     vault_summary: VaultSummary
     strategy: str
-    prompt: List[str]
+    prompts: List[str]
     backend: str
     accumulated_changes: List[FileChange]
     node_results: Dict
