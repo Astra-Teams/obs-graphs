@@ -38,6 +38,7 @@ def create_pending_workflow(db_session, **kwargs) -> Workflow:
         prompt_value = [prompt_value]
 
     workflow = Workflow(
+        workflow_type="article-proposal",
         prompt=prompt_value,
         status=WorkflowStatus.PENDING,
         strategy=kwargs.get("strategy", None),
@@ -73,6 +74,7 @@ def create_running_workflow(db_session, **kwargs) -> Workflow:
         prompt_value = [prompt_value]
 
     workflow = Workflow(
+        workflow_type="article-proposal",
         prompt=prompt_value,
         status=WorkflowStatus.RUNNING,
         strategy=kwargs.get("strategy", "new_article"),
@@ -123,6 +125,7 @@ def create_completed_workflow(
         prompt_value = [prompt_value]
 
     workflow = Workflow(
+        workflow_type="article-proposal",
         prompt=prompt_value,
         status=WorkflowStatus.COMPLETED,
         strategy=kwargs.get("strategy", "new_article"),
@@ -187,6 +190,7 @@ def create_failed_workflow(
         prompt_value = [prompt_value]
 
     workflow = Workflow(
+        workflow_type="article-proposal",
         prompt=prompt_value,
         status=WorkflowStatus.FAILED,
         strategy=kwargs.get("strategy", "improvement"),
@@ -225,6 +229,7 @@ def create_workflow_with_custom_metadata(
         Workflow instance with custom metadata
     """
     workflow = Workflow(
+        workflow_type="article-proposal",
         status=status,
         strategy=kwargs.get("strategy", "custom"),
         started_at=kwargs.get("started_at", datetime.now(timezone.utc)),

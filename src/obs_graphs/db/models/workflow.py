@@ -35,6 +35,9 @@ class Workflow(Base):
     __tablename__ = "workflows"
 
     id = Column(Integer, primary_key=True, index=True)
+    workflow_type = Column(
+        String(50), nullable=False, default="article-proposal", index=True
+    )
     prompt = Column(JSON, nullable=True)
     status = Column(
         Enum(WorkflowStatus),
@@ -68,4 +71,4 @@ class Workflow(Base):
                 if self.prompt and len(self.prompt) > 50
                 else self.prompt
             )
-        return f"<Workflow(id={self.id}, status={self.status.value}, strategy={self.strategy}, prompt={prompt_preview!r})>"
+        return f"<Workflow(id={self.id}, type={self.workflow_type}, status={self.status.value}, prompt={prompt_preview!r})>"

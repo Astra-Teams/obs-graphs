@@ -43,7 +43,8 @@ def test_determine_workflow_plan_requires_prompt(mock_container):
 
     with pytest.raises(ValueError, match="At least one prompt is required"):
         article_proposal_graph.determine_workflow_plan(
-            mock_container.get_vault_service(), SimpleNamespace(prompts=[], primary_prompt="")
+            mock_container.get_vault_service(),
+            SimpleNamespace(prompts=[], primary_prompt=""),
         )
 
 

@@ -74,7 +74,7 @@ def test_workflow_run_with_valid_prompts(client, mock_celery_task):
         "async_execution": True,
     }
 
-    response = client.post("/api/workflows/run", json=payload)
+    response = client.post("/api/workflows/article-proposal/run", json=payload)
 
     assert response.status_code == 201
     data = response.json()
@@ -97,7 +97,7 @@ def test_workflow_run_with_valid_prompts(client, mock_celery_task):
 def test_workflow_run_rejects_invalid_prompt_lists(client, payload):
     """Prompt lists must be non-empty and contain only non-empty strings."""
 
-    response = client.post("/api/workflows/run", json=payload)
+    response = client.post("/api/workflows/article-proposal/run", json=payload)
 
     assert response.status_code == 422
     error_detail = response.json()["detail"]
@@ -108,7 +108,7 @@ def test_workflow_run_rejects_missing_prompts(client):
     """Test that omitting the prompts field is rejected."""
 
     response = client.post(
-        "/api/workflows/run",
+        "/api/workflows/article-proposal/run",
         json={"async_execution": False},
     )
 
@@ -121,7 +121,7 @@ def test_workflow_run_prompts_strip_whitespace(client, mock_celery_task):
     """Prompts should be normalised by stripping surrounding whitespace."""
 
     response = client.post(
-        "/api/workflows/run",
+        "/api/workflows/article-proposal/run",
         json={
             "prompts": ["  Research topic with spaces  ", " follow up on insights  "],
             "async_execution": True,
@@ -143,7 +143,7 @@ def test_workflow_run_with_strategy_override(client, mock_celery_task):
     """Strategy overrides should work alongside prompt lists."""
 
     response = client.post(
-        "/api/workflows/run",
+        "/api/workflows/article-proposal/run",
         json={
             "prompts": ["Research transformers"],
             "strategy": WorkflowStrategy.RESEARCH_PROPOSAL.value,
@@ -164,7 +164,7 @@ def test_workflow_run_prompts_in_repr(client, mock_celery_task):
     """The stored prompts should appear in the workflow representation."""
 
     response = client.post(
-        "/api/workflows/run",
+        "/api/workflows/article-proposal/run",
         json={
             "prompts": ["Test research prompt"],
             "async_execution": True,
@@ -187,7 +187,7 @@ def test_workflow_run_long_prompt_truncated_in_repr(client, mock_celery_task):
 
     long_prompt = "A" * 100
     response = client.post(
-        "/api/workflows/run",
+        "/api/workflows/article-proposal/run",
         json={
             "prompts": [long_prompt],
             "async_execution": True,
@@ -215,7 +215,7 @@ def test_workflow_run_async_propagates_prompts(client, mock_celery_task):
         "async_execution": True,
     }
 
-    response = client.post("/api/workflows/run", json=payload)
+    response = client.post("/api/workflows/article-proposal/run", json=payload)
 
     assert response.status_code == 201
 

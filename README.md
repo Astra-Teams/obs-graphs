@@ -21,7 +21,9 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 │   ├── container.py     # Dependency injection container
 │   ├── db/              # Database models and session management
 │   ├── graphs/          # LangGraph workflow definitions
-│   │   └── article_proposal/  # Article proposal workflow
+│   │   ├── factory.py          # Factory function for workflow graph builders
+│   │   ├── protocol.py         # WorkflowGraphProtocol interface
+│   │   └── article_proposal/   # Article proposal workflow
 │   ├── protocols/       # Protocol definitions for dependency injection
 │   ├── services/        # Business logic services
 │   ├── settings.py      # Application settings
@@ -118,18 +120,21 @@ After starting the development stack with `just up`, verify the API is running:
 # Check health endpoint
 curl http://127.0.0.1:8001/health
 
-# List available workflows
-curl http://127.0.0.1:8001/api/v1/workflows
+# Check API status
+curl http://127.0.0.1:8001/api/workflows/status
 ```
 
 By default the research API client uses the in-repo mock. To exercise the real service, run the `olm-d-rch` submodule (or another compatible deployment), set `USE_MOCK_OLLAMA_DEEP_RESEARCHER=false`, and ensure the research API settings point to that endpoint.
 
 ### Workflow run payload
 
-To launch a workflow, submit a `POST /api/v1/workflows/run` request with an ordered list of prompts. The first entry is treated as the primary instruction, while subsequent entries represent follow-up steps the agents should consider. Each prompt is trimmed server-side and must contain non-whitespace content.
+To launch a workflow, submit a `POST /api/workflows/{workflow_type}/run` request with an ordered list of prompts. The first entry is treated as the primary instruction, while subsequent entries represent follow-up steps the agents should consider. Each prompt is trimmed server-side and must contain non-whitespace content.
+
+Currently supported workflow types:
+- `article-proposal`: Research topic proposal and article creation
 
 ```bash
-curl -X POST http://127.0.0.1:8001/api/v1/workflows/run \
+curl -X POST http://127.0.0.1:8001/api/workflows/article-proposal/run \
   -H "Content-Type: application/json" \
   -d '{
         "prompts": [
