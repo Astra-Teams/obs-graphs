@@ -345,20 +345,20 @@ def get_deep_research_node(
     return DeepResearchNode(research_client)
 
 
-def get_submit_pull_request_node(
+def get_submit_draft_branch_node(
     gateway_client: GatewayClientProtocol = Depends(get_gateway_client),
 ):
     """
-    Get the submit pull request node.
+    Get the submit draft branch node.
 
     Args:
         gateway_client: Gateway client for Obsidian operations
 
     Returns:
-        SubmitPullRequestNode configured with gateway client
+        SubmitDraftBranchNode configured with gateway client
     """
-    from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_pull_request import (
-        SubmitPullRequestNode,
+    from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_draft_branch import (
+        SubmitDraftBranchNode,
     )
 
-    return SubmitPullRequestNode(gateway_client)
+    return SubmitDraftBranchNode(gateway_client)

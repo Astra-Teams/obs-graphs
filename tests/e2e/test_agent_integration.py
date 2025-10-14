@@ -33,7 +33,7 @@ class TestAgentIntegration:
         assert plan.nodes == [
             "article_proposal",
             "deep_research",
-            "submit_pull_request",
+            "submit_draft_branch",
         ]
 
         result = orchestrator.execute_workflow(plan, container, prompts=prompts)

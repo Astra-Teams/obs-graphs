@@ -1,11 +1,11 @@
-"""Unit tests for SubmitPullRequestNode with obs-gtwy integration."""
+"""Unit tests for SubmitDraftBranchNode with obs-gtwy integration."""
 
 from unittest.mock import MagicMock
 
 import pytest
 
-from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_pull_request import (
-    SubmitPullRequestNode,
+from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_draft_branch import (
+    SubmitDraftBranchNode,
 )
 from src.obs_graphs.graphs.article_proposal.state import FileAction, FileChange
 
@@ -19,7 +19,7 @@ def gateway_client():
 
 @pytest.fixture
 def node(gateway_client):
-    return SubmitPullRequestNode(gateway_client)
+    return SubmitDraftBranchNode(gateway_client)
 
 
 def test_validate_input_valid(node):

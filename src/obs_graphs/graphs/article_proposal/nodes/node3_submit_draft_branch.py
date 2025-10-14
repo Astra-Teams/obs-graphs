@@ -8,9 +8,9 @@ from pathlib import Path
 from obs_gtwy_sdk import GatewayClientProtocol
 
 from src.obs_graphs.graphs.article_proposal.state import (
-    NodeResult,
     FileAction,
     FileChange,
+    NodeResult,
 )
 from src.obs_graphs.protocols import NodeProtocol
 

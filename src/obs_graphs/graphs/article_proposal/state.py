@@ -6,8 +6,8 @@ from typing import Annotated, Dict, List, Optional, TypedDict
 
 # Re-export Pydantic models for backward compatibility
 from src.obs_graphs.graphs.article_proposal.schemas import (
-    NodeResultModel,
     GraphStateModel,
+    NodeResultModel,
     VaultSummaryModel,
 )
 

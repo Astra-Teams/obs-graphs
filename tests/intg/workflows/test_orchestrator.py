@@ -54,7 +54,10 @@ def mock_research_client():
 
 @pytest.fixture
 def article_proposal_graph(
-    mock_vault_service, mock_llm_client_provider, mock_gateway_client, mock_research_client
+    mock_vault_service,
+    mock_llm_client_provider,
+    mock_gateway_client,
+    mock_research_client,
 ):
     """Return an ArticleProposalGraph with mocked dependencies."""
     return ArticleProposalGraph(
@@ -71,7 +74,7 @@ def test_determine_workflow_plan_requires_prompt(article_proposal_graph):
         SimpleNamespace(prompts=["test prompt"], primary_prompt="test prompt"),
     )
 
-    assert plan.nodes == ["article_proposal", "deep_research", "submit_pull_request"]
+    assert plan.nodes == ["article_proposal", "deep_research", "submit_draft_branch"]
     assert plan.strategy == "research_proposal"
 
 
@@ -88,7 +91,7 @@ def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
     assert plan.nodes == [
         "article_proposal",
         "deep_research",
-        "submit_pull_request",
+        "submit_draft_branch",
     ]
 
 
@@ -120,7 +123,7 @@ def test_execute_workflow_with_research_proposal_strategy(article_proposal_graph
 
     plan = WorkflowPlan(
         strategy="research_proposal",
-        nodes=["article_proposal", "deep_research", "submit_pull_request"],
+        nodes=["article_proposal", "deep_research", "submit_draft_branch"],
     )
 
     result = article_proposal_graph.execute_workflow(
@@ -133,7 +136,7 @@ def test_execute_workflow_with_research_proposal_strategy(article_proposal_graph
     assert set(result.node_results.keys()) == {
         "article_proposal",
         "deep_research",
-        "submit_pull_request",
+        "submit_draft_branch",
     }
     assert "research_proposal" in result.summary
 
@@ -148,7 +151,7 @@ def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
         nodes=[
             "article_proposal",
             "deep_research",
-            "submit_pull_request",
+            "submit_draft_branch",
         ],
     )
 
@@ -160,7 +163,10 @@ def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
 
 
 def test_execute_workflow_passes_backend_to_nodes(
-    mock_vault_service, mock_llm_client_provider, mock_gateway_client, mock_research_client
+    mock_vault_service,
+    mock_llm_client_provider,
+    mock_gateway_client,
+    mock_research_client,
 ):
     """The backend selection should appear in the node execution context."""
 
@@ -180,7 +186,6 @@ def test_execute_workflow_passes_backend_to_nodes(
     )
 
     # Override _get_node to return recording agents
-    original_get_node = graph._get_node
 
     def recording_node_factory(name: str):
         return RecordingAgent()
@@ -201,7 +206,10 @@ def test_execute_workflow_passes_backend_to_nodes(
 
 
 def test_run_workflow_collects_branch_metadata(
-    mock_vault_service, mock_llm_client_provider, mock_gateway_client, mock_research_client
+    mock_vault_service,
+    mock_llm_client_provider,
+    mock_gateway_client,
+    mock_research_client,
 ):
     """run_workflow should propagate branch metadata from the submit node."""
 
@@ -215,7 +223,7 @@ def test_run_workflow_collects_branch_metadata(
 
     # Override _get_node to return custom agents
     def node_factory(name: str):
-        if name == "submit_pull_request":
+        if name == "submit_draft_branch":
             agent = MagicMock()
 
             def execute(context: dict) -> NodeResult:
@@ -244,7 +252,10 @@ def test_run_workflow_collects_branch_metadata(
 
 
 def test_run_workflow_handles_failure(
-    mock_vault_service, mock_llm_client_provider, mock_gateway_client, mock_research_client
+    mock_vault_service,
+    mock_llm_client_provider,
+    mock_gateway_client,
+    mock_research_client,
 ):
     """run_workflow should return a failure result if a node raises."""
 

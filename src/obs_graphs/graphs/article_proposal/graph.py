@@ -10,9 +10,9 @@ from olm_d_rch_sdk import ResearchClientProtocol
 from src.obs_graphs.api.schemas import WorkflowRunRequest
 from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.graphs.article_proposal.state import (
-    NodeResult,
     FileChange,
     GraphState,
+    NodeResult,
     WorkflowStrategy,
 )
 from src.obs_graphs.protocols import (
@@ -114,12 +114,12 @@ class ArticleProposalGraph:
                 )
 
                 self._nodes[node_name] = DeepResearchNode(self.research_client)
-            elif node_name == "submit_pull_request":
-                from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_pull_request import (
-                    SubmitPullRequestNode,
+            elif node_name == "submit_draft_branch":
+                from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_draft_branch import (
+                    SubmitDraftBranchNode,
                 )
 
-                self._nodes[node_name] = SubmitPullRequestNode(self.gateway_client)
+                self._nodes[node_name] = SubmitDraftBranchNode(self.gateway_client)
             else:
                 raise ValueError(f"Unknown node: {node_name}")
 
@@ -154,9 +154,9 @@ class ArticleProposalGraph:
             if not workflow_result.success:
                 raise Exception(f"Workflow execution failed: {workflow_result.summary}")
 
-            pr_result = workflow_result.node_results.get("submit_pull_request", {})
-            pr_metadata = pr_result.get("metadata", {})
-            workflow_result.branch_name = pr_metadata.get("branch_name", "")
+            branch_result = workflow_result.node_results.get("submit_draft_branch", {})
+            branch_metadata = branch_result.get("metadata", {})
+            workflow_result.branch_name = branch_metadata.get("branch_name", "")
 
             return workflow_result
 
@@ -187,7 +187,7 @@ class ArticleProposalGraph:
         nodes = [
             "article_proposal",
             "deep_research",
-            "submit_pull_request",
+            "submit_draft_branch",
         ]
 
         return WorkflowPlan(nodes=nodes, strategy=strategy)

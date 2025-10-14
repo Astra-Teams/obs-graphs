@@ -6,9 +6,9 @@ from datetime import datetime
 from olm_d_rch_sdk import ResearchClientProtocol, ResearchResponse
 
 from src.obs_graphs.graphs.article_proposal.state import (
-    NodeResult,
     FileAction,
     FileChange,
+    NodeResult,
 )
 from src.obs_graphs.protocols import NodeProtocol
 
