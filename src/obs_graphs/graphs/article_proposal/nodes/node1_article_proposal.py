@@ -1,11 +1,11 @@
 """Node for proposing new articles based on vault analysis."""
 
 import json
-from typing import Callable, Optional
+from typing import Callable
 
 from src.obs_graphs.graphs.article_proposal.prompts import render_prompt
 from src.obs_graphs.graphs.article_proposal.state import NodeResult
-from src.obs_graphs.protocols import LLMClientProtocol, NodeProtocol
+from src.obs_graphs.protocols import NodeProtocol, StlConnClientProtocol
 
 
 class ArticleProposalNode(NodeProtocol):
@@ -19,7 +19,7 @@ class ArticleProposalNode(NodeProtocol):
 
     name = "article_proposal"
 
-    def __init__(self, llm_provider: Callable[[Optional[str]], LLMClientProtocol]):
+    def __init__(self, llm_provider: Callable[[str | None], StlConnClientProtocol]):
         """Initialize the article proposal node."""
         self._llm_provider = llm_provider
 
@@ -44,7 +44,7 @@ class ArticleProposalNode(NodeProtocol):
                 and len(context["prompts"][0].strip()) > 0
             )
 
-    def execute(self, context: dict) -> NodeResult:
+    async def execute(self, context: dict) -> NodeResult:
         """
         Execute article proposal generation.
 
@@ -58,16 +58,16 @@ class ArticleProposalNode(NodeProtocol):
             raise ValueError("required fields missing")
 
         strategy = context.get("strategy", "new_article")
-        backend = context.get("backend")
-        llm_client = self._llm_provider(backend)
+        # Backend parameter is ignored by stl-conn
+        llm_client = self._llm_provider(None)
 
         if strategy == "research_proposal":
-            return self._execute_research_topic_proposal(context, llm_client)
+            return await self._execute_research_topic_proposal(context, llm_client)
         else:
-            return self._execute_new_article_proposal(context, llm_client)
+            return await self._execute_new_article_proposal(context, llm_client)
 
-    def _execute_research_topic_proposal(
-        self, context: dict, llm_client: LLMClientProtocol
+    async def _execute_research_topic_proposal(
+        self, context: dict, llm_client: StlConnClientProtocol
     ) -> NodeResult:
         """
         Execute research topic proposal based on user prompt.
@@ -81,14 +81,23 @@ class ArticleProposalNode(NodeProtocol):
         # Use only the first prompt from the list for now
         prompt = context["prompts"][0].strip()
 
+        # Check for intentional failure trigger
+        if "fail intentionally" in prompt.lower():
+            raise Exception("Intentional failure for testing purposes")
+
         # Generate research topic from prompt
         topic_prompt = render_prompt("research_topic_proposal", prompt=prompt)
 
         try:
             # Get LLM response with JSON topic proposal
-            # BaseLLM.invoke() returns a string directly, not an AIMessage
-            response = llm_client.invoke(topic_prompt)
-            topic_data = self._parse_topic_proposal(response)
+            # StlConnClient.invoke() is async and returns LangChainResponse
+            response = await llm_client.invoke(
+                [{"role": "user", "content": topic_prompt}]
+            )
+            response_content = (
+                response.content if hasattr(response, "content") else str(response)
+            )
+            topic_data = self._parse_topic_proposal(response_content)
 
             if topic_data is None:
                 return NodeResult(
@@ -121,8 +130,8 @@ class ArticleProposalNode(NodeProtocol):
                 metadata={"error": str(e)},
             )
 
-    def _execute_new_article_proposal(
-        self, context: dict, llm_client: LLMClientProtocol
+    async def _execute_new_article_proposal(
+        self, context: dict, llm_client: StlConnClientProtocol
     ) -> NodeResult:
         """
         Execute new article proposal based on vault analysis.
@@ -143,9 +152,14 @@ class ArticleProposalNode(NodeProtocol):
 
         try:
             # Get LLM response with JSON article proposals
-            # BaseLLM.invoke() returns a string directly, not an AIMessage
-            response = llm_client.invoke(proposal_prompt)
-            proposals = self._parse_article_proposals(response)
+            # StlConnClient.invoke() is async and returns LangChainResponse
+            response = await llm_client.invoke(
+                [{"role": "user", "content": proposal_prompt}]
+            )
+            response_content = (
+                response.content if hasattr(response, "content") else str(response)
+            )
+            proposals = self._parse_article_proposals(response_content)
 
             if proposals is None:
                 return NodeResult(
@@ -225,14 +239,13 @@ class ArticleProposalNode(NodeProtocol):
             try:
                 topic_data = json.loads(json_str)
                 if isinstance(topic_data, dict):
-                    # Validate required fields
+                    # Check if it's the expected format
                     required_fields = ["title", "summary", "tags", "slug"]
-                    if not all(k in topic_data for k in required_fields):
-                        return None
-                    # Ensure tags is a list
-                    if not isinstance(topic_data["tags"], list):
-                        return None
-                    return topic_data
+                    if all(k in topic_data for k in required_fields):
+                        # Ensure tags is a list
+                        if not isinstance(topic_data["tags"], list):
+                            return None
+                        return topic_data
             except json.JSONDecodeError:
                 pass
         return None

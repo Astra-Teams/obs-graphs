@@ -44,6 +44,8 @@ def test_db():
 @pytest.fixture
 def client(test_db):
     """Create FastAPI test client with database override."""
+    from unittest.mock import MagicMock
+
     from fastapi import FastAPI
 
     from src.obs_graphs import dependencies
@@ -51,6 +53,15 @@ def client(test_db):
     app = FastAPI()
     app.include_router(router, prefix="/api")
     app.dependency_overrides[dependencies.get_db_session] = override_get_db
+
+    # Mock LLM client to avoid async issues in tests
+    mock_llm_client = MagicMock()
+    mock_llm_client.invoke.return_value = MagicMock()
+    mock_llm_client.invoke.return_value.content = '{"test": "mock response"}'
+    mock_llm_provider = MagicMock(return_value=mock_llm_client)
+    app.dependency_overrides[dependencies.get_llm_client_provider] = (
+        lambda: mock_llm_provider
+    )
 
     return TestClient(app)
 

@@ -9,7 +9,7 @@ from src.obs_graphs.graphs.article_proposal.state import FileAction
 class TestAgentIntegration:
     """Run the orchestrator end-to-end against vault fixtures."""
 
-    def test_research_workflow_creates_proposal_in_empty_vault(
+    async def test_research_workflow_creates_proposal_in_empty_vault(
         self, vault_fixture
     ) -> None:
         """An empty vault should still run the research workflow and produce changes."""
@@ -30,7 +30,7 @@ class TestAgentIntegration:
         prompts = [prompt]
         request = WorkflowRunRequest(prompts=prompts)
 
-        result = graph_builder.run_workflow(request)
+        result = await graph_builder.run_workflow(request)
         assert result.success is True
         # The important assertion is that we got CREATE changes, not the internal prompts
 
@@ -43,7 +43,7 @@ class TestAgentIntegration:
 
         assert vault_service.validate_vault_structure(vault_path)
 
-    def test_improvement_strategy_runs_all_agents(self, vault_fixture) -> None:
+    async def test_improvement_strategy_runs_all_agents(self, vault_fixture) -> None:
         """A populated vault should trigger the improvement strategy and execute all agents."""
         from src.obs_graphs.graphs.factory import get_graph_builder
         from src.obs_graphs.services import VaultService
@@ -62,7 +62,7 @@ class TestAgentIntegration:
         prompts = [prompt]
         request = WorkflowRunRequest(prompts=prompts)
 
-        result = graph_builder.run_workflow(request)
+        result = await graph_builder.run_workflow(request)
         assert result.success is True
         assert (
             len(result.node_results) == 3

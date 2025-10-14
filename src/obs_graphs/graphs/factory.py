@@ -7,13 +7,13 @@ from olm_d_rch_sdk import ResearchClientProtocol
 
 from src.obs_graphs.graphs.article_proposal.graph import ArticleProposalGraph
 from src.obs_graphs.graphs.protocol import WorkflowGraphProtocol
-from src.obs_graphs.protocols import LLMClientProtocol, VaultServiceProtocol
+from src.obs_graphs.protocols import StlConnClientProtocol, VaultServiceProtocol
 
 
 def get_graph_builder(
     workflow_type: str,
     vault_service: VaultServiceProtocol | None = None,
-    llm_client_provider: Callable[[str | None], LLMClientProtocol] | None = None,
+    llm_client_provider: Callable[[], StlConnClientProtocol] | None = None,
     gateway_client: GatewayClientProtocol | None = None,
     research_client: ResearchClientProtocol | None = None,
 ) -> WorkflowGraphProtocol:
@@ -41,9 +41,7 @@ def get_graph_builder(
     # Use provided dependencies or get defaults
     vault_service = vault_service or dependencies.get_vault_service()
     llm_client_provider = llm_client_provider or dependencies.get_llm_client_provider(
-        settings=dependencies.get_app_settings(),
-        ollama_settings=dependencies.get_ollama_settings(),
-        mlx_settings=dependencies.get_mlx_settings(),
+        stl_conn_settings=dependencies.get_stl_conn_settings(),
     )
     gateway_client = gateway_client or dependencies.get_gateway_client(
         settings=dependencies.get_app_settings(),

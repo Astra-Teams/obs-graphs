@@ -15,7 +15,7 @@ from src.obs_graphs.graphs.article_proposal.state import NodeResult
 
 
 class MockAgent(MagicMock):
-    def execute(self, context: dict) -> NodeResult:
+    async def execute(self, context: dict) -> NodeResult:
         return NodeResult(
             success=True, changes=[], message=f"{self.__class__.__name__} executed"
         )
@@ -30,34 +30,8 @@ def mock_vault_service():
 
 
 @pytest.fixture
-def mock_llm_client_provider():
-    """Return a mock LLM client provider."""
-    mock_client = MagicMock()
-
-    def provider(backend=None):
-        return mock_client
-
-    return provider
-
-
-@pytest.fixture
-def mock_gateway_client():
-    """Return a mock gateway client."""
-    return MagicMock()
-
-
-@pytest.fixture
-def mock_research_client():
-    """Return a mock research client."""
-    return MagicMock()
-
-
-@pytest.fixture
 def article_proposal_graph(
     mock_vault_service,
-    mock_llm_client_provider,
-    mock_gateway_client,
-    mock_research_client,
 ):
     """Return an ArticleProposalGraph with mocked dependencies."""
     # Create mock nodes
@@ -108,14 +82,14 @@ def test_determine_workflow_plan_validates_whitespace_only_prompt():
         WorkflowRunRequest(prompts=["   "])
 
 
-def test_execute_workflow(article_proposal_graph):
+async def test_execute_workflow(article_proposal_graph):
     """execute_workflow should run each node and aggregate results."""
     # Mock _get_node to return mock agents instead of real nodes
     article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
 
     plan = WorkflowPlan(strategy="test_plan", nodes=["article_proposal"])
 
-    result = article_proposal_graph.execute_workflow(plan)
+    result = await article_proposal_graph.execute_workflow(plan)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
@@ -123,7 +97,7 @@ def test_execute_workflow(article_proposal_graph):
     assert "article_proposal" in result.node_results
 
 
-def test_execute_workflow_with_research_proposal_strategy(article_proposal_graph):
+async def test_execute_workflow_with_research_proposal_strategy(article_proposal_graph):
     """execute_workflow should handle the research workflow plan."""
     # Mock _get_node to return mock agents instead of real nodes
     article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
@@ -133,7 +107,7 @@ def test_execute_workflow_with_research_proposal_strategy(article_proposal_graph
         nodes=["article_proposal", "deep_research", "submit_draft_branch"],
     )
 
-    result = article_proposal_graph.execute_workflow(
+    result = await article_proposal_graph.execute_workflow(
         plan, prompts=["Research quantum computing"]
     )
 
@@ -148,7 +122,7 @@ def test_execute_workflow_with_research_proposal_strategy(article_proposal_graph
     assert "research_proposal" in result.summary
 
 
-def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
+async def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
     """execute_workflow should process multiple nodes sequentially."""
     # Mock _get_node to return mock agents instead of real nodes
     article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
@@ -162,59 +136,15 @@ def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
         ],
     )
 
-    result = article_proposal_graph.execute_workflow(plan)
+    result = await article_proposal_graph.execute_workflow(plan)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
     assert len(result.node_results) == 3
 
 
-def test_execute_workflow_passes_backend_to_nodes(
+async def test_run_workflow_collects_branch_metadata(
     mock_vault_service,
-    mock_llm_client_provider,
-    mock_gateway_client,
-    mock_research_client,
-):
-    """The backend selection should appear in the node execution context."""
-
-    captured_backends: list[str] = []
-
-    class RecordingAgent(MockAgent):
-        def execute(self, context: dict) -> NodeResult:  # type: ignore[override]
-            captured_backends.append(context.get("backend"))
-            return super().execute(context)
-
-    # Create mock nodes
-    mock_article_proposal_node = RecordingAgent()
-    mock_deep_research_node = RecordingAgent()
-    mock_submit_draft_branch_node = MagicMock()
-
-    # Create a custom graph with mocked nodes that record backend
-    graph = ArticleProposalGraph(
-        vault_service=mock_vault_service,
-        article_proposal_node=mock_article_proposal_node,
-        deep_research_node=mock_deep_research_node,
-        submit_draft_branch_node=mock_submit_draft_branch_node,
-    )
-
-    plan = WorkflowPlan(
-        strategy="test_plan", nodes=["article_proposal", "deep_research"]
-    )
-
-    graph.execute_workflow(
-        plan,
-        prompts=["Backend propagation test"],
-        backend="mlx",
-    )
-
-    assert captured_backends == ["mlx", "mlx"]
-
-
-def test_run_workflow_collects_branch_metadata(
-    mock_vault_service,
-    mock_llm_client_provider,
-    mock_gateway_client,
-    mock_research_client,
 ):
     """run_workflow should propagate branch metadata from the submit node."""
 
@@ -223,7 +153,7 @@ def test_run_workflow_collects_branch_metadata(
     mock_deep_research_node = MockAgent()
     mock_submit_draft_branch_node = MagicMock()
 
-    def execute(context: dict) -> NodeResult:
+    async def execute(context: dict) -> NodeResult:
         return NodeResult(
             success=True,
             changes=[],
@@ -245,18 +175,15 @@ def test_run_workflow_collects_branch_metadata(
 
     request = WorkflowRunRequest(prompts=["Test research"])
 
-    result = graph.run_workflow(request)
+    result = await graph.run_workflow(request)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
     assert result.branch_name == "obsidian-agents/workflow-123"
 
 
-def test_run_workflow_handles_failure(
+async def test_run_workflow_handles_failure(
     mock_vault_service,
-    mock_llm_client_provider,
-    mock_gateway_client,
-    mock_research_client,
 ):
     """run_workflow should return a failure result if a node raises."""
 
@@ -276,7 +203,7 @@ def test_run_workflow_handles_failure(
 
     request = WorkflowRunRequest(prompts=["Test research failure path"])
 
-    result = graph.run_workflow(request)
+    result = await graph.run_workflow(request)
 
     assert isinstance(result, WorkflowResult)
     assert not result.success

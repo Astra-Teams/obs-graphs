@@ -1,15 +1,13 @@
 """Unit tests for the dependency injection system."""
 
-import pytest
 from obs_gtwy_sdk import MockObsGatewayClient
+from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 from src.obs_graphs import dependencies
-from src.obs_graphs.clients import OllamaClient
 from src.obs_graphs.config import (
     GatewaySettings,
-    MLXSettings,
     ObsGraphsSettings,
-    OllamaSettings,
+    StlConnSettings,
 )
 
 
@@ -21,15 +19,10 @@ class TestConfigurationProviders:
         settings = dependencies.get_app_settings()
         assert isinstance(settings, ObsGraphsSettings)
 
-    def test_get_ollama_settings(self):
-        """Test that get_ollama_settings returns OllamaSettings."""
-        settings = dependencies.get_ollama_settings()
-        assert isinstance(settings, OllamaSettings)
-
-    def test_get_mlx_settings(self):
-        """Test that get_mlx_settings returns MLXSettings."""
-        settings = dependencies.get_mlx_settings()
-        assert isinstance(settings, MLXSettings)
+    def test_get_stl_conn_settings(self):
+        """Test that get_stl_conn_settings returns StlConnSettings."""
+        settings = dependencies.get_stl_conn_settings()
+        assert isinstance(settings, StlConnSettings)
 
     def test_get_gateway_settings(self):
         """Test that get_gateway_settings returns GatewaySettings."""
@@ -46,104 +39,69 @@ class TestConfigurationProviders:
 class TestLLMClientFactory:
     """Test LLM client factory and provider functions."""
 
-    def test_get_llm_client_ollama(self, monkeypatch):
-        """Test that get_llm_client returns OllamaClient when backend is ollama."""
-        monkeypatch.setenv("OBS_GRAPHS_LLM_BACKEND", "ollama")
-        monkeypatch.setenv("OBS_GRAPHS_USE_MOCK_LLM", "false")
-
-        # Clear cache to pick up new env vars
-        dependencies.get_app_settings.cache_clear()
-        dependencies.get_ollama_settings.cache_clear()
-        dependencies.get_mlx_settings.cache_clear()
-
-        # Call with actual settings, not Depends
-        client = dependencies.get_llm_client(
-            settings=dependencies.get_app_settings(),
-            ollama_settings=dependencies.get_ollama_settings(),
-            mlx_settings=dependencies.get_mlx_settings(),
-        )
-        assert isinstance(client, OllamaClient)
-
     def test_get_llm_client_mock(self, monkeypatch):
-        """Test that get_llm_client returns mock client when USE_MOCK_LLM is true."""
-        monkeypatch.setenv("OBS_GRAPHS_USE_MOCK_LLM", "true")
-        monkeypatch.setenv("OBS_GRAPHS_LLM_BACKEND", "ollama")
+        """Test that get_llm_client returns MockStlConnClient when mock is enabled."""
+        monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
 
         # Clear cache to pick up new env vars
-        dependencies.get_app_settings.cache_clear()
-        dependencies.get_ollama_settings.cache_clear()
-        dependencies.get_mlx_settings.cache_clear()
+        dependencies.get_stl_conn_settings.cache_clear()
 
         client = dependencies.get_llm_client(
-            settings=dependencies.get_app_settings(),
-            ollama_settings=dependencies.get_ollama_settings(),
-            mlx_settings=dependencies.get_mlx_settings(),
+            stl_conn_settings=dependencies.get_stl_conn_settings(),
         )
-        assert isinstance(client, OllamaClient)
-        # Mock client should be wrapped in OllamaClient
+        assert isinstance(client, MockStlConnClient)
 
-    def test_get_llm_client_invalid_backend(self, monkeypatch):
-        """Test that invalid backend is caught by settings validation."""
-        # The validation happens at settings level, not at get_llm_client level
-        # So we expect a ValidationError from Pydantic
-        from pydantic_core import ValidationError
-
-        monkeypatch.setenv("OBS_GRAPHS_LLM_BACKEND", "invalid_backend")
-        monkeypatch.setenv("OBS_GRAPHS_USE_MOCK_LLM", "false")
+    def test_get_llm_client_real(self, monkeypatch):
+        """Test that get_llm_client returns StlConnClient when mock is disabled."""
+        monkeypatch.setenv("USE_MOCK_STL_CONN", "false")
 
         # Clear cache to pick up new env vars
-        dependencies.get_app_settings.cache_clear()
+        dependencies.get_stl_conn_settings.cache_clear()
 
-        with pytest.raises(ValidationError):
-            dependencies.get_app_settings()
+        client = dependencies.get_llm_client(
+            stl_conn_settings=dependencies.get_stl_conn_settings(),
+        )
+        assert isinstance(client, StlConnClient)
 
     def test_get_llm_client_provider(self):
         """Test that get_llm_client_provider returns a callable."""
         provider = dependencies.get_llm_client_provider(
-            settings=dependencies.get_app_settings(),
-            ollama_settings=dependencies.get_ollama_settings(),
-            mlx_settings=dependencies.get_mlx_settings(),
+            stl_conn_settings=dependencies.get_stl_conn_settings(),
         )
         assert callable(provider)
 
     def test_llm_client_provider_returns_client(self, monkeypatch):
         """Test that the provider function returns an LLM client."""
-        monkeypatch.setenv("OBS_GRAPHS_LLM_BACKEND", "ollama")
-        monkeypatch.setenv("OBS_GRAPHS_USE_MOCK_LLM", "false")
+        monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
 
         # Clear cache
-        dependencies.get_app_settings.cache_clear()
-        dependencies.get_ollama_settings.cache_clear()
-        dependencies.get_mlx_settings.cache_clear()
+        dependencies.get_stl_conn_settings.cache_clear()
 
         provider = dependencies.get_llm_client_provider(
-            settings=dependencies.get_app_settings(),
-            ollama_settings=dependencies.get_ollama_settings(),
-            mlx_settings=dependencies.get_mlx_settings(),
+            stl_conn_settings=dependencies.get_stl_conn_settings(),
         )
         client = provider()
-        # Check that it's an Ollama client (concrete type check instead of protocol)
-        assert isinstance(client, OllamaClient)
+        assert isinstance(client, MockStlConnClient)
 
-    def test_llm_client_provider_with_backend_override(self, monkeypatch):
-        """Test that provider accepts backend parameter to override default."""
-        monkeypatch.setenv("OBS_GRAPHS_LLM_BACKEND", "ollama")
-        monkeypatch.setenv("OBS_GRAPHS_USE_MOCK_LLM", "false")
+    def test_llm_client_provider_ignores_backend_parameter(self, monkeypatch):
+        """Test that provider ignores backend parameter (for API compatibility)."""
+        monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
 
         # Clear cache
-        dependencies.get_app_settings.cache_clear()
-        dependencies.get_ollama_settings.cache_clear()
-        dependencies.get_mlx_settings.cache_clear()
+        dependencies.get_stl_conn_settings.cache_clear()
 
         provider = dependencies.get_llm_client_provider(
-            settings=dependencies.get_app_settings(),
-            ollama_settings=dependencies.get_ollama_settings(),
-            mlx_settings=dependencies.get_mlx_settings(),
+            stl_conn_settings=dependencies.get_stl_conn_settings(),
         )
 
-        # Request ollama explicitly
-        client = provider("ollama")
-        assert isinstance(client, OllamaClient)
+        # Request different backends - should all return same client type
+        client1 = provider("ollama")
+        client2 = provider("mlx")
+        client3 = provider(None)
+
+        assert isinstance(client1, MockStlConnClient)
+        assert isinstance(client2, MockStlConnClient)
+        assert isinstance(client3, MockStlConnClient)
 
 
 class TestServiceProviders:

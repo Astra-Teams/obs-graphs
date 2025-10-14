@@ -11,11 +11,10 @@ from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 def set_db_test_env(monkeypatch):
     """Setup environment variables for database tests."""
     # monkeypatch.setenv("USE_SQLITE", "false")  # Commented out to allow db switching tests
-    monkeypatch.setenv("USE_MOCK_LLM", "true")
+    monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
     monkeypatch.setenv("USE_MOCK_REDIS", "true")
     monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
     monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
-    monkeypatch.setenv("OBS_GRAPHS_OLLAMA_MODEL", "tinyllama:1.1b")
     monkeypatch.setenv("RESEARCH_API_OLLAMA_MODEL", "tinyllama:1.1b")
 
 

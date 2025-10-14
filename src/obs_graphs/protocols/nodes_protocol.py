@@ -10,7 +10,7 @@ class NodeProtocol(Protocol):
 
     name: str  # Class attribute for node name
 
-    def execute(self, context: dict) -> NodeResult:
+    async def execute(self, context: dict) -> NodeResult:
         """
         Execute the node's task.
 

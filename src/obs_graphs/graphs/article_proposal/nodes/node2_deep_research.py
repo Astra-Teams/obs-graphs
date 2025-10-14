@@ -47,7 +47,7 @@ class DeepResearchNode(NodeProtocol):
             and len(context["topic_title"].strip()) > 0
         )
 
-    def execute(self, context: dict) -> NodeResult:
+    async def execute(self, context: dict) -> NodeResult:
         """
         Execute deep research and persist the returned article.
         """
@@ -66,11 +66,8 @@ class DeepResearchNode(NodeProtocol):
         try:
             # Call research API with topic
             logger.info(f"Starting research for topic: {topic_title}")
-            kwargs = {}
-            if context.get("backend") is not None:
-                kwargs["backend"] = context.get("backend")
             research_result: ResearchResponse = self.research_client.research(
-                topic_title, **kwargs
+                topic_title
             )
 
             if not research_result.success:

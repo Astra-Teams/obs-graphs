@@ -17,7 +17,7 @@ from src.obs_graphs.api.schemas import (
 )
 from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
-from src.obs_graphs.protocols import LLMClientProtocol, VaultServiceProtocol
+from src.obs_graphs.protocols import StlConnClientProtocol, VaultServiceProtocol
 
 router = APIRouter()
 
@@ -33,7 +33,7 @@ async def run_workflow(
     request: WorkflowRunRequest,
     db: Session = Depends(dependencies.get_db_session),
     vault_service: VaultServiceProtocol = Depends(dependencies.get_vault_service),
-    llm_client_provider: Callable[[str | None], LLMClientProtocol] = Depends(
+    llm_client_provider: Callable[[], StlConnClientProtocol] = Depends(
         dependencies.get_llm_client_provider
     ),
     gateway_client: GatewayClientProtocol = Depends(dependencies.get_gateway_client),
@@ -76,10 +76,6 @@ async def run_workflow(
             raise HTTPException(status_code=400, detail=str(e))
 
         # Create new workflow record with PENDING status
-        selected_backend = (
-            (request.backend or obs_graphs_settings.llm_backend).strip().lower()
-        )
-
         prompts = request.prompts
 
         # Persist workflow with full prompt history
@@ -89,7 +85,6 @@ async def run_workflow(
             status=WorkflowStatus.PENDING,
             strategy=request.strategy,
         )
-        workflow.workflow_metadata = {"backend": selected_backend}
         db.add(workflow)
         db.commit()
         db.refresh(workflow)
@@ -119,7 +114,7 @@ async def run_workflow(
             db.commit()
 
             # Run workflow with injected dependencies (vault_service already configured)
-            result = graph_builder.run_workflow(request)
+            result = await graph_builder.run_workflow(request)
 
             # Update workflow based on result
             if result.success:
@@ -131,17 +126,12 @@ async def run_workflow(
                         "node_results": result.node_results,
                         "total_changes": len(result.changes),
                         "branch_name": result.branch_name,
-                        "backend": selected_backend,
                     }
                 )
                 workflow.workflow_metadata = metadata
             else:
                 workflow.status = WorkflowStatus.FAILED
                 workflow.error_message = result.summary
-                # Ensure backend is recorded in metadata on failure as well
-                metadata = workflow.workflow_metadata or {}
-                metadata.setdefault("backend", selected_backend)
-                workflow.workflow_metadata = metadata
 
             workflow.completed_at = datetime.now(timezone.utc)
             db.commit()

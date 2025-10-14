@@ -8,7 +8,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.obs_graphs.celery.tasks import run_workflow_task
-from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.db.database import Base
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 from tests.db.conftest import create_pending_workflow
@@ -64,7 +63,11 @@ class TestRunWorkflowTask:
         mock_result.summary = "Test summary"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
-        mock_builder_instance.run_workflow.return_value = mock_result
+
+        async def mock_run_workflow(request):
+            return mock_result
+
+        mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
         mock_get_builder.return_value = mock_builder_instance
 
         # Save workflow ID before task execution (session will be closed)
@@ -99,7 +102,13 @@ class TestRunWorkflowTask:
 
         # Mock ObsidianArticleProposalToPRGraph to raise error
         mock_builder_instance = MagicMock()
-        mock_builder_instance.run_workflow.side_effect = Exception("Stop here")
+
+        async def mock_run_workflow_with_error(request):
+            raise Exception("Stop here")
+
+        mock_builder_instance.run_workflow = MagicMock(
+            side_effect=mock_run_workflow_with_error
+        )
         mock_get_builder.return_value = mock_builder_instance
 
         with pytest.raises(Exception):
@@ -132,7 +141,11 @@ class TestRunWorkflowTask:
         mock_result.summary = "Test"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
-        mock_builder_instance.run_workflow.return_value = mock_result
+
+        async def mock_run_workflow(request):
+            return mock_result
+
+        mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
         mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
@@ -170,7 +183,11 @@ class TestRunWorkflowTask:
         mock_result.summary = "Improved articles"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
-        mock_builder_instance.run_workflow.return_value = mock_result
+
+        async def mock_run_workflow(request):
+            return mock_result
+
+        mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
         mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
@@ -205,7 +222,11 @@ class TestRunWorkflowTask:
         mock_result.summary = "Success"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
-        mock_builder_instance.run_workflow.return_value = mock_result
+
+        async def mock_run_workflow(request):
+            return mock_result
+
+        mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
         mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
@@ -235,7 +256,13 @@ class TestRunWorkflowTask:
         mock_get_db.return_value = iter([test_db])
 
         mock_builder_instance = MagicMock()
-        mock_builder_instance.run_workflow.side_effect = Exception("Workflow error")
+
+        async def mock_run_workflow_with_error(request):
+            raise Exception("Workflow error")
+
+        mock_builder_instance.run_workflow = MagicMock(
+            side_effect=mock_run_workflow_with_error
+        )
         mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
@@ -298,7 +325,11 @@ class TestRunWorkflowTask:
         mock_result.summary = "Success"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
-        mock_builder_instance.run_workflow.return_value = mock_result
+
+        async def mock_run_workflow(request):
+            return mock_result
+
+        mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
         mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
@@ -313,7 +344,6 @@ class TestRunWorkflowTask:
         assert hasattr(request, "prompts")
         assert request.prompts == ["Test research prompt for propagation"]
         assert request.primary_prompt == "Test research prompt for propagation"
-        assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -347,7 +377,11 @@ class TestRunWorkflowTask:
         mock_result.summary = "Success"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
-        mock_builder_instance.run_workflow.return_value = mock_result
+
+        async def mock_run_workflow(request):
+            return mock_result
+
+        mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
         mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
@@ -362,7 +396,6 @@ class TestRunWorkflowTask:
         assert hasattr(request, "prompts")
         assert request.prompts == ["Default research prompt"]
         assert request.primary_prompt == "Default research prompt"
-        assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -398,7 +431,11 @@ class TestRunWorkflowTask:
         mock_result.summary = "Success"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
-        mock_builder_instance.run_workflow.return_value = mock_result
+
+        async def mock_run_workflow(request):
+            return mock_result
+
+        mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
         mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
@@ -413,19 +450,18 @@ class TestRunWorkflowTask:
         assert request.prompts == ["Research quantum computing"]
         assert request.primary_prompt == "Research quantum computing"
         assert request.strategy == WorkflowStrategy.RESEARCH_PROPOSAL
-        assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    def test_task_uses_backend_from_metadata(
+    def test_task_propagates_prompt_from_metadata(
         self,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
     ):
-        """Task should respect backend stored in workflow metadata."""
+        """Task should propagate prompts from workflow metadata."""
         mock_prepare_dir.return_value = Path("/tmp/vault")
 
         workflow = Workflow(
@@ -448,7 +484,11 @@ class TestRunWorkflowTask:
         mock_result.summary = "Success"
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
-        mock_builder_instance.run_workflow.return_value = mock_result
+
+        async def mock_run_workflow(request):
+            return mock_result
+
+        mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
         mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
@@ -457,11 +497,4 @@ class TestRunWorkflowTask:
 
         mock_builder_instance.run_workflow.assert_called_once()
         request = mock_builder_instance.run_workflow.call_args[0][0]
-        assert request.backend == "mlx"
-
-        # Re-query workflow from database to access updated metadata
-        updated_workflow = (
-            test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
-        )
-        updated_metadata = updated_workflow.workflow_metadata or {}
-        assert updated_metadata.get("backend") == "mlx"
+        assert request.prompts == ["Backend specific prompt"]

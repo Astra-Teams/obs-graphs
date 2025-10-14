@@ -10,10 +10,17 @@ WORKDIR /app
 # Install uv and git (needed for dependencies and submodules)
 RUN --mount=type=cache,target=/root/.cache \
   pip install uv && \
-  apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+  apt-get update && apt-get install -y git openssh-client && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency definition files  
 COPY pyproject.toml uv.lock README.md ./
+
+# Configure git with GitHub token for private repositories
+RUN --mount=type=secret,id=github_token \
+  if [ -s /run/secrets/github_token ]; then \
+  git config --global credential.helper store && \
+  printf "https://oauth2:%s@github.com" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
+  fi
 
 
 # ==============================================================================

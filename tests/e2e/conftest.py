@@ -74,7 +74,9 @@ def e2e_setup() -> Generator[None, None, None]:
     # Prepare environment variables for subprocess
     env = os.environ.copy()
     env["USE_SQLITE"] = "false"
-    env["USE_MOCK_LLM"] = "false"
+    env["USE_MOCK_STL_CONN"] = (
+        "true"  # E2E uses mock stl-conn (requires separate LLM server)
+    )
     env["USE_MOCK_REDIS"] = "false"  # E2E uses real Redis
     env["USE_MOCK_OLLAMA_DEEP_RESEARCHER"] = "false"
     env["USE_MOCK_OBS_GTWY"] = "true"

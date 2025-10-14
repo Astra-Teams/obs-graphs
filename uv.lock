@@ -842,6 +842,7 @@ version = "1.1.10"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/74/31/feeddfce1748c4a233ec1aa5b7396161c07ae1aa9b7bdbc9a72c3c7dd768/hf_xet-1.1.10.tar.gz", hash = "sha256:408aef343800a2102374a883f283ff29068055c111f003ff840733d3b715bb97", size = 487910, upload-time = "2025-09-12T20:10:27.12Z" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/f7/a2/343e6d05de96908366bdc0081f2d8607d61200be2ac802769c4284cc65bd/hf_xet-1.1.10-cp37-abi3-macosx_10_12_x86_64.whl", hash = "sha256:686083aca1a6669bc85c21c0563551cbcdaa5cf7876a91f3d074a030b577231d", size = 2761466, upload-time = "2025-09-12T20:10:22.836Z" },
     { url = "https://files.pythonhosted.org/packages/31/f9/6215f948ac8f17566ee27af6430ea72045e0418ce757260248b483f4183b/hf_xet-1.1.10-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:71081925383b66b24eedff3013f8e6bbd41215c3338be4b94ba75fd75b21513b", size = 2623807, upload-time = "2025-09-12T20:10:21.118Z" },
 ]
 
@@ -1696,6 +1697,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pygithub" },
     { name = "sqlalchemy" },
+    { name = "stl-conn" },
     { name = "uvicorn" },
     { name = "uvloop" },
 ]
@@ -1735,6 +1737,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.4.0,<3.0.0" },
     { name = "pygithub", specifier = ">=2.1.0,<3.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.29,<3.0.0" },
+    { name = "stl-conn", git = "https://github.com/asterismhq/stl-conn.git" },
     { name = "uvicorn", specifier = ">=0.35.0,<0.36.0" },
     { name = "uvloop", specifier = ">=0.19.0,<0.20.0" },
 ]
@@ -1782,7 +1785,7 @@ wheels = [
 [[package]]
 name = "olm-d-rch"
 version = "0.0.1"
-source = { git = "https://github.com/asterismhq/olm-d-rch.git#c53eb0a0194abaf57e9070e833785542d9cda577" }
+source = { git = "https://github.com/asterismhq/olm-d-rch.git#8fe4156a4fca47a8b723a6691abe6a42b99d6c55" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "ddgs" },
@@ -1790,13 +1793,12 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "langchain-community" },
-    { name = "langchain-ollama" },
     { name = "langgraph" },
-    { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "python-json-logger" },
     { name = "requests" },
+    { name = "stl-conn" },
     { name = "tiktoken" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -2187,6 +2189,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/00/e9/3916abb671bffb00845408c604ff03480dc8dc273310d8268547a37be0fb/pydantic_core-2.41.3.tar.gz", hash = "sha256:cdebb34b36ad05e8d77b4e797ad38a2a775c2a07a8fa386d4f6943b7778dcd39", size = 457489, upload-time = "2025-10-13T19:34:51.666Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/20/11/3149cae2a61ddd11c206cde9dab7598a53cfabe8e69850507876988d2047/pydantic_core-2.41.3-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:7bdc8b70bc4b68e4d891b46d018012cac7bbfe3b981a7c874716dde09ff09fd5", size = 2098919, upload-time = "2025-10-13T19:31:28.727Z" },
     { url = "https://files.pythonhosted.org/packages/53/64/1717c7c5b092c64e5022b0d02b11703c2c94c31d897366b6c8d160b7d1de/pydantic_core-2.41.3-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:446361e93f4ffe509edae5862fb89a0d24cbc8f2935f05c6584c2f2ca6e7b6df", size = 1910372, upload-time = "2025-10-13T19:31:30.351Z" },
@@ -2625,6 +2628,7 @@ version = "0.6.2"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ac/cc/738f3011628920e027a11754d9cae9abec1aed00f7ae860abbf843755233/safetensors-0.6.2.tar.gz", hash = "sha256:43ff2aa0e6fa2dc3ea5524ac7ad93a9839256b8703761e76e2d0b2a3fa4f15d9", size = 197968, upload-time = "2025-08-08T13:13:58.654Z" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/4d/b1/3f5fd73c039fc87dba3ff8b5d528bfc5a32b597fea8e7a6a4800343a17c7/safetensors-0.6.2-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:9c85ede8ec58f120bad982ec47746981e210492a6db876882aa021446af8ffba", size = 454797, upload-time = "2025-08-08T13:13:52.066Z" },
     { url = "https://files.pythonhosted.org/packages/8c/c9/bb114c158540ee17907ec470d01980957fdaf87b4aa07914c24eba87b9c6/safetensors-0.6.2-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:d6675cf4b39c98dbd7d940598028f3742e0375a6b4d4277e76beb0c35f4b843b", size = 432206, upload-time = "2025-08-08T13:13:50.931Z" },
 ]
 
@@ -2739,6 +2743,20 @@ wheels = [
 ]
 
 [[package]]
+name = "stl-conn"
+version = "1.2.0"
+source = { git = "https://github.com/asterismhq/stl-conn.git#0cd95cdb58c058ecc9f8c5e40bdb86c4392c44bd" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "mlx-lm", marker = "sys_platform == 'darwin'" },
+    { name = "ollama" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[[package]]
 name = "tenacity"
 version = "9.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2819,6 +2837,7 @@ dependencies = [
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/46/fb6854cec3278fbfa4a75b50232c77622bc517ac886156e6afbfa4d8fc6e/tokenizers-0.22.1.tar.gz", hash = "sha256:61de6522785310a309b3407bac22d99c4db5dba349935e99e4d15ea2226af2d9", size = 363123, upload-time = "2025-09-19T09:49:23.424Z" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/33/f4b2d94ada7ab297328fc671fed209368ddb82f965ec2224eb1892674c3a/tokenizers-0.22.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:59fdb013df17455e5f950b4b834a7b3ee2e0271e6378ccb33aa74d178b513c73", size = 3069318, upload-time = "2025-09-19T09:49:11.848Z" },
     { url = "https://files.pythonhosted.org/packages/1c/58/2aa8c874d02b974990e89ff95826a4852a8b2a273c7d1b4411cdd45a4565/tokenizers-0.22.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:8d4e484f7b0827021ac5f9f71d4794aaef62b979ab7608593da22b1d2e3c4edc", size = 2926478, upload-time = "2025-09-19T09:49:09.759Z" },
 ]
 

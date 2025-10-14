@@ -96,7 +96,8 @@ def test_validate_input_missing_fields(node):
     assert node.validate_input(context) is True
 
 
-def test_execute_with_valid_context(node, vault_path, mock_research_client):
+@pytest.mark.asyncio
+async def test_execute_with_valid_context(node, vault_path, mock_research_client):
     """Test that execute creates proposal file successfully."""
     context = {
         "topic_title": "Impact of Transformers on NLP",
@@ -105,7 +106,7 @@ def test_execute_with_valid_context(node, vault_path, mock_research_client):
         "proposal_slug": "impact-of-transformers-on-nlp",
     }
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert isinstance(result, NodeResult)
     assert result.success is True
@@ -133,7 +134,8 @@ def test_execute_with_valid_context(node, vault_path, mock_research_client):
     )
 
 
-def test_execute_preserves_article(node, vault_path, mock_research_client):
+@pytest.mark.asyncio
+async def test_execute_preserves_article(node, vault_path, mock_research_client):
     """Test that the article returned by the client is persisted verbatim."""
     context = {
         "topic_title": "Test Topic",
@@ -142,7 +144,7 @@ def test_execute_preserves_article(node, vault_path, mock_research_client):
         "proposal_slug": "test-topic",
     }
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert result.success is True
     content = result.changes[0].content
@@ -151,7 +153,8 @@ def test_execute_preserves_article(node, vault_path, mock_research_client):
     assert content == expected_article
 
 
-def test_execute_with_api_error(node, vault_path, mock_research_client):
+@pytest.mark.asyncio
+async def test_execute_with_api_error(node, vault_path, mock_research_client):
     """Test that execute handles research API errors."""
     mock_research_client.research.side_effect = Exception("API Error")
 
@@ -162,7 +165,7 @@ def test_execute_with_api_error(node, vault_path, mock_research_client):
         "proposal_slug": "test-topic",
     }
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert isinstance(result, NodeResult)
     assert result.success is False
@@ -171,15 +174,17 @@ def test_execute_with_api_error(node, vault_path, mock_research_client):
     assert "API Error" in str(result.metadata["error"])
 
 
-def test_execute_with_invalid_context(node, vault_path):
+@pytest.mark.asyncio
+async def test_execute_with_invalid_context(node, vault_path):
     """Test that execute raises error with invalid context."""
     context = {"topic_title": ""}  # Empty topic_title
 
     with pytest.raises(ValueError, match="topic_title is required"):
-        node.execute(context)
+        await node.execute(context)
 
 
-def test_execute_unique_filenames(node, vault_path, mock_research_client):
+@pytest.mark.asyncio
+async def test_execute_unique_filenames(node, vault_path, mock_research_client):
     """Test that execute generates unique filenames with timestamps."""
     import time
 
@@ -191,9 +196,9 @@ def test_execute_unique_filenames(node, vault_path, mock_research_client):
     }
 
     # Execute twice with delay to ensure different timestamps (format is YYYYmmdd_HHMMSS)
-    result1 = node.execute(context)
+    result1 = await node.execute(context)
     time.sleep(1.1)  # 1.1 second delay to ensure different timestamp
-    result2 = node.execute(context)
+    result2 = await node.execute(context)
 
     assert result1.success is True
     assert result2.success is True

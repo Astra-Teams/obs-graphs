@@ -7,7 +7,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 - **FastAPI** application that exposes workflow orchestration endpoints.
 - **LangGraph** powered agents for article improvements, classification, cross-referencing, and vault quality audits.
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
-- **Pluggable LLM backends** (Ollama or MLX) with a unified client protocol for agent prompts.
+- **Pluggable LLM backends** via the stl-conn SDK, providing a unified interface to various LLM providers.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
 - **SDK integrations** for obs-gtwy and deep research through the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
 
@@ -69,8 +69,8 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 - `USE_MOCK_OBS_GTWY` – when `true`, obs-graphs uses an in-process mock of the obs-gtwy gateway while the real API is not deployed.
 - `OBS_GTWY_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
 - `VAULT_SUBMODULE_PATH` – filesystem path to the local Obsidian vault submodule checkout.
-- `OBS_GRAPHS_LLM_BACKEND` – default LLM backend (`ollama` or `mlx`) used by workflow nodes. Backend-specific options are defined in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py` (for example `OBS_GRAPHS_OLLAMA_MODEL`, `OLLAMA_HOST`, `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, etc.).
-- `RESEARCH_API_URL` / related settings under `src/obs_graphs/config/research_api_settings.py` – connection details for the external deep-research API (served by the `olm-d-rch` submodule when mocks are disabled).
+- `STL_CONN_BASE_URL` – base URL for the stl-conn service providing LLM access.
+- `USE_MOCK_STL_CONN` – when `true`, uses mock LLM responses for development and testing.
 
 ### 3. Run the application stack
 
@@ -102,15 +102,14 @@ just e2e-test          # Spin up stack and run pytest with PostgreSQL and mocked
 
 E2E tests rely on PostgreSQL and will wait for `obs-api` to report healthy before executing tests.
 
-### Selecting an LLM backend
+### LLM Integration
 
-Workflows obtain their language model through the dependency container. You can switch between Ollama and MLX without code changes:
+Workflows obtain their language model through the stl-conn SDK, which provides a unified interface to various LLM providers. Configuration is managed via environment variables:
 
-- Set `OBS_GRAPHS_LLM_BACKEND=ollama` (default) to use an Ollama server. Configure the Ollama-specific settings in `src/obs_graphs/config/ollama_settings.py` (e.g. `OLLAMA_HOST`, `OBS_GRAPHS_OLLAMA_MODEL`).
-- Set `OBS_GRAPHS_LLM_BACKEND=mlx` to use the MLX runtime on Apple Silicon. Configure MLX-specific settings in `src/obs_graphs/config/mlx_settings.py` (e.g. `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, `OBS_GRAPHS_MLX_TEMPERATURE`, `OBS_GRAPHS_MLX_TOP_P`). The runtime requires the `mlx-lm` package and an ARM64 Mac; the container raises a clear error on unsupported hardware.
-- For development, enable `USE_MOCK_LLM=true` to wrap the existing mock responses behind the same protocol.
+- Set `STL_CONN_BASE_URL` to the URL of your stl-conn service instance.
+- For development, enable `USE_MOCK_STL_CONN=true` to use mock LLM responses instead of calling the real service.
 
-Individual workflow requests (API or Celery) can override the backend via the `backend` field; the choice is propagated to both the Article Proposal agent and the deep research client.
+The stl-conn service abstracts away the complexities of different LLM backends, allowing workflows to focus on their logic without backend-specific code.
 
 ### 5. Quick API test
 
@@ -150,7 +149,7 @@ Validation rules:
 
 - The `prompts` array must contain at least one item.
 - Every entry is normalised with `str.strip()` and must remain non-empty after trimming.
-- Optional fields such as `strategy` and `backend` continue to work as before.
+- Optional fields such as `strategy` continue to work as before.
 
 ## Workflow model
 

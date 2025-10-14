@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from langgraph.graph import END, StateGraph
 
 from src.obs_graphs.api.schemas import WorkflowRunRequest
-from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.graphs.article_proposal.state import (
     FileChange,
     GraphState,
@@ -101,7 +100,7 @@ class ArticleProposalGraph:
 
         return self._nodes[node_name]
 
-    def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
+    async def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
         """
         Run the complete workflow: execute nodes and submit the draft via obs-gtwy.
 
@@ -121,10 +120,9 @@ class ArticleProposalGraph:
                 workflow_plan.strategy = request.strategy
 
             # Execute workflow
-            workflow_result = self.execute_workflow(
+            workflow_result = await self.execute_workflow(
                 workflow_plan,
                 prompts=request.prompts,
-                backend=request.backend,
             )
 
             if not workflow_result.success:
@@ -168,11 +166,10 @@ class ArticleProposalGraph:
 
         return WorkflowPlan(nodes=nodes, strategy=strategy)
 
-    def execute_workflow(
+    async def execute_workflow(
         self,
         workflow_plan: WorkflowPlan,
         prompts: list[str] | None = None,
-        backend: str | None = None,
     ) -> WorkflowResult:
         """
         Execute workflow using LangGraph state graph.
@@ -180,7 +177,6 @@ class ArticleProposalGraph:
         Args:
             workflow_plan: Plan specifying which nodes to run
             prompts: User prompts for research workflows (list of strings)
-            backend: Backend LLM to use
 
         Returns:
             WorkflowResult with aggregated changes and results
@@ -188,15 +184,12 @@ class ArticleProposalGraph:
         # Initialize workflow state
         vault_summary = self.vault_service.get_vault_summary()
 
-        selected_backend = (backend or obs_graphs_settings.llm_backend).strip().lower()
-
         prompt_list = prompts or []
 
         initial_state: GraphState = {
             "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
             "prompts": prompt_list,
-            "backend": selected_backend,
             "accumulated_changes": [],
             "node_results": {},
             "messages": [],
@@ -207,7 +200,7 @@ class ArticleProposalGraph:
 
         # Execute the workflow
         try:
-            final_state = graph.invoke(initial_state)
+            final_state = await graph.ainvoke(initial_state)
 
             # Extract results from final state
             all_changes = final_state["accumulated_changes"]
@@ -272,7 +265,7 @@ class ArticleProposalGraph:
             Callable node function for use in state graph
         """
 
-        def node_node(state: GraphState) -> GraphState:
+        async def node_node(state: GraphState) -> GraphState:
             """Execute the node and update state."""
             node = self._get_node(node_name)
 
@@ -281,7 +274,6 @@ class ArticleProposalGraph:
                 "vault_summary": state["vault_summary"],
                 "strategy": state["strategy"],
                 "prompts": state["prompts"],
-                "backend": state["backend"],
                 "accumulated_changes": state["accumulated_changes"],
                 "node_results": state["node_results"],
             }
@@ -292,7 +284,7 @@ class ArticleProposalGraph:
                     context.update(prev_result["metadata"])
 
             # Execute node (nodes no longer receive vault_path, they use VaultService)
-            result: NodeResult = node.execute(context)
+            result: NodeResult = await node.execute(context)
 
             # Update state with results
             state["accumulated_changes"].extend(result.changes)

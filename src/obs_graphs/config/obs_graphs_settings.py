@@ -42,12 +42,6 @@ class ObsGraphsSettings(BaseSettings):
         description="Toggle between SQLite (True) and PostgreSQL (False) databases.",
         alias="USE_SQLITE",
     )
-    use_mock_llm: bool = Field(
-        default=False,
-        title="Use Mock LLM",
-        description="Return a mocked LLM client when enabled.",
-        alias="USE_MOCK_LLM",
-    )
     use_mock_redis: bool = Field(
         default=False,
         title="Use Mock Redis",
@@ -67,24 +61,12 @@ class ObsGraphsSettings(BaseSettings):
         alias="USE_MOCK_OBS_GTWY",
     )
 
-    # --- LLM Settings ---
-    llm_backend: str = Field(
-        default="ollama",
-        title="Default LLM Backend",
-        description="LLM backend to use for article proposal generation (ollama or mlx).",
-        alias="OBS_GRAPHS_LLM_BACKEND",
-    )
-
     vault_submodule_path: str = Field(
         default="submodules/obsidian-vault",
         title="Vault Submodule Path",
         description="Filesystem path to the locally checked out Obsidian vault submodule.",
         alias="VAULT_SUBMODULE_PATH",
     )
-
-    # Note: Ollama/MLX backend-specific configuration lives in
-    # `src.obs_graphs.config.ollama_settings` and `src.obs_graphs.config.mlx_settings`.
-    # This class only defines the default backend selector (`llm_backend`).
 
     @field_validator("debug", mode="before")
     @classmethod
@@ -93,12 +75,3 @@ class ObsGraphsSettings(BaseSettings):
         if isinstance(value, str):
             return value.lower() in {"true", "1", "yes", "on"}
         return bool(value)
-
-    @field_validator("llm_backend", mode="after")
-    @classmethod
-    def validate_llm_backend(cls, value: str) -> str:
-        """Normalize and validate the configured LLM backend."""
-        normalized = value.strip().lower()
-        if normalized not in {"ollama", "mlx"}:
-            raise ValueError("LLM backend must be either 'ollama' or 'mlx'")
-        return normalized
