@@ -2,9 +2,12 @@
 	path = submodules/obsidian-vault
 	url = https://github.com/asterismhq/constellations.git
 	branch = main
-[submodule "submodules/olm-d-rch"] # v1.7.2
+[submodule "submodules/olm-d-rch"] # v1.7.3
 	path = submodules/olm-d-rch
 	url = https://github.com/asterismhq/olm-d-rch
 [submodule "submodules/obs-gtwy"] # v2.1.1
 	path = submodules/obs-gtwy
 	url = https://github.com/asterismhq/obs-gtwy
+[submodule "submodules/stl-conn"] # v1.2.0
+	path = submodules/stl-conn
+	url = https://github.com/asterismhq/stl-conn
