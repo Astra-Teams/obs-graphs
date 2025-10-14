@@ -5,12 +5,14 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from obs_gtwy_sdk import GatewayClientProtocol
+
 from src.obs_graphs.graphs.article_proposal.state import (
     AgentResult,
     FileAction,
     FileChange,
 )
-from src.obs_graphs.protocols import GatewayClientProtocol, NodeProtocol
+from src.obs_graphs.protocols import NodeProtocol
 
 
 class SubmitPullRequestAgent(NodeProtocol):
@@ -48,11 +50,14 @@ class SubmitPullRequestAgent(NodeProtocol):
             content = draft_change.content or ""
 
             suggested_branch = self._derive_branch_name(file_name, node_results)
-            created_branch = self._gateway_client.create_draft_branch(
-                file_name=file_name,
-                content=content,
-                branch_name=suggested_branch,
-            )
+            drafts = [{"file_name": file_name, "content": content}]
+            response = self._gateway_client.create_drafts(drafts=drafts)
+            if not isinstance(response, dict):
+                raise ValueError("obs-gtwy SDK returned unexpected response payload")
+
+            created_branch = response.get("branch_name")
+            if not isinstance(created_branch, str) or not created_branch.strip():
+                created_branch = suggested_branch
 
             message = f"Draft branch created successfully: {created_branch}"
 

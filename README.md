@@ -9,6 +9,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
 - **Pluggable LLM backends** (Ollama or MLX) with a unified client protocol for agent prompts.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
+- **SDK integrations** for obs-gtwy and deep research through the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
 
 ## Directory Structure
 
@@ -16,7 +17,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 ├── src/obs_graphs/       # Main application package
 │   ├── api/             # FastAPI endpoints and schemas
 │   ├── celery/          # Celery tasks for async workflow execution
-│   ├── clients/         # External service clients (obs-gtwy, research API, LLM adapters)
+│   ├── clients/         # External service clients (LLM adapters; gateway/research SDKs live in submodules)
 │   ├── config/          # Configuration modules
 │   ├── container.py     # Dependency injection container
 │   ├── db/              # Database models and session management
@@ -67,7 +68,7 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 
 - `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true`, but you can point to a live service by setting it to `false`.
 - `USE_MOCK_OBS_GTWY` – when `true`, obs-graphs uses an in-process mock of the obs-gtwy gateway while the real API is not deployed.
-- `OBS_GTWY_API_URL` / `OBS_GTWY_TIMEOUT_SECONDS` – connection details for the gateway responsible for materialising draft branches.
+- `OBS_GTWY_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
 - `VAULT_SUBMODULE_PATH` – filesystem path to the local Obsidian vault submodule checkout.
 - `OBS_GRAPHS_LLM_BACKEND` – default LLM backend (`ollama` or `mlx`) used by workflow nodes. Backend-specific options are defined in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py` (for example `OBS_GRAPHS_OLLAMA_MODEL`, `OLLAMA_HOST`, `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, etc.).
 - `RESEARCH_API_URL` / related settings under `src/obs_graphs/config/research_api_settings.py` – connection details for the external deep-research API (served by the `olm-d-rch` submodule when mocks are disabled).

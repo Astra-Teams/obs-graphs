@@ -13,7 +13,7 @@ from src.obs_graphs.graphs.article_proposal.state import FileAction, FileChange
 @pytest.fixture
 def gateway_client():
     client = MagicMock()
-    client.create_draft_branch.return_value = "draft/sample-branch"
+    client.create_drafts.return_value = {"branch_name": "draft/sample-branch"}
     return client
 
 
@@ -47,7 +47,7 @@ def test_execute_with_no_changes_skips_gateway(agent, gateway_client):
 
     assert result.success is True
     assert result.metadata == {"branch_name": ""}
-    gateway_client.create_draft_branch.assert_not_called()
+    gateway_client.create_drafts.assert_not_called()
 
 
 def test_execute_submits_single_draft(agent, gateway_client):
@@ -70,10 +70,8 @@ def test_execute_submits_single_draft(agent, gateway_client):
 
     result = agent.execute(context)
 
-    gateway_client.create_draft_branch.assert_called_once_with(
-        file_name="sample.md",
-        content="# Sample Draft",
-        branch_name="draft/sample",
+    gateway_client.create_drafts.assert_called_once_with(
+        drafts=[{"file_name": "sample.md", "content": "# Sample Draft"}]
     )
     assert result.success is True
     assert result.metadata["branch_name"] == "draft/sample-branch"
@@ -116,7 +114,7 @@ def test_execute_handles_gateway_exception(agent, gateway_client):
         "node_results": {},
     }
 
-    gateway_client.create_draft_branch.side_effect = RuntimeError("gateway down")
+    gateway_client.create_drafts.side_effect = RuntimeError("gateway down")
 
     result = agent.execute(context)
 

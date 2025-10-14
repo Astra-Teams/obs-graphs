@@ -33,10 +33,7 @@ def test_get_gateway_client_production_mode(
     client2 = container.get_gateway_client()
 
     assert client1 is client2 is mock_instance
-    mock_obs_gateway_client.assert_called_once_with(
-        base_url="http://gateway",
-        timeout_seconds=12.5,
-    )
+    mock_obs_gateway_client.assert_called_once_with(base_url="http://gateway")
 
 
 @patch("src.obs_graphs.container.ollama_settings")

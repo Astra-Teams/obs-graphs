@@ -68,7 +68,7 @@ def test_get_gateway_client_returns_mock_when_flag_enabled(
     client1 = container.get_gateway_client()
     client2 = container.get_gateway_client()
 
-    assert hasattr(client1, "create_draft_branch")
+    assert hasattr(client1, "create_drafts")
     assert client1 is client2
 
 
