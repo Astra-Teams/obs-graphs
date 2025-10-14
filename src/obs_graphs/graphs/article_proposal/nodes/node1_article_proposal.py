@@ -246,14 +246,6 @@ class ArticleProposalNode(NodeProtocol):
                         if not isinstance(topic_data["tags"], list):
                             return None
                         return topic_data
-                    # Handle SDK mock response format
-                    elif "query" in topic_data and "rationale" in topic_data:
-                        return {
-                            "title": topic_data["query"],
-                            "summary": topic_data["rationale"],
-                            "tags": ["test", "mock"],
-                            "slug": "test-research-topic",
-                        }
             except json.JSONDecodeError:
                 pass
         return None

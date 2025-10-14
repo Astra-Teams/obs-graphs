@@ -10,9 +10,13 @@ on:
 jobs:
   run-linters:
     uses: ./.github/workflows/run-linters.yml
+    secrets:
+      OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
 
   run-local-tests:
     uses: ./.github/workflows/run-local-tests.yml
+    secrets:
+      OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
 
   run-docker-tests:
     uses: ./.github/workflows/run-docker-tests.yml
