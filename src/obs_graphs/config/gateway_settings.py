@@ -19,8 +19,3 @@ class GatewaySettings(BaseSettings):
         alias="OBS_GTWY_API_URL",
         description="Base URL for the obs-gtwy API.",
     )
-    timeout_seconds: float = Field(
-        default=30.0,
-        alias="OBS_GTWY_TIMEOUT_SECONDS",
-        description="Timeout in seconds for obs-gtwy API requests.",
-    )

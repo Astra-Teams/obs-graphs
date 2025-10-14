@@ -51,13 +51,17 @@ class SubmitPullRequestAgent(NodeProtocol):
 
             suggested_branch = self._derive_branch_name(file_name, node_results)
             drafts = [{"file_name": file_name, "content": content}]
-            response = self._gateway_client.create_drafts(drafts=drafts)
+            response = self._gateway_client.create_drafts(
+                drafts=drafts, branch_name=suggested_branch
+            )
             if not isinstance(response, dict):
                 raise ValueError("obs-gtwy SDK returned unexpected response payload")
 
             created_branch = response.get("branch_name")
             if not isinstance(created_branch, str) or not created_branch.strip():
-                created_branch = suggested_branch
+                raise ValueError(
+                    "obs-gtwy SDK response is missing a valid 'branch_name'"
+                )
 
             message = f"Draft branch created successfully: {created_branch}"
 

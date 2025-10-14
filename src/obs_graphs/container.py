@@ -6,12 +6,9 @@ from typing import Dict, Optional, Union
 
 import redis
 from obs_gtwy_sdk import GatewayClientProtocol, MockObsGatewayClient, ObsGatewayClient
-from olm_d_rch_sdk import (
-    MockResearchApiClient,
-    ResearchApiClient,
-    ResearchClientProtocol,
-)
+from olm_d_rch_sdk import ResearchApiClient, ResearchClientProtocol
 
+from dev.mocks_clients import MockResearchApiClient
 from src.obs_graphs.clients import MLXClient, OllamaClient
 from src.obs_graphs.config import (
     gateway_settings,

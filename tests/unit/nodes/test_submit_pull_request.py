@@ -71,7 +71,8 @@ def test_execute_submits_single_draft(agent, gateway_client):
     result = agent.execute(context)
 
     gateway_client.create_drafts.assert_called_once_with(
-        drafts=[{"file_name": "sample.md", "content": "# Sample Draft"}]
+        drafts=[{"file_name": "sample.md", "content": "# Sample Draft"}],
+        branch_name="draft/sample",
     )
     assert result.success is True
     assert result.metadata["branch_name"] == "draft/sample-branch"
