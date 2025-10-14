@@ -26,7 +26,7 @@
 ### 1. Application Core (`src/obs_graphs/`)
 -   **API (`api/`)**: FastAPI endpoints with path-based workflow type routing (`/api/workflows/{workflow_type}/run`), Pydantic schemas for validation.
 -   **Workflow Engine (`graphs/`)**:
-    -   Factory pattern (`factory.py`) for extensible workflow graph creation
+    -   Factory pattern (`factory.py`) for extensible workflow graph creation with dependency injection
     -   Protocol interface (`protocol.py`) defining `WorkflowGraphProtocol` for type-safe graph implementations
     -   LangGraph state machines for stateful workflow orchestration using modular agent nodes
     -   Currently supports: `article-proposal` workflow type
@@ -35,7 +35,7 @@
 -   **Clients (`clients/`)**: LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`; gateway and research integrations now consume the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
 -   **Async Tasks (`celery/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
 -   **Configuration (`config/`)**: Environment-based settings and feature flags (e.g., `OBS_GRAPHS_LLM_BACKEND`). Backend-specific parameters live in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py`.
--   **DI (`container.py`)**: Protocol-based Dependency Injection for loose coupling.
+-   **DI (`dependencies.py`)**: FastAPI-native dependency injection hub with provider functions and factory patterns for services, clients, and configuration.
 -   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions.
 
 ### 2. Testing (`tests/`)
@@ -50,10 +50,10 @@
 ## ⚖️ Architectural Principles
 
 -   **Separation of Concerns**: Clear boundaries between API, business logic, data, and infrastructure.
--   **Dependency Injection**: Protocol-based DI for testability and flexibility; container resolves LLM backend per request.
+-   **Dependency Injection**: FastAPI-native DI using `Depends()` for testability and flexibility. Provider functions in `dependencies.py` create services with appropriate configurations. Factory patterns enable backend-specific implementations (e.g., LLM clients).
 -   **Schema Separation**: Pydantic for API validation, distinct types for internal state.
--   **Node-Based Agents**: Modular, single-responsibility agents registered by name.
--   **Comprehensive Testing**: Multi-layered testing strategy (Unit → Integration → E2E).
+-   **Node-Based Agents**: Modular, single-responsibility agents with constructor injection of dependencies.
+-   **Comprehensive Testing**: Multi-layered testing strategy (Unit → Integration → E2E) with easy mocking via `app.dependency_overrides`.
 
 ---
 

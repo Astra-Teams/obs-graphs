@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from src.obs_graphs.api.router import router
-from src.obs_graphs.db.database import Base, get_db
+from src.obs_graphs.db.database import Base
 from src.obs_graphs.db.models.workflow import Workflow
 from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
 
@@ -46,9 +46,11 @@ def client(test_db):
     """Create FastAPI test client with database override."""
     from fastapi import FastAPI
 
+    from src.obs_graphs import dependencies
+
     app = FastAPI()
     app.include_router(router, prefix="/api")
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[dependencies.get_db_session] = override_get_db
 
     return TestClient(app)
 

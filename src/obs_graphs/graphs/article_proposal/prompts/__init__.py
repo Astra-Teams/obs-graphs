@@ -1,4 +1,4 @@
-"""Prompt management for Obsidian agents."""
+"""Prompt management for Obsidian nodes."""
 
 from .loader import render_prompt
 

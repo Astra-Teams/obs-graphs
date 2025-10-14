@@ -83,19 +83,22 @@ def run_workflow_task(self, workflow_id: int) -> None:
         # 3. Prepare local workflow directory from vault submodule
         temp_vault_dir = _prepare_workflow_directory(workflow_id)
 
-        # Set the path in the container
-        from src.obs_graphs.container import get_container
-
-        container = get_container()
-        container.set_vault_path(temp_vault_dir)
-
-        # 4. Get graph builder for workflow type and run workflow
+        # 4. Create dependencies with the temporary vault path
         from src.obs_graphs.api.schemas import WorkflowRunRequest
         from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
+        from src.obs_graphs.services import VaultService
+
+        # Create vault service with temporary path
+        vault_service = VaultService(vault_path=temp_vault_dir)
+
+        # Get appropriate graph builder based on workflow type with dependencies
+        # For Celery, we need to override the vault_service with the temporary path
         from src.obs_graphs.graphs.factory import get_graph_builder
 
-        # Get appropriate graph builder based on workflow type
-        graph_builder = get_graph_builder(workflow.workflow_type or "article-proposal")
+        graph_builder = get_graph_builder(
+            workflow_type=workflow.workflow_type,
+            vault_service=vault_service,
+        )
 
         # Handle legacy strategies by coercing unknown values to RESEARCH_PROPOSAL
         try:

@@ -35,7 +35,7 @@ def _poll_workflow_until_terminal(
     terminal_statuses = {"COMPLETED", "FAILED"}
 
     while time.time() - start_time < timeout:
-        response = client.get(f"/api/v1/workflows/{workflow_id}")
+        response = client.get(f"/api/workflows/{workflow_id}")
         response.raise_for_status()
         workflow_data = response.json()
 
@@ -63,7 +63,7 @@ class TestWorkflowE2E:
         # Submit workflow
         with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
             response = client.post(
-                "/api/v1/workflows/article-proposal/run",
+                "/api/workflows/article-proposal/run",
                 json={
                     "prompts": ["Create a new article about testing"],
                     "async_execution": True,
@@ -104,7 +104,7 @@ class TestWorkflowE2E:
 
             # Verify it appears in the completed workflows list
             list_response = client.get(
-                "/api/v1/workflows", params={"status": "COMPLETED", "limit": 10}
+                "/api/workflows", params={"status": "COMPLETED", "limit": 10}
             )
             assert list_response.status_code == 200
             list_payload = list_response.json()
@@ -120,7 +120,7 @@ class TestWorkflowE2E:
         # Submit workflow with invalid configuration to trigger failure
         with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
             response = client.post(
-                "/api/v1/workflows/article-proposal/run",
+                "/api/workflows/article-proposal/run",
                 json={
                     "prompts": ["fail intentionally"],
                     "async_execution": True,
@@ -142,7 +142,7 @@ class TestWorkflowE2E:
 
             # Verify it appears in the failed workflows list
             failed_list = client.get(
-                "/api/v1/workflows", params={"status": "FAILED", "limit": 10}
+                "/api/workflows", params={"status": "FAILED", "limit": 10}
             )
             assert failed_list.status_code == 200
             failed_ids = {item["id"] for item in failed_list.json()["workflows"]}
@@ -159,7 +159,7 @@ class TestWorkflowE2E:
         def _submit_workflow() -> Dict[str, Any]:
             with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
                 response = client.post(
-                    "/api/v1/workflows/article-proposal/run",
+                    "/api/workflows/article-proposal/run",
                     json={
                         "prompts": ["Concurrent test workflow"],
                         "async_execution": True,
@@ -178,7 +178,7 @@ class TestWorkflowE2E:
         # Verify all workflows are accessible via API
         with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
             for workflow_id in workflow_ids:
-                response = client.get(f"/api/v1/workflows/{workflow_id}")
+                response = client.get(f"/api/workflows/{workflow_id}")
                 assert response.status_code == 200
                 data = response.json()
                 assert data["id"] == workflow_id

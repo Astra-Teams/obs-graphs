@@ -44,10 +44,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_retrieves_workflow_from_database(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -58,11 +56,6 @@ class TestRunWorkflowTask:
         # Setup
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -91,10 +84,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_updates_status_to_running(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -105,11 +96,6 @@ class TestRunWorkflowTask:
         workflow = create_pending_workflow(test_db)
         workflow_id = workflow.id
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         # Mock ObsidianArticleProposalToPRGraph to raise error
         mock_builder_instance = MagicMock()
@@ -127,10 +113,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_calls_run_workflow_and_updates_db(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -140,11 +124,6 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -172,10 +151,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_records_branch_name(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -185,11 +162,6 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -214,10 +186,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_updates_workflow_to_completed(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -227,11 +197,6 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -257,10 +222,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_updates_workflow_to_failed_on_error(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -270,11 +233,6 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         workflow = create_pending_workflow(test_db)
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_builder_instance.run_workflow.side_effect = Exception("Workflow error")
@@ -311,10 +269,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_prompt_to_workflow_request(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -334,11 +290,6 @@ class TestRunWorkflowTask:
         test_db.refresh(workflow)
 
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -367,10 +318,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_empty_prompt_when_null(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -390,11 +339,6 @@ class TestRunWorkflowTask:
         test_db.refresh(workflow)
 
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -423,10 +367,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_prompt_with_strategy(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -448,11 +390,6 @@ class TestRunWorkflowTask:
         test_db.refresh(workflow)
 
         mock_get_db.return_value = iter([test_db])
-
-        # Mock container
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()
@@ -481,10 +418,8 @@ class TestRunWorkflowTask:
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
-    @patch("src.obs_graphs.container.get_container")
     def test_task_uses_backend_from_metadata(
         self,
-        mock_get_container,
         mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
@@ -505,10 +440,6 @@ class TestRunWorkflowTask:
         test_db.refresh(workflow)
 
         mock_get_db.return_value = iter([test_db])
-
-        mock_container = MagicMock()
-        mock_get_container.return_value = mock_container
-        mock_container.set_vault_path = MagicMock()
 
         mock_builder_instance = MagicMock()
         mock_result = MagicMock()

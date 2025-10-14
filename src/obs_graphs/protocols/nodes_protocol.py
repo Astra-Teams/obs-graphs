@@ -1,16 +1,16 @@
-"""Protocol definition for node/agent interface."""
+"""Protocol definition for node interface."""
 
 from typing import Protocol
 
-from src.obs_graphs.graphs.article_proposal.state import AgentResult
+from src.obs_graphs.graphs.article_proposal.state import NodeResult
 
 
 class NodeProtocol(Protocol):
-    """Protocol for node/agent operations."""
+    """Protocol for node operations."""
 
     name: str  # Class attribute for node name
 
-    def execute(self, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> NodeResult:
         """
         Execute the node's task.
 
@@ -24,7 +24,7 @@ class NodeProtocol(Protocol):
                 - previous_results: Results from previous nodes
 
         Returns:
-            AgentResult containing success status, file changes, and metadata
+            NodeResult containing success status, file changes, and metadata
 
         Raises:
             ValueError: If input validation fails

@@ -1,4 +1,4 @@
-"""Unit tests for DeepResearchAgent."""
+"""Unit tests for DeepResearchNode."""
 
 from unittest.mock import MagicMock
 
@@ -6,9 +6,9 @@ import pytest
 from olm_d_rch_sdk import ResearchResponse
 
 from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
-    DeepResearchAgent,
+    DeepResearchNode,
 )
-from src.obs_graphs.graphs.article_proposal.state import AgentResult, FileAction
+from src.obs_graphs.graphs.article_proposal.state import FileAction, NodeResult
 
 
 @pytest.fixture
@@ -34,9 +34,9 @@ def mock_research_client():
 
 
 @pytest.fixture
-def agent(mock_research_client):
-    """Create DeepResearchAgent instance."""
-    return DeepResearchAgent(mock_research_client)
+def node(mock_research_client):
+    """Create DeepResearchNode instance."""
+    return DeepResearchNode(mock_research_client)
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ def vault_path(tmp_path):
     return vault
 
 
-def test_validate_input_valid(agent):
+def test_validate_input_valid(node):
     """Test that validate_input accepts valid context."""
     context = {
         "topic_title": "Test Topic",
@@ -58,7 +58,7 @@ def test_validate_input_valid(agent):
         "tags": ["tag1", "tag2", "tag3"],
         "proposal_slug": "test-topic",
     }
-    assert agent.validate_input(context) is True
+    assert node.validate_input(context) is True
 
     # Also test without tags (now optional)
     context_without_tags = {
@@ -66,10 +66,10 @@ def test_validate_input_valid(agent):
         "topic_summary": "Test summary",
         "proposal_slug": "test-topic",
     }
-    assert agent.validate_input(context_without_tags) is True
+    assert node.validate_input(context_without_tags) is True
 
 
-def test_validate_input_missing_fields(agent):
+def test_validate_input_missing_fields(node):
     """Test that validate_input rejects missing required fields."""
     # Missing topic_title
     context = {
@@ -77,7 +77,7 @@ def test_validate_input_missing_fields(agent):
         "tags": ["tag1", "tag2", "tag3"],
         "proposal_slug": "test-topic",
     }
-    assert agent.validate_input(context) is False
+    assert node.validate_input(context) is False
 
     # Empty topic_title
     context = {
@@ -85,7 +85,7 @@ def test_validate_input_missing_fields(agent):
         "topic_summary": "Test summary",
         "proposal_slug": "test-topic",
     }
-    assert agent.validate_input(context) is False
+    assert node.validate_input(context) is False
 
     # Valid context without tags (tags are now optional)
     context = {
@@ -93,10 +93,10 @@ def test_validate_input_missing_fields(agent):
         "topic_summary": "Test summary",
         "proposal_slug": "test-topic",
     }
-    assert agent.validate_input(context) is True
+    assert node.validate_input(context) is True
 
 
-def test_execute_with_valid_context(agent, vault_path, mock_research_client):
+def test_execute_with_valid_context(node, vault_path, mock_research_client):
     """Test that execute creates proposal file successfully."""
     context = {
         "topic_title": "Impact of Transformers on NLP",
@@ -105,9 +105,9 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
         "proposal_slug": "impact-of-transformers-on-nlp",
     }
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
-    assert isinstance(result, AgentResult)
+    assert isinstance(result, NodeResult)
     assert result.success is True
     assert len(result.changes) == 1
     assert result.changes[0].action == FileAction.CREATE
@@ -133,7 +133,7 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
     )
 
 
-def test_execute_preserves_article(agent, vault_path, mock_research_client):
+def test_execute_preserves_article(node, vault_path, mock_research_client):
     """Test that the article returned by the client is persisted verbatim."""
     context = {
         "topic_title": "Test Topic",
@@ -142,7 +142,7 @@ def test_execute_preserves_article(agent, vault_path, mock_research_client):
         "proposal_slug": "test-topic",
     }
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
     assert result.success is True
     content = result.changes[0].content
@@ -151,7 +151,7 @@ def test_execute_preserves_article(agent, vault_path, mock_research_client):
     assert content == expected_article
 
 
-def test_execute_with_api_error(agent, vault_path, mock_research_client):
+def test_execute_with_api_error(node, vault_path, mock_research_client):
     """Test that execute handles research API errors."""
     mock_research_client.research.side_effect = Exception("API Error")
 
@@ -162,24 +162,24 @@ def test_execute_with_api_error(agent, vault_path, mock_research_client):
         "proposal_slug": "test-topic",
     }
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
-    assert isinstance(result, AgentResult)
+    assert isinstance(result, NodeResult)
     assert result.success is False
     assert result.changes == []
     assert "error" in result.metadata
     assert "API Error" in str(result.metadata["error"])
 
 
-def test_execute_with_invalid_context(agent, vault_path):
+def test_execute_with_invalid_context(node, vault_path):
     """Test that execute raises error with invalid context."""
     context = {"topic_title": ""}  # Empty topic_title
 
     with pytest.raises(ValueError, match="topic_title is required"):
-        agent.execute(context)
+        node.execute(context)
 
 
-def test_execute_unique_filenames(agent, vault_path, mock_research_client):
+def test_execute_unique_filenames(node, vault_path, mock_research_client):
     """Test that execute generates unique filenames with timestamps."""
     import time
 
@@ -191,9 +191,9 @@ def test_execute_unique_filenames(agent, vault_path, mock_research_client):
     }
 
     # Execute twice with delay to ensure different timestamps (format is YYYYmmdd_HHMMSS)
-    result1 = agent.execute(context)
+    result1 = node.execute(context)
     time.sleep(1.1)  # 1.1 second delay to ensure different timestamp
-    result2 = agent.execute(context)
+    result2 = node.execute(context)
 
     assert result1.success is True
     assert result2.success is True

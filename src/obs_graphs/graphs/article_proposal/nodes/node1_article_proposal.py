@@ -1,26 +1,26 @@
-"""Agent for proposing new articles based on vault analysis."""
+"""Node for proposing new articles based on vault analysis."""
 
 import json
 from typing import Callable, Optional
 
 from src.obs_graphs.graphs.article_proposal.prompts import render_prompt
-from src.obs_graphs.graphs.article_proposal.state import AgentResult
+from src.obs_graphs.graphs.article_proposal.state import NodeResult
 from src.obs_graphs.protocols import LLMClientProtocol, NodeProtocol
 
 
-class ArticleProposalAgent(NodeProtocol):
+class ArticleProposalNode(NodeProtocol):
     """
-    Agent responsible for analyzing vault and proposing new articles.
+    Node responsible for analyzing vault and proposing new articles.
 
-    This agent analyzes the current vault structure and content to identify
+    This node analyzes the current vault structure and content to identify
     gaps or opportunities for new articles. It uses LLM to generate article
-    proposals that will be passed to the content generation agent.
+    proposals that will be passed to the content generation node.
     """
 
     name = "article_proposal"
 
     def __init__(self, llm_provider: Callable[[Optional[str]], LLMClientProtocol]):
-        """Initialize the article proposal agent."""
+        """Initialize the article proposal node."""
         self._llm_provider = llm_provider
 
     def validate_input(self, context: dict) -> bool:
@@ -44,7 +44,7 @@ class ArticleProposalAgent(NodeProtocol):
                 and len(context["prompts"][0].strip()) > 0
             )
 
-    def execute(self, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> NodeResult:
         """
         Execute article proposal generation.
 
@@ -52,7 +52,7 @@ class ArticleProposalAgent(NodeProtocol):
             context: Dictionary containing vault_summary, strategy, and prompt
 
         Returns:
-            AgentResult with article proposals or topic proposal
+            NodeResult with article proposals or topic proposal
         """
         if not self.validate_input(context):
             raise ValueError("required fields missing")
@@ -68,7 +68,7 @@ class ArticleProposalAgent(NodeProtocol):
 
     def _execute_research_topic_proposal(
         self, context: dict, llm_client: LLMClientProtocol
-    ) -> AgentResult:
+    ) -> NodeResult:
         """
         Execute research topic proposal based on user prompt.
 
@@ -76,7 +76,7 @@ class ArticleProposalAgent(NodeProtocol):
             context: Dictionary containing 'prompts' with user's research request (list of strings)
 
         Returns:
-            AgentResult with topic metadata (title, summary, tags, slug)
+            NodeResult with topic metadata (title, summary, tags, slug)
         """
         # Use only the first prompt from the list for now
         prompt = context["prompts"][0].strip()
@@ -91,7 +91,7 @@ class ArticleProposalAgent(NodeProtocol):
             topic_data = self._parse_topic_proposal(response)
 
             if topic_data is None:
-                return AgentResult(
+                return NodeResult(
                     success=False,
                     changes=[],
                     message="Failed to parse LLM response: malformed JSON",
@@ -109,12 +109,12 @@ class ArticleProposalAgent(NodeProtocol):
 
             message = f"Generated research topic: {topic_data['title']}"
 
-            return AgentResult(
+            return NodeResult(
                 success=True, changes=[], message=message, metadata=metadata
             )
 
         except Exception as e:
-            return AgentResult(
+            return NodeResult(
                 success=False,
                 changes=[],
                 message=f"Failed to generate research topic: {str(e)}",
@@ -123,7 +123,7 @@ class ArticleProposalAgent(NodeProtocol):
 
     def _execute_new_article_proposal(
         self, context: dict, llm_client: LLMClientProtocol
-    ) -> AgentResult:
+    ) -> NodeResult:
         """
         Execute new article proposal based on vault analysis.
 
@@ -131,7 +131,7 @@ class ArticleProposalAgent(NodeProtocol):
             context: Dictionary containing 'vault_summary'
 
         Returns:
-            AgentResult with article proposals
+            NodeResult with article proposals
         """
         vault_summary = context["vault_summary"]
 
@@ -148,7 +148,7 @@ class ArticleProposalAgent(NodeProtocol):
             proposals = self._parse_article_proposals(response)
 
             if proposals is None:
-                return AgentResult(
+                return NodeResult(
                     success=False,
                     changes=[],
                     message="Failed to parse LLM response: malformed JSON",
@@ -162,12 +162,12 @@ class ArticleProposalAgent(NodeProtocol):
 
             message = f"Generated {len(proposals)} new article proposals"
 
-            return AgentResult(
+            return NodeResult(
                 success=True, changes=[], message=message, metadata=metadata
             )
 
         except Exception as e:
-            return AgentResult(
+            return NodeResult(
                 success=False,
                 changes=[],
                 message=f"Failed to generate article proposals: {str(e)}",
