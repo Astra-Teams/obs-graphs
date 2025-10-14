@@ -156,14 +156,5 @@ def vault_fixture(tmp_path: Path, default_settings: ObsGraphsSettings):
 
 @pytest.fixture
 def mock_data_path() -> Path:
-    """Provides the path to the mock data directory."""
+    """Path to the mock data directory."""
     return MOCKS_ROOT
-
-
-@pytest.fixture
-def llm_responses(mock_data_path: Path) -> dict:
-    """Load LLM mock responses from JSON file."""
-    import json
-
-    llm_responses_file = mock_data_path / "llm_responses.json"
-    return json.loads(llm_responses_file.read_text(encoding="utf-8"))

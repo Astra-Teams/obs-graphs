@@ -149,7 +149,7 @@ Validation rules:
 
 - The `prompts` array must contain at least one item.
 - Every entry is normalised with `str.strip()` and must remain non-empty after trimming.
-- Optional fields such as `strategy` and `backend` continue to work as before.
+- Optional fields such as `strategy` continue to work as before.
 
 ## Workflow model
 
