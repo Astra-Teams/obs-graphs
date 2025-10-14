@@ -27,6 +27,7 @@ class SubmitDraftBranchNode(NodeProtocol):
         required_keys = ["strategy", "accumulated_changes", "node_results"]
         return all(key in context for key in required_keys)
 
+    # Async for protocol compatibility, no awaitable operations in this method
     async def execute(self, context: dict) -> NodeResult:
         if not self.validate_input(context):
             raise ValueError(

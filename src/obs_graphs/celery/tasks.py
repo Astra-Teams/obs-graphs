@@ -1,5 +1,6 @@
 """Celery tasks for executing Obsidian Vault workflows."""
 
+import asyncio
 import logging
 import shutil
 import tempfile
@@ -122,7 +123,6 @@ def run_workflow_task(self, workflow_id: int) -> None:
             prompts=prompt_value,
             strategy=strategy,
         )
-        import asyncio
 
         result = asyncio.run(graph_builder.run_workflow(request))
 
