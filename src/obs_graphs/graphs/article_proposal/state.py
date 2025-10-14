@@ -92,7 +92,6 @@ class GraphState(TypedDict):
     vault_summary: VaultSummary
     strategy: str
     prompts: List[str]
-    backend: str
     accumulated_changes: List[FileChange]
     node_results: Dict
     messages: Annotated[List, "add_messages"]

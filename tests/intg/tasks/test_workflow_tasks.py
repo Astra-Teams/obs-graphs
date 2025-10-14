@@ -8,7 +8,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.obs_graphs.celery.tasks import run_workflow_task
-from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.db.database import Base
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 from tests.db.conftest import create_pending_workflow
@@ -313,7 +312,6 @@ class TestRunWorkflowTask:
         assert hasattr(request, "prompts")
         assert request.prompts == ["Test research prompt for propagation"]
         assert request.primary_prompt == "Test research prompt for propagation"
-        assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -362,7 +360,6 @@ class TestRunWorkflowTask:
         assert hasattr(request, "prompts")
         assert request.prompts == ["Default research prompt"]
         assert request.primary_prompt == "Default research prompt"
-        assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -413,7 +410,6 @@ class TestRunWorkflowTask:
         assert request.prompts == ["Research quantum computing"]
         assert request.primary_prompt == "Research quantum computing"
         assert request.strategy == WorkflowStrategy.RESEARCH_PROPOSAL
-        assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
@@ -457,11 +453,4 @@ class TestRunWorkflowTask:
 
         mock_builder_instance.run_workflow.assert_called_once()
         request = mock_builder_instance.run_workflow.call_args[0][0]
-        assert request.backend == "mlx"
-
-        # Re-query workflow from database to access updated metadata
-        updated_workflow = (
-            test_db.query(Workflow).filter(Workflow.id == workflow_id).first()
-        )
-        updated_metadata = updated_workflow.workflow_metadata or {}
-        assert updated_metadata.get("backend") == "mlx"
+        assert request.prompts == ["Backend specific prompt"]

@@ -167,12 +167,3 @@ def llm_responses(mock_data_path: Path) -> dict:
 
     llm_responses_file = mock_data_path / "llm_responses.json"
     return json.loads(llm_responses_file.read_text(encoding="utf-8"))
-
-
-@pytest.fixture
-def github_responses(mock_data_path: Path) -> dict:
-    """Load GitHub mock responses from JSON file."""
-    import json
-
-    github_responses_file = mock_data_path / "github_responses.json"
-    return json.loads(github_responses_file.read_text(encoding="utf-8"))

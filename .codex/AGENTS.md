@@ -4,7 +4,7 @@
 
 **Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes by delegating draft branches to the **obs-gtwy** gateway service.
 
-**Core Tech**: FastAPI, LangGraph, Ollama, PostgreSQL/SQLite, Celery, Redis, Docker.
+**Core Tech**: FastAPI, LangGraph, stl-conn (Stella Connector), PostgreSQL/SQLite, Celery, Redis, Docker.
 
 ---
 
@@ -32,11 +32,11 @@
     -   Currently supports: `article-proposal` workflow type
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
--   **Clients (`clients/`)**: LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`; gateway and research integrations now consume the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
+-   **Clients (`clients/`)**: LLM integration via `stl-conn` SDK (`StlConnClient`, `MockStlConnClient`) implementing `StlConnClientProtocol`; gateway and research integrations consume shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
 -   **Async Tasks (`celery/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
--   **Configuration (`config/`)**: Environment-based settings and feature flags (e.g., `OBS_GRAPHS_LLM_BACKEND`). Backend-specific parameters live in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py`.
--   **DI (`dependencies.py`)**: FastAPI-native dependency injection hub with provider functions and factory patterns for services, clients, and configuration.
--   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions.
+-   **Configuration (`config/`)**: Environment-based settings for stl-conn endpoint (`stl_conn_settings.py`), database, Redis, gateway, and research API configurations.
+-   **DI (`dependencies.py`)**: FastAPI-native dependency injection hub with provider functions for services, clients, and configuration. LLM client creation delegated to stl-conn SDK.
+-   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions. Uses `StlConnClientProtocol` from stl-conn SDK for LLM operations.
 
 ### 2. Testing (`tests/`)
 -   **Unit**: Isolated component tests (fast) - all services mocked.
@@ -50,7 +50,7 @@
 ## ⚖️ Architectural Principles
 
 -   **Separation of Concerns**: Clear boundaries between API, business logic, data, and infrastructure.
--   **Dependency Injection**: FastAPI-native DI using `Depends()` for testability and flexibility. Provider functions in `dependencies.py` create services with appropriate configurations. Factory patterns enable backend-specific implementations (e.g., LLM clients).
+-   **Dependency Injection**: FastAPI-native DI using `Depends()` for testability and flexibility. Provider functions in `dependencies.py` create services with appropriate configurations. LLM backend selection delegated to stl-conn service.
 -   **Schema Separation**: Pydantic for API validation, distinct types for internal state.
 -   **Node-Based Agents**: Modular, single-responsibility agents with constructor injection of dependencies.
 -   **Comprehensive Testing**: Multi-layered testing strategy (Unit → Integration → E2E) with easy mocking via `app.dependency_overrides`.

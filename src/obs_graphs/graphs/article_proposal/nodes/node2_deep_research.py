@@ -66,11 +66,8 @@ class DeepResearchNode(NodeProtocol):
         try:
             # Call research API with topic
             logger.info(f"Starting research for topic: {topic_title}")
-            kwargs = {}
-            if context.get("backend") is not None:
-                kwargs["backend"] = context.get("backend")
             research_result: ResearchResponse = self.research_client.research(
-                topic_title, **kwargs
+                topic_title
             )
 
             if not research_result.success:

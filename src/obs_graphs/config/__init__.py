@@ -2,17 +2,15 @@
 
 from .db_settings import DBSettings
 from .gateway_settings import GatewaySettings
-from .mlx_settings import MLXSettings
 from .obs_graphs_settings import ObsGraphsSettings
-from .ollama_settings import OllamaSettings
 from .redis_settings import RedisSettings
 from .research_api_settings import ResearchAPISettings
+from .stl_conn_settings import StlConnSettings
 from .workflow_settings import WorkflowSettings
 
 # Singleton instances for direct access
 obs_graphs_settings = ObsGraphsSettings()
-ollama_settings = OllamaSettings()
-mlx_settings = MLXSettings()
+stl_conn_settings = StlConnSettings()
 gateway_settings = GatewaySettings()
 db_settings = DBSettings()
 redis_settings = RedisSettings()
@@ -23,16 +21,14 @@ __all__ = [
     # Classes
     "DBSettings",
     "ObsGraphsSettings",
-    "OllamaSettings",
-    "MLXSettings",
+    "StlConnSettings",
     "GatewaySettings",
     "RedisSettings",
     "ResearchAPISettings",
     "WorkflowSettings",
     # Singleton instances
     "obs_graphs_settings",
-    "ollama_settings",
-    "mlx_settings",
+    "stl_conn_settings",
     "gateway_settings",
     "db_settings",
     "redis_settings",

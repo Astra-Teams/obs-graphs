@@ -169,47 +169,6 @@ def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
     assert len(result.node_results) == 3
 
 
-def test_execute_workflow_passes_backend_to_nodes(
-    mock_vault_service,
-    mock_llm_client_provider,
-    mock_gateway_client,
-    mock_research_client,
-):
-    """The backend selection should appear in the node execution context."""
-
-    captured_backends: list[str] = []
-
-    class RecordingAgent(MockAgent):
-        def execute(self, context: dict) -> NodeResult:  # type: ignore[override]
-            captured_backends.append(context.get("backend"))
-            return super().execute(context)
-
-    # Create mock nodes
-    mock_article_proposal_node = RecordingAgent()
-    mock_deep_research_node = RecordingAgent()
-    mock_submit_draft_branch_node = MagicMock()
-
-    # Create a custom graph with mocked nodes that record backend
-    graph = ArticleProposalGraph(
-        vault_service=mock_vault_service,
-        article_proposal_node=mock_article_proposal_node,
-        deep_research_node=mock_deep_research_node,
-        submit_draft_branch_node=mock_submit_draft_branch_node,
-    )
-
-    plan = WorkflowPlan(
-        strategy="test_plan", nodes=["article_proposal", "deep_research"]
-    )
-
-    graph.execute_workflow(
-        plan,
-        prompts=["Backend propagation test"],
-        backend="mlx",
-    )
-
-    assert captured_backends == ["mlx", "mlx"]
-
-
 def test_run_workflow_collects_branch_metadata(
     mock_vault_service,
     mock_llm_client_provider,

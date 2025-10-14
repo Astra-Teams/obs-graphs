@@ -1,6 +1,5 @@
 import pytest
 
-from dev.mocks_clients.mock_ollama_client import MockOllamaClient
 from dev.mocks_clients.mock_redis_client import MockRedisClient
 
 
@@ -8,17 +7,10 @@ from dev.mocks_clients.mock_redis_client import MockRedisClient
 def set_intg_test_env(monkeypatch):
     """Setup environment variables for integration tests - all mocked."""
     monkeypatch.setenv("USE_SQLITE", "true")
-    monkeypatch.setenv("USE_MOCK_LLM", "true")
+    monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
     monkeypatch.setenv("USE_MOCK_REDIS", "true")
     monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
     monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
-
-
-@pytest.fixture
-def mock_ollama_client() -> MockOllamaClient:
-    """Provide a mock Ollama client for unit tests."""
-
-    return MockOllamaClient()
 
 
 @pytest.fixture

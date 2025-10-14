@@ -1,4 +1,7 @@
 {
+  "research_topic_proposal": {
+    "content": "{\"title\": \"Understanding Artificial Intelligence\", \"summary\": \"An exploration of AI concepts, applications, and future implications\", \"tags\": [\"AI\", \"Machine Learning\", \"Technology\"], \"slug\": \"understanding-ai\"}"
+  },
   "article_generation_new": {
     "content": "[{\"title\": \"Getting Started with Git\", \"category\": \"Programming\", \"description\": \"A beginner-friendly guide to version control with Git\", \"filename\": \"Programming/git-basics.md\"}]"
   },

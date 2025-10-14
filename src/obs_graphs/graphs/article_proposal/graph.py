@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from langgraph.graph import END, StateGraph
 
 from src.obs_graphs.api.schemas import WorkflowRunRequest
-from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.graphs.article_proposal.state import (
     FileChange,
     GraphState,
@@ -124,7 +123,6 @@ class ArticleProposalGraph:
             workflow_result = self.execute_workflow(
                 workflow_plan,
                 prompts=request.prompts,
-                backend=request.backend,
             )
 
             if not workflow_result.success:
@@ -172,7 +170,6 @@ class ArticleProposalGraph:
         self,
         workflow_plan: WorkflowPlan,
         prompts: list[str] | None = None,
-        backend: str | None = None,
     ) -> WorkflowResult:
         """
         Execute workflow using LangGraph state graph.
@@ -180,7 +177,6 @@ class ArticleProposalGraph:
         Args:
             workflow_plan: Plan specifying which nodes to run
             prompts: User prompts for research workflows (list of strings)
-            backend: Backend LLM to use
 
         Returns:
             WorkflowResult with aggregated changes and results
@@ -188,15 +184,12 @@ class ArticleProposalGraph:
         # Initialize workflow state
         vault_summary = self.vault_service.get_vault_summary()
 
-        selected_backend = (backend or obs_graphs_settings.llm_backend).strip().lower()
-
         prompt_list = prompts or []
 
         initial_state: GraphState = {
             "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
             "prompts": prompt_list,
-            "backend": selected_backend,
             "accumulated_changes": [],
             "node_results": {},
             "messages": [],
@@ -281,7 +274,6 @@ class ArticleProposalGraph:
                 "vault_summary": state["vault_summary"],
                 "strategy": state["strategy"],
                 "prompts": state["prompts"],
-                "backend": state["backend"],
                 "accumulated_changes": state["accumulated_changes"],
                 "node_results": state["node_results"],
             }

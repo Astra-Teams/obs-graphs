@@ -1,6 +1,5 @@
 """Central dependency injection hub for obs-graphs using FastAPI's Depends mechanism."""
 
-import platform
 from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Generator, Union
@@ -10,22 +9,21 @@ from fastapi import Depends
 from obs_gtwy_sdk import GatewayClientProtocol, MockObsGatewayClient, ObsGatewayClient
 from olm_d_rch_sdk import ResearchApiClient, ResearchClientProtocol
 from sqlalchemy.orm import Session
+from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 from dev.mocks_clients import MockRedisClient, MockResearchApiClient
-from src.obs_graphs.clients import MLXClient, OllamaClient
 from src.obs_graphs.config import (
     DBSettings,
     GatewaySettings,
-    MLXSettings,
     ObsGraphsSettings,
-    OllamaSettings,
     RedisSettings,
     ResearchAPISettings,
+    StlConnSettings,
     WorkflowSettings,
 )
 from src.obs_graphs.db.database import create_db_session
 from src.obs_graphs.protocols import (
-    LLMClientProtocol,
+    StlConnClientProtocol,
     VaultServiceProtocol,
 )
 from src.obs_graphs.services import VaultService
@@ -42,15 +40,9 @@ def get_app_settings() -> ObsGraphsSettings:
 
 
 @lru_cache()
-def get_ollama_settings() -> OllamaSettings:
-    """Get the Ollama settings singleton."""
-    return OllamaSettings()
-
-
-@lru_cache()
-def get_mlx_settings() -> MLXSettings:
-    """Get the MLX settings singleton."""
-    return MLXSettings()
+def get_stl_conn_settings() -> StlConnSettings:
+    """Get the Stella Connector settings singleton."""
+    return StlConnSettings()
 
 
 @lru_cache()
@@ -84,100 +76,60 @@ def get_workflow_settings() -> WorkflowSettings:
 
 
 # ============================================================================
-# LLM Client Factory Pattern
+# LLM Client via Stella Connector (stl-conn)
 # ============================================================================
 
-# Factory dictionary mapping backend names to client constructors
-CLIENT_FACTORIES = {
-    "ollama": lambda settings: OllamaClient(
-        model=settings.model,
-        base_url=settings.base_url,
-    ),
-    "mlx": lambda settings: MLXClient(settings),
-}
 
-
-def _create_llm_client(
-    backend: str,
-    use_mock: bool,
-    ollama_settings: OllamaSettings,
-    mlx_settings: MLXSettings,
-) -> LLMClientProtocol:
-    """Helper function to create an LLM client based on configuration."""
-    if use_mock:
-        from dev.mocks_clients import MockOllamaClient
-
-        return OllamaClient(
-            model=ollama_settings.model,
-            base_url=ollama_settings.base_url,
-            llm=MockOllamaClient(),
-        )
-
-    if backend not in CLIENT_FACTORIES:
-        raise ValueError(f"Unknown LLM backend: {backend}")
-
-    if backend == "mlx":
-        machine = platform.machine().lower()
-        if machine not in {"arm64", "aarch64"}:
-            raise RuntimeError(
-                "MLX backend is only supported on Apple Silicon (ARM64/AArch64)."
-            )
-        return CLIENT_FACTORIES["mlx"](mlx_settings)
-
-    # Default to Ollama
-    return CLIENT_FACTORIES["ollama"](ollama_settings)
-
-
-def get_llm_client(
-    settings: ObsGraphsSettings = Depends(get_app_settings),
-    ollama_settings: OllamaSettings = Depends(get_ollama_settings),
-    mlx_settings: MLXSettings = Depends(get_mlx_settings),
-) -> LLMClientProtocol:
+def _create_llm_client(stl_conn_settings: StlConnSettings) -> StlConnClientProtocol:
     """
-    Get an LLM client based on application settings.
+    Create an LLM client using the Stella Connector SDK.
 
     Args:
-        settings: Application settings determining which backend to use
-        ollama_settings: Ollama-specific configuration
-        mlx_settings: MLX-specific configuration
+        stl_conn_settings: Stella Connector configuration
 
     Returns:
-        An LLM client implementing LLMClientProtocol
-
-    Raises:
-        ValueError: If the backend is unsupported
-        RuntimeError: If MLX is requested on non-ARM64 architecture
+        An LLM client implementing StlConnClientProtocol
     """
-    return _create_llm_client(
-        backend=settings.llm_backend.lower(),
-        use_mock=settings.use_mock_llm,
-        ollama_settings=ollama_settings,
-        mlx_settings=mlx_settings,
+    if stl_conn_settings.use_mock_stl_conn:
+        return MockStlConnClient(response_format="langchain")
+    return StlConnClient(
+        base_url=stl_conn_settings.stl_conn_base_url,
+        response_format="langchain",
+        timeout=stl_conn_settings.stl_conn_timeout,
     )
 
 
+def get_llm_client(
+    stl_conn_settings: StlConnSettings = Depends(get_stl_conn_settings),
+) -> StlConnClientProtocol:
+    """
+    Get an LLM client via Stella Connector.
+
+    Args:
+        stl_conn_settings: Stella Connector configuration
+
+    Returns:
+        An LLM client implementing StlConnClientProtocol
+    """
+    return _create_llm_client(stl_conn_settings)
+
+
 def get_llm_client_provider(
-    settings: ObsGraphsSettings = Depends(get_app_settings),
-    ollama_settings: OllamaSettings = Depends(get_ollama_settings),
-    mlx_settings: MLXSettings = Depends(get_mlx_settings),
-) -> Callable[[str | None], LLMClientProtocol]:
+    stl_conn_settings: StlConnSettings = Depends(get_stl_conn_settings),
+) -> Callable[[str | None], StlConnClientProtocol]:
     """
     Get a provider function for LLM clients.
 
-    This is used by nodes that need to create LLM clients with specific backends.
+    The backend parameter is kept for API compatibility but is ignored
+    since stl-conn handles backend selection internally.
 
     Returns:
-        A callable that accepts an optional backend parameter and returns an LLM client
+        A callable that returns an LLM client via Stella Connector
     """
 
-    def provider(backend: str | None = None) -> LLMClientProtocol:
-        target_backend = (backend or settings.llm_backend).strip().lower()
-        return _create_llm_client(
-            backend=target_backend,
-            use_mock=settings.use_mock_llm,
-            ollama_settings=ollama_settings,
-            mlx_settings=mlx_settings,
-        )
+    def provider(backend: str | None = None) -> StlConnClientProtocol:
+        # Backend parameter is ignored - stl-conn handles backend selection
+        return _create_llm_client(stl_conn_settings)
 
     return provider
 
@@ -291,7 +243,7 @@ def get_redis_client(
 
 
 def get_article_proposal_node(
-    llm_client_provider: Callable[[str | None], LLMClientProtocol] = Depends(
+    llm_client_provider: Callable[[str | None], StlConnClientProtocol] = Depends(
         get_llm_client_provider
     ),
 ):
