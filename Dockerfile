@@ -18,8 +18,8 @@ COPY pyproject.toml uv.lock README.md ./
 # Configure git with GitHub token for private repositories
 RUN --mount=type=secret,id=github_token \
   if [ -f /run/secrets/github_token ]; then \
-    git config --global credential.helper store && \
-    echo "https://oauth2:$(cat /run/secrets/github_token)@github.com" > ~/.git-credentials; \
+  git config --global credential.helper store && \
+  echo "https://oauth2:$(cat /run/secrets/github_token)@github.com" > ~/.git-credentials; \
   fi
 
 

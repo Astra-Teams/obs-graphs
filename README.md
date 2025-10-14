@@ -69,7 +69,7 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 - `USE_MOCK_OBS_GTWY` – when `true`, obs-graphs uses an in-process mock of the obs-gtwy gateway while the real API is not deployed.
 - `OBS_GTWY_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
 - `VAULT_SUBMODULE_PATH` – filesystem path to the local Obsidian vault submodule checkout.
-- `OBS_GRAPHS_LLM_BACKEND` – default LLM backend (`ollama` or `mlx`) used by workflow nodes. Backend-specific options are defined in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py` (for example `OBS_GRAPHS_OLLAMA_MODEL`, `OLLAMA_HOST`, `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, etc.).
+- `OBS_GRAPHS_LLM_BACKEND` – default LLM backend (`ollama` or `mlx`) used by workflow nodes. Backend-specific options are defined in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py` (for example `OBS_GRAPHS_OLLAMA_MODEL`, `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, etc.).
 - `RESEARCH_API_URL` / related settings under `src/obs_graphs/config/research_api_settings.py` – connection details for the external deep-research API (served by the `olm-d-rch` submodule when mocks are disabled).
 
 ### 3. Run the application stack
@@ -106,7 +106,7 @@ E2E tests rely on PostgreSQL and will wait for `obs-api` to report healthy befor
 
 Workflows obtain their language model through the dependency container. You can switch between Ollama and MLX without code changes:
 
-- Set `OBS_GRAPHS_LLM_BACKEND=ollama` (default) to use an Ollama server. Configure the Ollama-specific settings in `src/obs_graphs/config/ollama_settings.py` (e.g. `OLLAMA_HOST`, `OBS_GRAPHS_OLLAMA_MODEL`).
+- Set `OBS_GRAPHS_LLM_BACKEND=ollama` (default) to use an Ollama server. Configure the Ollama-specific settings in `src/obs_graphs/config/ollama_settings.py` (e.g. `OBS_GRAPHS_OLLAMA_MODEL`).
 - Set `OBS_GRAPHS_LLM_BACKEND=mlx` to use the MLX runtime on Apple Silicon. Configure MLX-specific settings in `src/obs_graphs/config/mlx_settings.py` (e.g. `OBS_GRAPHS_MLX_MODEL`, `OBS_GRAPHS_MLX_MAX_TOKENS`, `OBS_GRAPHS_MLX_TEMPERATURE`, `OBS_GRAPHS_MLX_TOP_P`). The runtime requires the `mlx-lm` package and an ARM64 Mac; the container raises a clear error on unsupported hardware.
 - For development, enable `USE_MOCK_LLM=true` to wrap the existing mock responses behind the same protocol.
 

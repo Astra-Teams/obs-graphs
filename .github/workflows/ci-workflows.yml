@@ -17,6 +17,5 @@ jobs:
   run-docker-tests:
     uses: ./.github/workflows/run-docker-tests.yml
     secrets:
-      OLLAMA_HOST: ${{ secrets.OLLAMA_HOST }}
       OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
       OBSIDIAN_VAULT_REPOSITORY: ${{ secrets.OBSIDIAN_VAULT_REPOSITORY }}

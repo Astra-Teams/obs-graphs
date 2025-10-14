@@ -11,7 +11,7 @@ from olm_d_rch_sdk import ResearchApiClient, ResearchClientProtocol
 from sqlalchemy.orm import Session
 from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
-from dev.mocks_clients import MockRedisClient, MockResearchApiClient
+from dev.mocks.clients import MockRedisClient, MockResearchApiClient
 from src.obs_graphs.config import (
     DBSettings,
     GatewaySettings,

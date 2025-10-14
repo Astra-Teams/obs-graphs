@@ -1,6 +1,6 @@
 import pytest
 
-from dev.mocks_clients.mock_redis_client import MockRedisClient
+from dev.mocks.clients.mock_redis_client import MockRedisClient
 
 
 @pytest.fixture(autouse=True)
