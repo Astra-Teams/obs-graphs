@@ -105,7 +105,6 @@ class DeepResearchNode(NodeProtocol):
                 "research_metadata": metadata,
                 "diagnostics": diagnostics,
                 "processing_time_seconds": research_result.processing_time,
-                "topic_summary": context.get("topic_summary"),
             }
 
             message = f"Generated research proposal: {filename}"

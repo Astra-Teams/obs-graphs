@@ -19,14 +19,7 @@ def mock_llm():
         """Mock async invoke method that returns a response with content attribute."""
 
         class MockResponse:
-            content = """
-    {
-        "title": "Impact of Transformer Models on NLP",
-        "summary": "This research explores how transformer architectures have revolutionized natural language processing.",
-        "tags": ["transformers", "nlp", "deep-learning", "attention-mechanism"],
-        "slug": "impact-of-transformer-models-on-nlp"
-    }
-    """
+            content = "Impact of Transformer Models on NLP"
 
         return MockResponse()
 
@@ -87,12 +80,7 @@ async def test_execute_with_valid_prompt(node, vault_path):
     assert result.success is True
     assert result.changes == []
     assert "topic_title" in result.metadata
-    assert "topic_summary" in result.metadata
-    assert "tags" in result.metadata
-    assert "proposal_slug" in result.metadata
     assert result.metadata["topic_title"] == "Impact of Transformer Models on NLP"
-    assert len(result.metadata["tags"]) == 4
-    assert result.metadata["tags"][0] == "transformers"
 
 
 @pytest.mark.asyncio
@@ -109,12 +97,12 @@ async def test_execute_without_backend_uses_default(node, llm_provider):
 
 
 @pytest.mark.asyncio
-async def test_execute_with_malformed_json(node, vault_path, mock_llm):
-    """Test that execute handles malformed JSON response."""
+async def test_execute_with_malformed_response(node, vault_path, mock_llm):
+    """Test that execute handles malformed response with fallback."""
 
     async def mock_invoke_malformed(messages):
         class MockResponse:
-            content = "This is not valid JSON"
+            content = ""  # Empty response
 
         return MockResponse()
 
@@ -125,29 +113,22 @@ async def test_execute_with_malformed_json(node, vault_path, mock_llm):
     result = await node.execute(context)
 
     assert isinstance(result, NodeResult)
-    assert result.success is False
-    assert "malformed_json" in result.metadata.get("error", "")
+    assert result.success is True  # Now succeeds with fallback
+    assert "topic_title" in result.metadata
+    assert result.metadata["topic_title"] == "Research on Test prompt"
 
 
 @pytest.mark.asyncio
-async def test_execute_with_invalid_tags(node, vault_path, mock_llm):
-    """Test that execute accepts any number of tags."""
-    # Only 2 tags - should be accepted now
+async def test_execute_with_valid_response(node, vault_path, mock_llm):
+    """Test that execute accepts valid response."""
 
-    async def mock_invoke_tags(messages):
+    async def mock_invoke_valid(messages):
         class MockResponse:
-            content = """
-    {
-        "title": "Test Topic",
-        "summary": "Test summary",
-        "tags": ["tag1", "tag2"],
-        "slug": "test-topic"
-    }
-    """
+            content = "Test Topic Title"
 
         return MockResponse()
 
-    mock_llm.invoke = mock_invoke_tags
+    mock_llm.invoke = mock_invoke_valid
 
     context = {"prompts": ["Test prompt"], "strategy": "research_proposal"}
 
@@ -155,7 +136,7 @@ async def test_execute_with_invalid_tags(node, vault_path, mock_llm):
 
     assert isinstance(result, NodeResult)
     assert result.success is True
-    assert result.metadata["tags"] == ["tag1", "tag2"]
+    assert result.metadata["topic_title"] == "Test Topic Title"
 
 
 @pytest.mark.asyncio
@@ -173,14 +154,7 @@ async def test_execute_tags_lowercase(node, vault_path, mock_llm):
 
     async def mock_invoke_preserve_tags(messages):
         class MockResponse:
-            content = """
-    {
-        "title": "Test Topic",
-        "summary": "Test summary",
-        "tags": ["Machine-Learning", "NLP", "Deep-Learning"],
-        "slug": "test-topic"
-    }
-    """
+            content = "Test Topic Title"
 
         return MockResponse()
 
@@ -192,4 +166,3 @@ async def test_execute_tags_lowercase(node, vault_path, mock_llm):
 
     assert isinstance(result, NodeResult)
     assert result.success is True
-    assert result.metadata["tags"] == ["Machine-Learning", "NLP", "Deep-Learning"]

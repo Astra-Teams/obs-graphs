@@ -54,27 +54,15 @@ def test_validate_input_valid(node):
     """Test that validate_input accepts valid context."""
     context = {
         "topic_title": "Test Topic",
-        "topic_summary": "Test summary",
-        "tags": ["tag1", "tag2", "tag3"],
         "proposal_slug": "test-topic",
     }
     assert node.validate_input(context) is True
-
-    # Also test without tags (now optional)
-    context_without_tags = {
-        "topic_title": "Test Topic",
-        "topic_summary": "Test summary",
-        "proposal_slug": "test-topic",
-    }
-    assert node.validate_input(context_without_tags) is True
 
 
 def test_validate_input_missing_fields(node):
     """Test that validate_input rejects missing required fields."""
     # Missing topic_title
     context = {
-        "topic_summary": "Test summary",
-        "tags": ["tag1", "tag2", "tag3"],
         "proposal_slug": "test-topic",
     }
     assert node.validate_input(context) is False
@@ -82,18 +70,9 @@ def test_validate_input_missing_fields(node):
     # Empty topic_title
     context = {
         "topic_title": "",
-        "topic_summary": "Test summary",
         "proposal_slug": "test-topic",
     }
     assert node.validate_input(context) is False
-
-    # Valid context without tags (tags are now optional)
-    context = {
-        "topic_title": "Test Topic",
-        "topic_summary": "Test summary",
-        "proposal_slug": "test-topic",
-    }
-    assert node.validate_input(context) is True
 
 
 @pytest.mark.asyncio
@@ -101,8 +80,6 @@ async def test_execute_with_valid_context(node, vault_path, mock_research_client
     """Test that execute creates proposal file successfully."""
     context = {
         "topic_title": "Impact of Transformers on NLP",
-        "topic_summary": "Research on transformer architectures",
-        "tags": ["transformers", "nlp", "deep-learning"],
         "proposal_slug": "impact-of-transformers-on-nlp",
     }
 
@@ -126,7 +103,6 @@ async def test_execute_with_valid_context(node, vault_path, mock_research_client
         == "https://arxiv.org/abs/1706.03762"
     )
     assert result.metadata["diagnostics"] == ["mock"]
-    assert result.metadata["topic_summary"] == "Research on transformer architectures"
 
     # Verify research client was called
     mock_research_client.research.assert_called_once_with(
@@ -139,8 +115,6 @@ async def test_execute_preserves_article(node, vault_path, mock_research_client)
     """Test that the article returned by the client is persisted verbatim."""
     context = {
         "topic_title": "Test Topic",
-        "topic_summary": "Test summary",
-        "tags": ["tag1", "tag2", "tag3"],
         "proposal_slug": "test-topic",
     }
 
@@ -160,8 +134,6 @@ async def test_execute_with_api_error(node, vault_path, mock_research_client):
 
     context = {
         "topic_title": "Test Topic",
-        "topic_summary": "Test summary",
-        "tags": ["tag1", "tag2", "tag3"],
         "proposal_slug": "test-topic",
     }
 
@@ -190,8 +162,6 @@ async def test_execute_unique_filenames(node, vault_path, mock_research_client):
 
     context = {
         "topic_title": "Test Topic",
-        "topic_summary": "Test summary",
-        "tags": ["tag1", "tag2", "tag3"],
         "proposal_slug": "test-topic",
     }
 
