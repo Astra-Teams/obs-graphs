@@ -35,7 +35,10 @@ class Workflow(Base):
     __tablename__ = "workflows"
 
     id = Column(Integer, primary_key=True, index=True)
-    prompt = Column(Text, nullable=True)
+    workflow_type = Column(
+        String(50), nullable=False, default="article-proposal", index=True
+    )
+    prompt = Column(JSON, nullable=True)
     status = Column(
         Enum(WorkflowStatus),
         nullable=False,
@@ -54,9 +57,18 @@ class Workflow(Base):
     )
 
     def __repr__(self):
-        prompt_preview = (
-            f"{self.prompt[:50]}..."
-            if self.prompt and len(self.prompt) > 50
-            else self.prompt
-        )
-        return f"<Workflow(id={self.id}, status={self.status.value}, strategy={self.strategy}, prompt={prompt_preview!r})>"
+        # Handle prompt as either list or legacy string
+        if isinstance(self.prompt, list):
+            first_prompt = self.prompt[0] if self.prompt else ""
+            prompt_preview = (
+                f"{first_prompt[:50]}..."
+                if first_prompt and len(first_prompt) > 50
+                else first_prompt
+            )
+        else:
+            prompt_preview = (
+                f"{self.prompt[:50]}..."
+                if self.prompt and len(self.prompt) > 50
+                else self.prompt
+            )
+        return f"<Workflow(id={self.id}, type={self.workflow_type}, status={self.status.value}, strategy={self.strategy}, prompt={prompt_preview!r})>"

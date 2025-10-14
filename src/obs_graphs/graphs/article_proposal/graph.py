@@ -84,7 +84,7 @@ class ArticleProposalGraph:
             workflow_result = self.execute_workflow(
                 workflow_plan,
                 container,
-                prompt=request.prompt,
+                prompts=request.prompts,
                 backend=request.backend,
             )
 
@@ -122,9 +122,6 @@ class ArticleProposalGraph:
         Returns:
             WorkflowPlan with ordered list of nodes and strategy
         """
-        if not (request.prompt and request.prompt.strip()):
-            raise ValueError("Prompt is required to run the article proposal workflow")
-
         strategy = WorkflowStrategy.RESEARCH_PROPOSAL.value
         nodes = [
             "article_proposal",
@@ -138,7 +135,7 @@ class ArticleProposalGraph:
         self,
         workflow_plan: WorkflowPlan,
         container: DependencyContainer,
-        prompt: str = "",
+        prompts: list[str] | None = None,
         backend: str | None = None,
     ) -> WorkflowResult:
         """
@@ -147,7 +144,7 @@ class ArticleProposalGraph:
         Args:
             workflow_plan: Plan specifying which nodes to run
             container: Dependency container
-            prompt: User prompt for research workflows
+            prompts: User prompts for research workflows (list of strings)
 
         Returns:
             WorkflowResult with aggregated changes and results
@@ -158,10 +155,12 @@ class ArticleProposalGraph:
 
         selected_backend = (backend or obs_graphs_settings.llm_backend).strip().lower()
 
+        prompt_list = prompts or []
+
         initial_state: GraphState = {
             "vault_summary": vault_summary,
             "strategy": workflow_plan.strategy,
-            "prompt": prompt,
+            "prompts": prompt_list,
             "backend": selected_backend,
             "accumulated_changes": [],
             "node_results": {},
@@ -250,7 +249,7 @@ class ArticleProposalGraph:
             context = {
                 "vault_summary": state["vault_summary"],
                 "strategy": state["strategy"],
-                "prompt": state["prompt"],
+                "prompts": state["prompts"],
                 "backend": state["backend"],
                 "accumulated_changes": state["accumulated_changes"],
                 "node_results": state["node_results"],

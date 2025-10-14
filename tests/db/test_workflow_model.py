@@ -22,9 +22,10 @@ def test_create_pending_workflow_defaults(db_session: Session) -> None:
     assert workflow.completed_at is None
     assert workflow.branch_name is None
     assert workflow.error_message is None
+    assert workflow.prompt == ["Test research prompt"]
     assert (
         repr(workflow)
-        == f"<Workflow(id={workflow.id}, status=PENDING, strategy=None, prompt='Test research prompt')>"
+        == f"<Workflow(id={workflow.id}, type=article-proposal, status=PENDING, strategy=None, prompt='Test research prompt')>"
     )
 
 
@@ -49,7 +50,9 @@ def test_workflow_transition_to_completed(db_session: Session) -> None:
     assert workflow.workflow_metadata["total_changes"] == 1
     assert workflow.workflow_metadata["agent_results"]["new_article"]["success"] is True
     assert workflow.started_at == original_started_at
-    assert workflow.completed_at == completed_at.replace(tzinfo=None)
+    assert workflow.completed_at.replace(tzinfo=None) == completed_at.replace(
+        tzinfo=None
+    )
 
 
 def test_failed_workflow_records_error_details(db_session: Session) -> None:
@@ -74,8 +77,10 @@ def test_failed_workflow_records_error_details(db_session: Session) -> None:
     assert workflow.status is WorkflowStatus.FAILED
     assert workflow.error_message.startswith("Workflow execution failed")
     assert workflow.workflow_metadata["retry_count"] == 1
-    assert workflow.started_at == started_at.replace(tzinfo=None)
-    assert workflow.completed_at == completed_at.replace(tzinfo=None)
+    assert workflow.started_at.replace(tzinfo=None) == started_at.replace(tzinfo=None)
+    assert workflow.completed_at.replace(tzinfo=None) == completed_at.replace(
+        tzinfo=None
+    )
 
 
 def test_query_workflows_by_status(db_session: Session) -> None:

@@ -89,9 +89,13 @@ def run_workflow_task(self, workflow_id: int) -> None:
         container = get_container()
         container.set_vault_path(temp_vault_dir)
 
-        # 4. Create ArticleProposalGraph and run workflow
+        # 4. Get graph builder for workflow type and run workflow
         from src.obs_graphs.api.schemas import WorkflowRunRequest
         from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
+        from src.obs_graphs.graphs.factory import get_graph_builder
+
+        # Get appropriate graph builder based on workflow type
+        graph_builder = get_graph_builder(workflow.workflow_type or "article-proposal")
 
         # Handle legacy strategies by coercing unknown values to RESEARCH_PROPOSAL
         try:
@@ -107,12 +111,19 @@ def run_workflow_task(self, workflow_id: int) -> None:
         )
         backend_value = backend_value.strip().lower()
 
+        # Handle prompt: convert to list if needed for backward compatibility
+        prompt_value = workflow.prompt
+        if prompt_value is None:
+            prompt_value = ["Default research prompt"]
+        elif isinstance(prompt_value, str):
+            # Legacy string prompt - convert to list
+            prompt_value = [prompt_value]
+
         request = WorkflowRunRequest(
-            prompt=workflow.prompt or "Default research prompt",
+            prompts=prompt_value,
             strategy=strategy,
             backend=backend_value,
         )
-        graph_builder = container.get_graph_builder()
         result = graph_builder.run_workflow(request)
 
         # Update workflow based on result

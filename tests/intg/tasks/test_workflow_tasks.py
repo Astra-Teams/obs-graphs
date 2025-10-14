@@ -43,10 +43,12 @@ class TestRunWorkflowTask:
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_retrieves_workflow_from_database(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -70,7 +72,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         # Save workflow ID before task execution (session will be closed)
         workflow_id = workflow.id
@@ -88,9 +90,15 @@ class TestRunWorkflowTask:
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_updates_status_to_running(
-        self, mock_get_container, mock_get_db, mock_prepare_dir, test_db
+        self,
+        mock_get_container,
+        mock_get_builder,
+        mock_get_db,
+        mock_prepare_dir,
+        test_db,
     ):
         """Test that task updates workflow status to RUNNING at start."""
         mock_prepare_dir.return_value = Path("/tmp/vault")
@@ -106,7 +114,7 @@ class TestRunWorkflowTask:
         # Mock ObsidianArticleProposalToPRGraph to raise error
         mock_builder_instance = MagicMock()
         mock_builder_instance.run_workflow.side_effect = Exception("Stop here")
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         with pytest.raises(Exception):
             run_workflow_task(workflow_id)
@@ -118,10 +126,12 @@ class TestRunWorkflowTask:
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_calls_run_workflow_and_updates_db(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -144,7 +154,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -161,10 +171,12 @@ class TestRunWorkflowTask:
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_records_branch_name(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -187,7 +199,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -201,10 +213,12 @@ class TestRunWorkflowTask:
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_updates_workflow_to_completed(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -227,7 +241,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -242,10 +256,12 @@ class TestRunWorkflowTask:
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_updates_workflow_to_failed_on_error(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -262,7 +278,7 @@ class TestRunWorkflowTask:
 
         mock_builder_instance = MagicMock()
         mock_builder_instance.run_workflow.side_effect = Exception("Workflow error")
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -294,10 +310,12 @@ class TestRunWorkflowTask:
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_prompt_to_workflow_request(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -306,7 +324,8 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         # Create workflow with prompt
         workflow = Workflow(
-            prompt="Test research prompt for propagation",
+            workflow_type="article-proposal",
+            prompt=["Test research prompt for propagation"],
             status=WorkflowStatus.PENDING,
             strategy=None,
         )
@@ -329,7 +348,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -340,16 +359,19 @@ class TestRunWorkflowTask:
         call_args = mock_builder_instance.run_workflow.call_args[0]
         request = call_args[0]
 
-        assert hasattr(request, "prompt")
-        assert request.prompt == "Test research prompt for propagation"
+        assert hasattr(request, "prompts")
+        assert request.prompts == ["Test research prompt for propagation"]
+        assert request.primary_prompt == "Test research prompt for propagation"
         assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_empty_prompt_when_null(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -358,6 +380,7 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
         # Create workflow with NULL prompt (old records)
         workflow = Workflow(
+            workflow_type="article-proposal",
             prompt=None,
             status=WorkflowStatus.PENDING,
             strategy=None,
@@ -381,7 +404,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -392,16 +415,19 @@ class TestRunWorkflowTask:
         call_args = mock_builder_instance.run_workflow.call_args[0]
         request = call_args[0]
 
-        assert hasattr(request, "prompt")
-        assert request.prompt == "Default research prompt"
+        assert hasattr(request, "prompts")
+        assert request.prompts == ["Default research prompt"]
+        assert request.primary_prompt == "Default research prompt"
         assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_propagates_prompt_with_strategy(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -412,7 +438,8 @@ class TestRunWorkflowTask:
 
         # Create workflow with prompt and strategy
         workflow = Workflow(
-            prompt="Research quantum computing",
+            workflow_type="article-proposal",
+            prompt=["Research quantum computing"],
             status=WorkflowStatus.PENDING,
             strategy=WorkflowStrategy.RESEARCH_PROPOSAL,
         )
@@ -435,7 +462,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 
@@ -446,16 +473,19 @@ class TestRunWorkflowTask:
         call_args = mock_builder_instance.run_workflow.call_args[0]
         request = call_args[0]
 
-        assert request.prompt == "Research quantum computing"
+        assert request.prompts == ["Research quantum computing"]
+        assert request.primary_prompt == "Research quantum computing"
         assert request.strategy == WorkflowStrategy.RESEARCH_PROPOSAL
         assert request.backend == obs_graphs_settings.llm_backend
 
     @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
     @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     @patch("src.obs_graphs.container.get_container")
     def test_task_uses_backend_from_metadata(
         self,
         mock_get_container,
+        mock_get_builder,
         mock_get_db,
         mock_prepare_dir,
         test_db,
@@ -464,7 +494,8 @@ class TestRunWorkflowTask:
         mock_prepare_dir.return_value = Path("/tmp/vault")
 
         workflow = Workflow(
-            prompt="Backend specific prompt",
+            workflow_type="article-proposal",
+            prompt=["Backend specific prompt"],
             status=WorkflowStatus.PENDING,
             strategy=None,
             workflow_metadata={"backend": "mlx"},
@@ -487,7 +518,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
         mock_builder_instance.run_workflow.return_value = mock_result
-        mock_container.get_graph_builder.return_value = mock_builder_instance
+        mock_get_builder.return_value = mock_builder_instance
 
         workflow_id = workflow.id
 

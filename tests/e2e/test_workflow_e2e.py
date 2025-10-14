@@ -63,9 +63,9 @@ class TestWorkflowE2E:
         # Submit workflow
         with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
             response = client.post(
-                "/api/v1/workflows/run",
+                "/api/v1/workflows/article-proposal/run",
                 json={
-                    "prompt": "Create a new article about testing",
+                    "prompts": ["Create a new article about testing"],
                     "async_execution": True,
                 },
             )
@@ -120,9 +120,9 @@ class TestWorkflowE2E:
         # Submit workflow with invalid configuration to trigger failure
         with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
             response = client.post(
-                "/api/v1/workflows/run",
+                "/api/v1/workflows/article-proposal/run",
                 json={
-                    "prompt": "fail intentionally",
+                    "prompts": ["fail intentionally"],
                     "async_execution": True,
                 },
             )
@@ -159,9 +159,9 @@ class TestWorkflowE2E:
         def _submit_workflow() -> Dict[str, Any]:
             with httpx.Client(base_url="http://127.0.0.1:8002", timeout=30.0) as client:
                 response = client.post(
-                    "/api/v1/workflows/run",
+                    "/api/v1/workflows/article-proposal/run",
                     json={
-                        "prompt": "Concurrent test workflow",
+                        "prompts": ["Concurrent test workflow"],
                         "async_execution": True,
                     },
                 )

@@ -38,9 +38,10 @@ class ArticleProposalAgent(NodeProtocol):
             return "vault_summary" in context
         else:
             return (
-                "prompt" in context
-                and isinstance(context["prompt"], str)
-                and len(context["prompt"].strip()) > 0
+                "prompts" in context
+                and isinstance(context["prompts"], list)
+                and len(context["prompts"]) > 0
+                and len(context["prompts"][0].strip()) > 0
             )
 
     def execute(self, context: dict) -> AgentResult:
@@ -72,12 +73,13 @@ class ArticleProposalAgent(NodeProtocol):
         Execute research topic proposal based on user prompt.
 
         Args:
-            context: Dictionary containing 'prompt' with user's research request
+            context: Dictionary containing 'prompts' with user's research request (list of strings)
 
         Returns:
             AgentResult with topic metadata (title, summary, tags, slug)
         """
-        prompt = context["prompt"].strip()
+        # Use only the first prompt from the list for now
+        prompt = context["prompts"][0].strip()
 
         # Generate research topic from prompt
         topic_prompt = render_prompt("research_topic_proposal", prompt=prompt)

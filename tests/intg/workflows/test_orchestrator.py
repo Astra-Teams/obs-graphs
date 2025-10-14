@@ -38,13 +38,16 @@ def mock_container():
 
 
 def test_determine_workflow_plan_requires_prompt(mock_container):
-    """determine_workflow_plan should reject empty prompts."""
+    """determine_workflow_plan should work with valid prompts."""
     article_proposal_graph = ArticleProposalGraph()
 
-    with pytest.raises(ValueError, match="Prompt is required"):
-        article_proposal_graph.determine_workflow_plan(
-            mock_container.get_vault_service(), SimpleNamespace(prompt="")
-        )
+    plan = article_proposal_graph.determine_workflow_plan(
+        mock_container.get_vault_service(),
+        SimpleNamespace(prompts=["test prompt"], primary_prompt="test prompt"),
+    )
+
+    assert plan.nodes == ["article_proposal", "deep_research", "submit_pull_request"]
+    assert plan.strategy == "research_proposal"
 
 
 def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
@@ -52,7 +55,7 @@ def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
 ):
     """determine_workflow_plan should choose the research path when a prompt is given."""
     article_proposal_graph = ArticleProposalGraph()
-    request = WorkflowRunRequest(prompt="Research transformers")
+    request = WorkflowRunRequest(prompts=["Research transformers"])
 
     plan = article_proposal_graph.determine_workflow_plan(
         mock_container.get_vault_service(), request
@@ -69,8 +72,8 @@ def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
 
 def test_determine_workflow_plan_validates_whitespace_only_prompt():
     """A whitespace-only prompt should raise a validation error."""
-    with pytest.raises(ValueError, match="Prompt is required"):
-        WorkflowRunRequest(prompt="   ")
+    with pytest.raises(ValueError, match="Prompts cannot contain empty strings"):
+        WorkflowRunRequest(prompts=["   "])
 
 
 def test_execute_workflow(mock_container):
@@ -95,7 +98,7 @@ def test_execute_workflow_with_research_proposal_strategy(mock_container):
     article_proposal_graph = ArticleProposalGraph()
 
     result = article_proposal_graph.execute_workflow(
-        plan, mock_container, prompt="Research quantum computing"
+        plan, mock_container, prompts=["Research quantum computing"]
     )
 
     assert isinstance(result, WorkflowResult)
@@ -152,7 +155,7 @@ def test_execute_workflow_passes_backend_to_nodes(mock_container):
     article_proposal_graph.execute_workflow(
         plan,
         mock_container,
-        prompt="Backend propagation test",
+        prompts=["Backend propagation test"],
         backend="mlx",
     )
 
@@ -189,7 +192,7 @@ def test_run_workflow_collects_branch_metadata(mock_get_container):
     mock_get_container.return_value = mock_container
 
     article_proposal_graph = ArticleProposalGraph()
-    request = WorkflowRunRequest(prompt="Test research")
+    request = WorkflowRunRequest(prompts=["Test research"])
 
     result = article_proposal_graph.run_workflow(request)
 
@@ -218,7 +221,7 @@ def test_run_workflow_handles_failure(mock_get_container):
     mock_get_container.return_value = mock_container
 
     article_proposal_graph = ArticleProposalGraph()
-    request = WorkflowRunRequest(prompt="Test research failure path")
+    request = WorkflowRunRequest(prompts=["Test research failure path"])
 
     result = article_proposal_graph.run_workflow(request)
 

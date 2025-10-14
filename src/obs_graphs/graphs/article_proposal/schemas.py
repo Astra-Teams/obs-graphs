@@ -35,7 +35,7 @@ class GraphStateModel(BaseModel):
 
     vault_summary: VaultSummaryModel
     strategy: "WorkflowStrategy"
-    prompt: str
+    prompt: List[str]
     accumulated_changes: List["FileChange"]
     node_results: Dict[str, AgentResultModel]
     messages: List[str]

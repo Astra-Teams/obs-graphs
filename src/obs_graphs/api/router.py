@@ -21,36 +21,57 @@ router = APIRouter()
 
 
 # Endpoints
-@router.post("/workflows/run", response_model=WorkflowRunResponse, status_code=201)
+@router.post(
+    "/workflows/{workflow_type}/run",
+    response_model=WorkflowRunResponse,
+    status_code=201,
+)
 async def run_workflow(
+    workflow_type: str,
     request: WorkflowRunRequest,
     db: Session = Depends(get_db),
 ) -> WorkflowRunResponse:
     """
-    Run a new workflow execution synchronously or asynchronously.
+    Run a workflow of the specified type.
 
     Creates a new Workflow record in the database and executes the workflow.
     If async_execution is True, queues the workflow for background execution.
     If async_execution is False, executes synchronously.
 
     Args:
-        request: Workflow run request with prompt, strategy, and execution mode
+        workflow_type: Type of workflow to run (e.g., 'article-proposal')
+        request: Workflow run request with prompts and configuration
         db: Database session dependency
 
     Returns:
         WorkflowRunResponse with workflow ID, status, and message
 
     Raises:
-        HTTPException: If workflow creation fails
+        HTTPException: If workflow creation fails or unknown workflow type
+
+    Supported workflow types:
+        - article-proposal: Research topic proposal and article creation
     """
     try:
+        # Validate workflow type using factory
+        from src.obs_graphs.graphs.factory import get_graph_builder
+
+        try:
+            graph_builder = get_graph_builder(workflow_type)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
         # Create new workflow record with PENDING status
         selected_backend = (
             (request.backend or obs_graphs_settings.llm_backend).strip().lower()
         )
 
+        prompts = request.prompts
+
+        # Persist workflow with full prompt history
         workflow = Workflow(
-            prompt=request.prompt.strip(),
+            workflow_type=workflow_type,
+            prompt=prompts,
             status=WorkflowStatus.PENDING,
             strategy=request.strategy,
         )
@@ -99,13 +120,8 @@ async def run_workflow(
             vault_path = raw_path if raw_path.is_absolute() else project_root / raw_path
             container.set_vault_path(vault_path)
 
-            # Create Graph and run workflow
-            from src.obs_graphs.graphs.article_proposal.graph import (
-                ArticleProposalGraph,
-            )
-
-            article_proposal_graph = ArticleProposalGraph()
-            result = article_proposal_graph.run_workflow(request)
+            # Use factory to get graph builder and run workflow
+            result = graph_builder.run_workflow(request)
 
             # Update workflow based on result
             if result.success:

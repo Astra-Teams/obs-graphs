@@ -22,11 +22,13 @@ class ObsGatewayClient(GatewayClientProtocol):
         """Create a branch via obs-gtwy and return the registered branch name."""
 
         payload = {
-            "file_name": file_name,
-            "content": content,
+            "drafts": [
+                {
+                    "file_name": file_name,
+                    "content": content,
+                }
+            ]
         }
-        if branch_name:
-            payload["branch_name"] = branch_name
 
         try:
             with httpx.Client(

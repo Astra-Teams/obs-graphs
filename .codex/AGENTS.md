@@ -24,12 +24,16 @@
 ## 🏛️ Core Architecture
 
 ### 1. Application Core (`src/obs_graphs/`)
--   **API (`api/`)**: FastAPI endpoints, Pydantic schemas, and routing.
--   **Workflow Engine (`graphs/`)**: LangGraph for stateful workflow orchestration using modular agent nodes.
+-   **API (`api/`)**: FastAPI endpoints with path-based workflow type routing (`/api/workflows/{workflow_type}/run`), Pydantic schemas for validation.
+-   **Workflow Engine (`graphs/`)**:
+    -   Factory pattern (`factory.py`) for extensible workflow graph creation
+    -   Protocol interface (`protocol.py`) defining `WorkflowGraphProtocol` for type-safe graph implementations
+    -   LangGraph state machines for stateful workflow orchestration using modular agent nodes
+    -   Currently supports: `article-proposal` workflow type
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
--   **Data Access (`db/`)**: SQLAlchemy models and repository pattern for DB interactions.
+-   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
 -   **Clients (`clients/`)**: External service clients (obs-gtwy gateway, Research APIs) plus unified LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`.
--   **Async Tasks (`celery/`)**: Background task execution with Redis.
+-   **Async Tasks (`celery/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
 -   **Configuration (`config/`)**: Environment-based settings and feature flags (e.g., `OBS_GRAPHS_LLM_BACKEND`). Backend-specific parameters live in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py`.
 -   **DI (`container.py`)**: Protocol-based Dependency Injection for loose coupling.
 -   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions.
