@@ -116,7 +116,6 @@ async def test_execute_with_malformed_response(node, vault_path, mock_llm):
     assert result.success is True  # Now succeeds with fallback
     assert "topic_title" in result.metadata
     assert result.metadata["topic_title"] == "Research on Test prompt"
-    assert result.metadata["topic_title"] == "Research on Test prompt"
 
 
 @pytest.mark.asyncio
@@ -137,6 +136,7 @@ async def test_execute_with_valid_response(node, vault_path, mock_llm):
 
     assert isinstance(result, NodeResult)
     assert result.success is True
+    assert result.metadata["topic_title"] == "Test Topic Title"
 
 
 @pytest.mark.asyncio
