@@ -1580,7 +1580,9 @@ dependencies = [
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
     { name = "langgraph" },
+    { name = "obs-gtwy-api" },
     { name = "ollama" },
+    { name = "olm-d-rch" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
     { name = "pygithub" },
@@ -1595,8 +1597,6 @@ dev = [
     { name = "fakeredis" },
     { name = "filelock" },
     { name = "ipython" },
-    { name = "obs-gtwy-api" },
-    { name = "olm-d-rch" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-xdist" },
@@ -1619,7 +1619,9 @@ requires-dist = [
     { name = "langchain-ollama", specifier = ">=0.3.6,<0.4.0" },
     { name = "langchain-openai", specifier = ">=0.0.5,<0.3.0" },
     { name = "langgraph", specifier = ">=0.0.20,<0.3.0" },
+    { name = "obs-gtwy-api", git = "https://github.com/asterismhq/obs-gtwy.git" },
     { name = "ollama", specifier = ">=0.5.3,<0.6.0" },
+    { name = "olm-d-rch", git = "https://github.com/asterismhq/olm-d-rch.git" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1,<4.0" },
     { name = "pydantic-settings", specifier = ">=2.4.0,<3.0.0" },
     { name = "pygithub", specifier = ">=2.1.0,<3.0.0" },
@@ -1634,8 +1636,6 @@ dev = [
     { name = "fakeredis", specifier = ">=2.20.0" },
     { name = "filelock", specifier = ">=3.12.2,<4.0.0" },
     { name = "ipython", specifier = ">=9.4.0" },
-    { name = "obs-gtwy-api", git = "https://github.com/asterismhq/obs-gtwy.git" },
-    { name = "olm-d-rch", git = "https://github.com/asterismhq/olm-d-rch.git" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-asyncio", specifier = ">=0.23.7" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
@@ -1648,7 +1648,7 @@ dev = [
 [[package]]
 name = "obs-gtwy-api"
 version = "0.1.0"
-source = { git = "https://github.com/asterismhq/obs-gtwy.git#94ac5f20268ca594106f5229f8036d86ce4750a8" }
+source = { git = "https://github.com/asterismhq/obs-gtwy.git#fbc16a0595ebdb8a0ed41c8612ce56e9a64c35f3" }
 dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
@@ -1673,7 +1673,7 @@ wheels = [
 [[package]]
 name = "olm-d-rch"
 version = "0.0.1"
-source = { git = "https://github.com/asterismhq/olm-d-rch.git#2bd6f6ac29d2a5a75f0a1f3782d9d90f33ce9a91" }
+source = { git = "https://github.com/asterismhq/olm-d-rch.git#63503273fed50ee3cd39afdc679fa5850631bc82" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "ddgs" },

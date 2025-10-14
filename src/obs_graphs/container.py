@@ -5,8 +5,11 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 import redis
+from obs_gtwy_sdk import GatewayClientProtocol, MockObsGatewayClient, ObsGatewayClient
+from olm_d_rch_sdk import ResearchApiClient, ResearchClientProtocol
 
-from src.obs_graphs.clients import MLXClient, ObsGatewayClient, OllamaClient
+from dev.mocks_clients import MockResearchApiClient
+from src.obs_graphs.clients import MLXClient, OllamaClient
 from src.obs_graphs.config import (
     gateway_settings,
     mlx_settings,
@@ -16,10 +19,8 @@ from src.obs_graphs.config import (
     research_api_settings,
 )
 from src.obs_graphs.protocols import (
-    GatewayClientProtocol,
     LLMClientProtocol,
     NodeProtocol,
-    ResearchClientProtocol,
     VaultServiceProtocol,
 )
 from src.obs_graphs.services import VaultService
@@ -81,38 +82,10 @@ class DependencyContainer:
         """Return the obs-gtwy gateway client implementation."""
         if self._gateway_client is None:
             gateway_base = str(gateway_settings.base_url).rstrip("/")
-            gateway_timeout = gateway_settings.timeout_seconds
-
             if obs_graphs_settings.use_mock_obs_gateway:
-                from mock_obs_gtwy_client.mock_obs_gtwy_client import (
-                    MockObsGtwyClient,
-                )
-
-                class AdaptedMockGateway(GatewayClientProtocol):
-                    def __init__(self):
-                        self._client = MockObsGtwyClient()
-
-                    def create_draft_branch(
-                        self, *, file_name: str, content: str, branch_name: str
-                    ) -> str:
-                        if branch_name:
-                            return branch_name
-                        response = self._client.create_draft(file_name, content)
-                        derived = response.get("branch_name")
-                        if not isinstance(derived, str) or not derived.strip():
-                            slug = (
-                                Path(file_name).stem.replace(" ", "-").lower()
-                                or "draft"
-                            )
-                            return f"draft/{slug}"
-                        return derived.strip()
-
-                self._gateway_client = AdaptedMockGateway()
+                self._gateway_client = MockObsGatewayClient()
             else:
-                self._gateway_client = ObsGatewayClient(
-                    base_url=gateway_base,
-                    timeout_seconds=gateway_timeout,
-                )
+                self._gateway_client = ObsGatewayClient(base_url=gateway_base)
         return self._gateway_client
 
     def get_research_client(self) -> ResearchClientProtocol:
@@ -124,50 +97,11 @@ class DependencyContainer:
         """
         if self._research_client is None:
             if obs_graphs_settings.use_mock_ollama_deep_researcher:
-                from mock_olm_d_rch_client.mock_olm_d_rch_client import (
-                    MockOlmDRchClient,
-                )
-
-                from src.obs_graphs.protocols.research_client_protocol import (
-                    ResearchResult,
-                )
-
-                class AdaptedMockClient:
-                    def __init__(self):
-                        self.client = MockOlmDRchClient()
-
-                    def run_research(
-                        self, query: str, backend: Optional[str] = None
-                    ) -> ResearchResult:
-                        result = self.client.research(query)
-                        article = result["article"]
-                        if not isinstance(article, str) or not article.strip():
-                            raise ValueError(
-                                "Mock research client returned empty article"
-                            )
-
-                        metadata = result.get("metadata") or {}
-                        if not isinstance(metadata, dict):
-                            metadata = {}
-
-                        diagnostics = result.get("diagnostics") or []
-                        if not isinstance(diagnostics, list):
-                            diagnostics = [str(diagnostics)]
-
-                        return ResearchResult(
-                            article=article,
-                            metadata=metadata,
-                            diagnostics=[str(item) for item in diagnostics],
-                            processing_time=result.get("processing_time"),
-                        )
-
-                self._research_client = AdaptedMockClient()
+                self._research_client = MockResearchApiClient()
             else:
-                from src.obs_graphs.clients.research_api_client import ResearchApiClient
-
                 api_settings = research_api_settings
                 self._research_client = ResearchApiClient(
-                    base_url=api_settings.research_api_url,
+                    base_url=str(api_settings.research_api_url).rstrip("/"),
                     timeout=api_settings.research_api_timeout_seconds,
                 )
         return self._research_client

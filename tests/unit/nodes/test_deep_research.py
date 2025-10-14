@@ -3,19 +3,20 @@
 from unittest.mock import MagicMock
 
 import pytest
+from olm_d_rch_sdk import ResearchResponse
 
 from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
     DeepResearchAgent,
 )
 from src.obs_graphs.graphs.article_proposal.state import AgentResult, FileAction
-from src.obs_graphs.protocols.research_client_protocol import ResearchResult
 
 
 @pytest.fixture
 def mock_research_client():
     """Create a mock research client."""
     client = MagicMock()
-    client.run_research.return_value = ResearchResult(
+    client.research.return_value = ResearchResponse(
+        success=True,
         article="# Impact of Transformers on NLP\n\nContent body",
         metadata={
             "sources": [
@@ -27,6 +28,7 @@ def mock_research_client():
         },
         diagnostics=["mock"],
         processing_time=1.23,
+        error_message=None,
     )
     return client
 
@@ -126,8 +128,8 @@ def test_execute_with_valid_context(agent, vault_path, mock_research_client):
     assert result.metadata["topic_summary"] == "Research on transformer architectures"
 
     # Verify research client was called
-    mock_research_client.run_research.assert_called_once_with(
-        "Impact of Transformers on NLP", backend=None
+    mock_research_client.research.assert_called_once_with(
+        "Impact of Transformers on NLP"
     )
 
 
@@ -145,13 +147,13 @@ def test_execute_preserves_article(agent, vault_path, mock_research_client):
     assert result.success is True
     content = result.changes[0].content
 
-    expected_article = mock_research_client.run_research.return_value.article
+    expected_article = mock_research_client.research.return_value.article
     assert content == expected_article
 
 
 def test_execute_with_api_error(agent, vault_path, mock_research_client):
     """Test that execute handles research API errors."""
-    mock_research_client.run_research.side_effect = Exception("API Error")
+    mock_research_client.research.side_effect = Exception("API Error")
 
     context = {
         "topic_title": "Test Topic",

@@ -3,12 +3,14 @@
 import logging
 from datetime import datetime
 
+from olm_d_rch_sdk import ResearchClientProtocol, ResearchResponse
+
 from src.obs_graphs.graphs.article_proposal.state import (
     AgentResult,
     FileAction,
     FileChange,
 )
-from src.obs_graphs.protocols import NodeProtocol, ResearchClientProtocol
+from src.obs_graphs.protocols import NodeProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +66,28 @@ class DeepResearchAgent(NodeProtocol):
         try:
             # Call research API with topic
             logger.info(f"Starting research for topic: {topic_title}")
-            backend = context.get("backend")
-            research_result = self.research_client.run_research(
-                topic_title,
-                backend=backend,
+            kwargs = {}
+            if context.get("backend") is not None:
+                kwargs["backend"] = context.get("backend")
+            research_result: ResearchResponse = self.research_client.research(
+                topic_title, **kwargs
             )
+
+            if not research_result.success:
+                error_message = (
+                    research_result.error_message or "Research API reported failure"
+                )
+                raise ValueError(error_message)
+
+            article_content = (research_result.article or "").strip()
+            if not article_content:
+                raise ValueError("Research API response missing article content")
+
+            metadata = research_result.metadata or {}
+            if not isinstance(metadata, dict):
+                metadata = {}
+
+            diagnostics = list(research_result.diagnostics or [])
 
             # Generate unique filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -79,15 +98,15 @@ class DeepResearchAgent(NodeProtocol):
             file_change = FileChange(
                 path=file_path,
                 action=FileAction.CREATE,
-                content=research_result.article,
+                content=article_content,
             )
 
             metadata = {
                 "proposal_filename": filename,
                 "proposal_path": file_path,
-                "sources_count": research_result.metadata.get("source_count", 0),
-                "research_metadata": research_result.metadata,
-                "diagnostics": research_result.diagnostics,
+                "sources_count": metadata.get("source_count", 0),
+                "research_metadata": metadata,
+                "diagnostics": diagnostics,
                 "processing_time_seconds": research_result.processing_time,
                 "topic_summary": context.get("topic_summary"),
             }

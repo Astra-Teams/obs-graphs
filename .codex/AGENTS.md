@@ -32,7 +32,7 @@
     -   Currently supports: `article-proposal` workflow type
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
--   **Clients (`clients/`)**: External service clients (obs-gtwy gateway, Research APIs) plus unified LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`.
+-   **Clients (`clients/`)**: LLM adapters (`OllamaClient`, `MLXClient`) behind `LLMClientProtocol`; gateway and research integrations now consume the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
 -   **Async Tasks (`celery/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
 -   **Configuration (`config/`)**: Environment-based settings and feature flags (e.g., `OBS_GRAPHS_LLM_BACKEND`). Backend-specific parameters live in `src/obs_graphs/config/ollama_settings.py` and `src/obs_graphs/config/mlx_settings.py`.
 -   **DI (`container.py`)**: Protocol-based Dependency Injection for loose coupling.
