@@ -30,34 +30,8 @@ def mock_vault_service():
 
 
 @pytest.fixture
-def mock_llm_client_provider():
-    """Return a mock LLM client provider."""
-    mock_client = MagicMock()
-
-    def provider(backend=None):
-        return mock_client
-
-    return provider
-
-
-@pytest.fixture
-def mock_gateway_client():
-    """Return a mock gateway client."""
-    return MagicMock()
-
-
-@pytest.fixture
-def mock_research_client():
-    """Return a mock research client."""
-    return MagicMock()
-
-
-@pytest.fixture
 def article_proposal_graph(
     mock_vault_service,
-    mock_llm_client_provider,
-    mock_gateway_client,
-    mock_research_client,
 ):
     """Return an ArticleProposalGraph with mocked dependencies."""
     # Create mock nodes
@@ -171,9 +145,6 @@ async def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
 
 async def test_run_workflow_collects_branch_metadata(
     mock_vault_service,
-    mock_llm_client_provider,
-    mock_gateway_client,
-    mock_research_client,
 ):
     """run_workflow should propagate branch metadata from the submit node."""
 
@@ -213,9 +184,6 @@ async def test_run_workflow_collects_branch_metadata(
 
 async def test_run_workflow_handles_failure(
     mock_vault_service,
-    mock_llm_client_provider,
-    mock_gateway_client,
-    mock_research_client,
 ):
     """run_workflow should return a failure result if a node raises."""
 
