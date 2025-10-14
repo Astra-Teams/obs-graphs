@@ -19,6 +19,7 @@ jobs:
       matrix:
         test_target: [build-test, psql-test, e2e-test]
     env:
+      UV_CACHE_DIR: ./.uv-cache
       OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
       OBSIDIAN_VAULT_REPOSITORY: ${{ secrets.OBSIDIAN_VAULT_REPOSITORY }}
     steps:

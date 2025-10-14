@@ -2,13 +2,16 @@ name: Run Linters
 
 on:
   workflow_call:
-
-permissions:
-  contents: read
+    secrets:
+      OBS_GRAPHS_TOKEN:
+        required: true
 
 jobs:
   run-linters:
     runs-on: ubuntu-latest
+    env:
+      UV_CACHE_DIR: ./.uv-cache
+      OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,6 +23,16 @@ jobs:
 
       - name: Install uv
         run: pipx install uv
+
+      - name: Configure Git for private repositories
+        env:
+          AUTH_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
+        run: |
+          if [ -z "$AUTH_TOKEN" ]; then
+            echo "OBS_GRAPHS_TOKEN secret is required to access private repositories." >&2
+            exit 1
+          fi
+          git config --global url."https://oauth2:${AUTH_TOKEN}@github.com/".insteadOf "https://github.com/"
 
       - name: Install dependencies
         run: uv sync --frozen
