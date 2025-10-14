@@ -24,7 +24,10 @@ from src.obs_graphs.config import (
     WorkflowSettings,
 )
 from src.obs_graphs.db.database import create_db_session
-from src.obs_graphs.protocols import LLMClientProtocol, VaultServiceProtocol
+from src.obs_graphs.protocols import (
+    LLMClientProtocol,
+    VaultServiceProtocol,
+)
 from src.obs_graphs.services import VaultService
 
 # ============================================================================
@@ -94,6 +97,37 @@ CLIENT_FACTORIES = {
 }
 
 
+def _create_llm_client(
+    backend: str,
+    use_mock: bool,
+    ollama_settings: OllamaSettings,
+    mlx_settings: MLXSettings,
+) -> LLMClientProtocol:
+    """Helper function to create an LLM client based on configuration."""
+    if use_mock:
+        from dev.mocks_clients import MockOllamaClient
+
+        return OllamaClient(
+            model=ollama_settings.model,
+            base_url=ollama_settings.base_url,
+            llm=MockOllamaClient(),
+        )
+
+    if backend not in CLIENT_FACTORIES:
+        raise ValueError(f"Unknown LLM backend: {backend}")
+
+    if backend == "mlx":
+        machine = platform.machine().lower()
+        if machine not in {"arm64", "aarch64"}:
+            raise RuntimeError(
+                "MLX backend is only supported on Apple Silicon (ARM64/AArch64)."
+            )
+        return CLIENT_FACTORIES["mlx"](mlx_settings)
+
+    # Default to Ollama
+    return CLIENT_FACTORIES["ollama"](ollama_settings)
+
+
 def get_llm_client(
     settings: ObsGraphsSettings = Depends(get_app_settings),
     ollama_settings: OllamaSettings = Depends(get_ollama_settings),
@@ -114,37 +148,12 @@ def get_llm_client(
         ValueError: If the backend is unsupported
         RuntimeError: If MLX is requested on non-ARM64 architecture
     """
-    backend = settings.llm_backend.lower()
-
-    # Handle mock mode
-    if settings.use_mock_llm:
-        from dev.mocks_clients import MockOllamaClient
-
-        return OllamaClient(
-            model=ollama_settings.model,
-            base_url=ollama_settings.base_url,
-            llm=MockOllamaClient(),
-        )
-
-    # Validate backend
-    if backend not in CLIENT_FACTORIES:
-        raise ValueError(f"Unknown LLM backend: {backend}")
-
-    # MLX requires Apple Silicon
-    if backend == "mlx":
-        machine = platform.machine().lower()
-        if machine not in {"arm64", "aarch64"}:
-            raise RuntimeError(
-                "MLX backend is only supported on Apple Silicon (ARM64/AArch64)."
-            )
-        return CLIENT_FACTORIES["mlx"](mlx_settings)
-
-    # Default to Ollama
-    if backend == "ollama":
-        return CLIENT_FACTORIES["ollama"](ollama_settings)
-
-    # Fallback to Ollama (should not reach here due to validation above)
-    return CLIENT_FACTORIES["ollama"](ollama_settings)
+    return _create_llm_client(
+        backend=settings.llm_backend.lower(),
+        use_mock=settings.use_mock_llm,
+        ollama_settings=ollama_settings,
+        mlx_settings=mlx_settings,
+    )
 
 
 def get_llm_client_provider(
@@ -163,36 +172,12 @@ def get_llm_client_provider(
 
     def provider(backend: str | None = None) -> LLMClientProtocol:
         target_backend = (backend or settings.llm_backend).strip().lower()
-
-        # Handle mock mode
-        if settings.use_mock_llm:
-            from dev.mocks_clients import MockOllamaClient
-
-            return OllamaClient(
-                model=ollama_settings.model,
-                base_url=ollama_settings.base_url,
-                llm=MockOllamaClient(),
-            )
-
-        # Validate backend
-        if target_backend not in CLIENT_FACTORIES:
-            raise ValueError(f"Unknown LLM backend: {target_backend}")
-
-        # MLX requires Apple Silicon
-        if target_backend == "mlx":
-            machine = platform.machine().lower()
-            if machine not in {"arm64", "aarch64"}:
-                raise RuntimeError(
-                    "MLX backend is only supported on Apple Silicon (ARM64/AArch64)."
-                )
-            return CLIENT_FACTORIES["mlx"](mlx_settings)
-
-        # Ollama
-        if target_backend == "ollama":
-            return CLIENT_FACTORIES["ollama"](ollama_settings)
-
-        # Fallback
-        return CLIENT_FACTORIES["ollama"](ollama_settings)
+        return _create_llm_client(
+            backend=target_backend,
+            use_mock=settings.use_mock_llm,
+            ollama_settings=ollama_settings,
+            mlx_settings=mlx_settings,
+        )
 
     return provider
 

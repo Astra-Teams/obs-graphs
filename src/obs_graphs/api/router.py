@@ -16,7 +16,6 @@ from src.obs_graphs.api.schemas import (
     WorkflowRunResponse,
 )
 from src.obs_graphs.config import obs_graphs_settings
-from src.obs_graphs.db.database import get_db
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 from src.obs_graphs.protocols import LLMClientProtocol, VaultServiceProtocol
 
@@ -32,7 +31,7 @@ router = APIRouter()
 async def run_workflow(
     workflow_type: str,
     request: WorkflowRunRequest,
-    db: Session = Depends(get_db),
+    db: Session = Depends(dependencies.get_db_session),
     vault_service: VaultServiceProtocol = Depends(dependencies.get_vault_service),
     llm_client_provider: Callable[[str | None], LLMClientProtocol] = Depends(
         dependencies.get_llm_client_provider
@@ -169,7 +168,7 @@ async def run_workflow(
 @router.get("/workflows/{workflow_id}", response_model=WorkflowResponse)
 async def get_workflow(
     workflow_id: int,
-    db: Session = Depends(get_db),
+    db: Session = Depends(dependencies.get_db_session),
 ) -> WorkflowResponse:
     """
     Get details of a specific workflow.
@@ -227,7 +226,7 @@ async def list_workflows(
         ge=0,
         description="Number of workflows to skip",
     ),
-    db: Session = Depends(get_db),
+    db: Session = Depends(dependencies.get_db_session),
 ) -> WorkflowListResponse:
     """
     List workflows with pagination and filtering.

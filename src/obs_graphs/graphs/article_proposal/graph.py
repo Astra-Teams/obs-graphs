@@ -1,11 +1,8 @@
 """LangGraph-based workflow orchestration for Obsidian Vault nodes."""
 
 from dataclasses import dataclass, field
-from typing import Callable
 
 from langgraph.graph import END, StateGraph
-from obs_gtwy_sdk import GatewayClientProtocol
-from olm_d_rch_sdk import ResearchClientProtocol
 
 from src.obs_graphs.api.schemas import WorkflowRunRequest
 from src.obs_graphs.config import obs_graphs_settings
@@ -16,7 +13,6 @@ from src.obs_graphs.graphs.article_proposal.state import (
     WorkflowStrategy,
 )
 from src.obs_graphs.protocols import (
-    LLMClientProtocol,
     NodeProtocol,
     VaultServiceProtocol,
 )
@@ -67,30 +63,29 @@ class ArticleProposalGraph:
     def __init__(
         self,
         vault_service: VaultServiceProtocol,
-        llm_client_provider: Callable[[str | None], LLMClientProtocol],
-        gateway_client: GatewayClientProtocol,
-        research_client: ResearchClientProtocol,
+        article_proposal_node: NodeProtocol,
+        deep_research_node: NodeProtocol,
+        submit_draft_branch_node: NodeProtocol,
     ):
         """
         Initialize the ArticleProposalGraph with required dependencies.
 
         Args:
             vault_service: Service for vault file operations
-            llm_client_provider: Provider function for creating LLM clients
-            gateway_client: Client for Obsidian gateway operations
-            research_client: Client for deep research operations
+            article_proposal_node: Node for article proposal generation
+            deep_research_node: Node for deep research operations
+            submit_draft_branch_node: Node for submitting draft branches
         """
         self.vault_service = vault_service
-        self.llm_client_provider = llm_client_provider
-        self.gateway_client = gateway_client
-        self.research_client = research_client
-
-        # Initialize nodes
-        self._nodes: dict[str, NodeProtocol] = {}
+        self._nodes = {
+            "article_proposal": article_proposal_node,
+            "deep_research": deep_research_node,
+            "submit_draft_branch": submit_draft_branch_node,
+        }
 
     def _get_node(self, node_name: str) -> NodeProtocol:
         """
-        Get or create a node instance by name.
+        Get a node instance by name.
 
         Args:
             node_name: Name of the node to retrieve
@@ -102,26 +97,7 @@ class ArticleProposalGraph:
             ValueError: If node_name is unknown
         """
         if node_name not in self._nodes:
-            if node_name == "article_proposal":
-                from src.obs_graphs.graphs.article_proposal.nodes.node1_article_proposal import (
-                    ArticleProposalNode,
-                )
-
-                self._nodes[node_name] = ArticleProposalNode(self.llm_client_provider)
-            elif node_name == "deep_research":
-                from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
-                    DeepResearchNode,
-                )
-
-                self._nodes[node_name] = DeepResearchNode(self.research_client)
-            elif node_name == "submit_draft_branch":
-                from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_draft_branch import (
-                    SubmitDraftBranchNode,
-                )
-
-                self._nodes[node_name] = SubmitDraftBranchNode(self.gateway_client)
-            else:
-                raise ValueError(f"Unknown node: {node_name}")
+            raise ValueError(f"Unknown node: {node_name}")
 
         return self._nodes[node_name]
 

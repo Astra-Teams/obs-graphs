@@ -60,11 +60,18 @@ def article_proposal_graph(
     mock_research_client,
 ):
     """Return an ArticleProposalGraph with mocked dependencies."""
+    # Create mock nodes
+    from unittest.mock import MagicMock
+
+    mock_article_proposal_node = MagicMock()
+    mock_deep_research_node = MagicMock()
+    mock_submit_draft_branch_node = MagicMock()
+
     return ArticleProposalGraph(
         vault_service=mock_vault_service,
-        llm_client_provider=mock_llm_client_provider,
-        gateway_client=mock_gateway_client,
-        research_client=mock_research_client,
+        article_proposal_node=mock_article_proposal_node,
+        deep_research_node=mock_deep_research_node,
+        submit_draft_branch_node=mock_submit_draft_branch_node,
     )
 
 
@@ -177,20 +184,18 @@ def test_execute_workflow_passes_backend_to_nodes(
             captured_backends.append(context.get("backend"))
             return super().execute(context)
 
+    # Create mock nodes
+    mock_article_proposal_node = RecordingAgent()
+    mock_deep_research_node = RecordingAgent()
+    mock_submit_draft_branch_node = MagicMock()
+
     # Create a custom graph with mocked nodes that record backend
     graph = ArticleProposalGraph(
         vault_service=mock_vault_service,
-        llm_client_provider=mock_llm_client_provider,
-        gateway_client=mock_gateway_client,
-        research_client=mock_research_client,
+        article_proposal_node=mock_article_proposal_node,
+        deep_research_node=mock_deep_research_node,
+        submit_draft_branch_node=mock_submit_draft_branch_node,
     )
-
-    # Override _get_node to return recording agents
-
-    def recording_node_factory(name: str):
-        return RecordingAgent()
-
-    graph._get_node = recording_node_factory  # type: ignore[assignment]
 
     plan = WorkflowPlan(
         strategy="test_plan", nodes=["article_proposal", "deep_research"]
@@ -213,34 +218,30 @@ def test_run_workflow_collects_branch_metadata(
 ):
     """run_workflow should propagate branch metadata from the submit node."""
 
+    # Create mock nodes
+    mock_article_proposal_node = MockAgent()
+    mock_deep_research_node = MockAgent()
+    mock_submit_draft_branch_node = MagicMock()
+
+    def execute(context: dict) -> NodeResult:
+        return NodeResult(
+            success=True,
+            changes=[],
+            message="Submitted",
+            metadata={
+                "branch_name": "obsidian-agents/workflow-123",
+            },
+        )
+
+    mock_submit_draft_branch_node.execute.side_effect = execute
+
     # Create graph with mocked dependencies
     graph = ArticleProposalGraph(
         vault_service=mock_vault_service,
-        llm_client_provider=mock_llm_client_provider,
-        gateway_client=mock_gateway_client,
-        research_client=mock_research_client,
+        article_proposal_node=mock_article_proposal_node,
+        deep_research_node=mock_deep_research_node,
+        submit_draft_branch_node=mock_submit_draft_branch_node,
     )
-
-    # Override _get_node to return custom agents
-    def node_factory(name: str):
-        if name == "submit_draft_branch":
-            agent = MagicMock()
-
-            def execute(context: dict) -> NodeResult:
-                return NodeResult(
-                    success=True,
-                    changes=[],
-                    message="Submitted",
-                    metadata={
-                        "branch_name": "obsidian-agents/workflow-123",
-                    },
-                )
-
-            agent.execute.side_effect = execute
-            return agent
-        return MockAgent()
-
-    graph._get_node = node_factory  # type: ignore[assignment]
 
     request = WorkflowRunRequest(prompts=["Test research"])
 
@@ -259,25 +260,19 @@ def test_run_workflow_handles_failure(
 ):
     """run_workflow should return a failure result if a node raises."""
 
+    # Create mock nodes
+    mock_article_proposal_node = MagicMock()
+    mock_article_proposal_node.execute.side_effect = RuntimeError("node failure")
+    mock_deep_research_node = MockAgent()
+    mock_submit_draft_branch_node = MockAgent()
+
     # Create graph with mocked dependencies
     graph = ArticleProposalGraph(
         vault_service=mock_vault_service,
-        llm_client_provider=mock_llm_client_provider,
-        gateway_client=mock_gateway_client,
-        research_client=mock_research_client,
+        article_proposal_node=mock_article_proposal_node,
+        deep_research_node=mock_deep_research_node,
+        submit_draft_branch_node=mock_submit_draft_branch_node,
     )
-
-    # Create a failing agent
-    failing_agent = MagicMock()
-    failing_agent.execute.side_effect = RuntimeError("node failure")
-
-    # Override _get_node to return failing agent for article_proposal
-    def node_factory(name: str):
-        if name == "article_proposal":
-            return failing_agent
-        return MockAgent()
-
-    graph._get_node = node_factory  # type: ignore[assignment]
 
     request = WorkflowRunRequest(prompts=["Test research failure path"])
 

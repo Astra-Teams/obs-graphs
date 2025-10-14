@@ -1,6 +1,7 @@
 """Unit tests for the dependency injection system."""
 
 import pytest
+from obs_gtwy_sdk import MockObsGatewayClient
 
 from src.obs_graphs import dependencies
 from src.obs_graphs.clients import OllamaClient
@@ -175,6 +176,7 @@ class TestServiceProviders:
             gateway_settings=dependencies.get_gateway_settings(),
         )
         assert client is not None
+        assert isinstance(client, MockObsGatewayClient)
 
     def test_get_research_client(self, monkeypatch):
         """Test that get_research_client returns appropriate client."""

@@ -19,7 +19,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 │   ├── celery/          # Celery tasks for async workflow execution
 │   ├── clients/         # External service clients (LLM adapters; gateway/research SDKs live in submodules)
 │   ├── config/          # Configuration modules
-│   ├── container.py     # Dependency injection container
+│   ├── dependencies.py  # FastAPI-native dependency injection hub
 │   ├── db/              # Database models and session management
 │   ├── graphs/          # LangGraph workflow definitions
 │   │   ├── factory.py          # Factory function for workflow graph builders
@@ -27,7 +27,6 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 │   │   └── article_proposal/   # Article proposal workflow
 │   ├── protocols/       # Protocol definitions for dependency injection
 │   ├── services/        # Business logic services
-│   ├── settings.py      # Application settings
 │   └── main.py          # FastAPI application entry point
 ├── tests/               # Unit, database, and end-to-end tests
 ├── dev/                 # Development fixtures and mocks
