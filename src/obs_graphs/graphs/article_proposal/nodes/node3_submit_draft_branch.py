@@ -27,7 +27,7 @@ class SubmitDraftBranchNode(NodeProtocol):
         required_keys = ["strategy", "accumulated_changes", "node_results"]
         return all(key in context for key in required_keys)
 
-    def execute(self, context: dict) -> NodeResult:
+    async def execute(self, context: dict) -> NodeResult:
         if not self.validate_input(context):
             raise ValueError(
                 "Invalid context: strategy, accumulated_changes, and node_results are required"

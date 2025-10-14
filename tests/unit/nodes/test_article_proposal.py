@@ -73,14 +73,15 @@ def test_validate_input_empty_prompt(node):
     assert node.validate_input(context) is False
 
 
-def test_execute_with_valid_prompt(node, vault_path):
+@pytest.mark.asyncio
+async def test_execute_with_valid_prompt(node, vault_path):
     """Test that execute returns topic proposal successfully."""
     context = {
         "prompts": ["Research the impact of transformers on NLP"],
         "strategy": "research_proposal",
     }
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert isinstance(result, NodeResult)
     assert result.success is True
@@ -94,19 +95,21 @@ def test_execute_with_valid_prompt(node, vault_path):
     assert result.metadata["tags"][0] == "transformers"
 
 
-def test_execute_without_backend_uses_default(node, llm_provider):
+@pytest.mark.asyncio
+async def test_execute_without_backend_uses_default(node, llm_provider):
     """Provider should be called with None when backend not supplied."""
     context = {
         "prompts": ["Investigate default backend"],
         "strategy": "research_proposal",
     }
 
-    node.execute(context)
+    await node.execute(context)
 
     llm_provider.assert_called_once_with(None)
 
 
-def test_execute_with_malformed_json(node, vault_path, mock_llm):
+@pytest.mark.asyncio
+async def test_execute_with_malformed_json(node, vault_path, mock_llm):
     """Test that execute handles malformed JSON response."""
 
     async def mock_invoke_malformed(messages):
@@ -119,14 +122,15 @@ def test_execute_with_malformed_json(node, vault_path, mock_llm):
 
     context = {"prompts": ["Test prompt"], "strategy": "research_proposal"}
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert isinstance(result, NodeResult)
     assert result.success is False
     assert "malformed_json" in result.metadata.get("error", "")
 
 
-def test_execute_with_invalid_tags(node, vault_path, mock_llm):
+@pytest.mark.asyncio
+async def test_execute_with_invalid_tags(node, vault_path, mock_llm):
     """Test that execute accepts any number of tags."""
     # Only 2 tags - should be accepted now
 
@@ -147,22 +151,24 @@ def test_execute_with_invalid_tags(node, vault_path, mock_llm):
 
     context = {"prompts": ["Test prompt"], "strategy": "research_proposal"}
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert isinstance(result, NodeResult)
     assert result.success is True
     assert result.metadata["tags"] == ["tag1", "tag2"]
 
 
-def test_execute_with_invalid_context(node, vault_path):
+@pytest.mark.asyncio
+async def test_execute_with_invalid_context(node, vault_path):
     """Test that execute raises error with invalid context."""
     context = {}
 
     with pytest.raises(ValueError, match="required fields missing"):
-        node.execute(context)
+        await node.execute(context)
 
 
-def test_execute_tags_lowercase(node, vault_path, mock_llm):
+@pytest.mark.asyncio
+async def test_execute_tags_lowercase(node, vault_path, mock_llm):
     """Test that tags are preserved as-is without lowercase conversion."""
 
     async def mock_invoke_preserve_tags(messages):
@@ -182,7 +188,7 @@ def test_execute_tags_lowercase(node, vault_path, mock_llm):
 
     context = {"prompts": ["Test prompt"], "strategy": "research_proposal"}
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert isinstance(result, NodeResult)
     assert result.success is True

@@ -100,7 +100,7 @@ class ArticleProposalGraph:
 
         return self._nodes[node_name]
 
-    def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
+    async def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
         """
         Run the complete workflow: execute nodes and submit the draft via obs-gtwy.
 
@@ -120,7 +120,7 @@ class ArticleProposalGraph:
                 workflow_plan.strategy = request.strategy
 
             # Execute workflow
-            workflow_result = self.execute_workflow(
+            workflow_result = await self.execute_workflow(
                 workflow_plan,
                 prompts=request.prompts,
             )
@@ -166,7 +166,7 @@ class ArticleProposalGraph:
 
         return WorkflowPlan(nodes=nodes, strategy=strategy)
 
-    def execute_workflow(
+    async def execute_workflow(
         self,
         workflow_plan: WorkflowPlan,
         prompts: list[str] | None = None,
@@ -200,7 +200,7 @@ class ArticleProposalGraph:
 
         # Execute the workflow
         try:
-            final_state = graph.invoke(initial_state)
+            final_state = await graph.ainvoke(initial_state)
 
             # Extract results from final state
             all_changes = final_state["accumulated_changes"]
@@ -265,7 +265,7 @@ class ArticleProposalGraph:
             Callable node function for use in state graph
         """
 
-        def node_node(state: GraphState) -> GraphState:
+        async def node_node(state: GraphState) -> GraphState:
             """Execute the node and update state."""
             node = self._get_node(node_name)
 
@@ -284,7 +284,7 @@ class ArticleProposalGraph:
                     context.update(prev_result["metadata"])
 
             # Execute node (nodes no longer receive vault_path, they use VaultService)
-            result: NodeResult = node.execute(context)
+            result: NodeResult = await node.execute(context)
 
             # Update state with results
             state["accumulated_changes"].extend(result.changes)

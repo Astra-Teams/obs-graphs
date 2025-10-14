@@ -76,4 +76,4 @@
 ## ⚙️ Configuration & QA
 
 -   **Configuration**: Managed via `.env` files and Docker Compose overrides for different environments.
--   **Quality Assurance**: Enforced through linting/formatting (Ruff), and a CI/CD pipeline that runs all automated tests and security scans.
+-   **Quality Assurance**: Enforced through type hints (mypy), linting/formatting (Ruff), and a CI/CD pipeline that runs all automated tests and security scans.

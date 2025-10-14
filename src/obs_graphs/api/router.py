@@ -114,7 +114,7 @@ async def run_workflow(
             db.commit()
 
             # Run workflow with injected dependencies (vault_service already configured)
-            result = graph_builder.run_workflow(request)
+            result = await graph_builder.run_workflow(request)
 
             # Update workflow based on result
             if result.success:
@@ -132,8 +132,6 @@ async def run_workflow(
             else:
                 workflow.status = WorkflowStatus.FAILED
                 workflow.error_message = result.summary
-                # Ensure metadata is recorded on failure as well
-                workflow.workflow_metadata = workflow.workflow_metadata
 
             workflow.completed_at = datetime.now(timezone.utc)
             db.commit()

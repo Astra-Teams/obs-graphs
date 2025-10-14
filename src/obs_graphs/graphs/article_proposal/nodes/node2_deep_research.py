@@ -47,7 +47,7 @@ class DeepResearchNode(NodeProtocol):
             and len(context["topic_title"].strip()) > 0
         )
 
-    def execute(self, context: dict) -> NodeResult:
+    async def execute(self, context: dict) -> NodeResult:
         """
         Execute deep research and persist the returned article.
         """

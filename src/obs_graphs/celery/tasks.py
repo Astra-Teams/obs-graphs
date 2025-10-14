@@ -122,7 +122,9 @@ def run_workflow_task(self, workflow_id: int) -> None:
             prompts=prompt_value,
             strategy=strategy,
         )
-        result = graph_builder.run_workflow(request)
+        import asyncio
+
+        result = asyncio.run(graph_builder.run_workflow(request))
 
         # Update workflow based on result
         if result.success:

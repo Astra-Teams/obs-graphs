@@ -1,6 +1,5 @@
 """Node for proposing new articles based on vault analysis."""
 
-import asyncio
 import json
 from typing import Callable
 
@@ -45,7 +44,7 @@ class ArticleProposalNode(NodeProtocol):
                 and len(context["prompts"][0].strip()) > 0
             )
 
-    def execute(self, context: dict) -> NodeResult:
+    async def execute(self, context: dict) -> NodeResult:
         """
         Execute article proposal generation.
 
@@ -63,11 +62,11 @@ class ArticleProposalNode(NodeProtocol):
         llm_client = self._llm_provider(None)
 
         if strategy == "research_proposal":
-            return self._execute_research_topic_proposal(context, llm_client)
+            return await self._execute_research_topic_proposal(context, llm_client)
         else:
-            return self._execute_new_article_proposal(context, llm_client)
+            return await self._execute_new_article_proposal(context, llm_client)
 
-    def _execute_research_topic_proposal(
+    async def _execute_research_topic_proposal(
         self, context: dict, llm_client: StlConnClientProtocol
     ) -> NodeResult:
         """
@@ -92,8 +91,8 @@ class ArticleProposalNode(NodeProtocol):
         try:
             # Get LLM response with JSON topic proposal
             # StlConnClient.invoke() is async and returns LangChainResponse
-            response = asyncio.run(
-                llm_client.invoke([{"role": "user", "content": topic_prompt}])
+            response = await llm_client.invoke(
+                [{"role": "user", "content": topic_prompt}]
             )
             response_content = (
                 response.content if hasattr(response, "content") else str(response)
@@ -131,7 +130,7 @@ class ArticleProposalNode(NodeProtocol):
                 metadata={"error": str(e)},
             )
 
-    def _execute_new_article_proposal(
+    async def _execute_new_article_proposal(
         self, context: dict, llm_client: StlConnClientProtocol
     ) -> NodeResult:
         """
@@ -154,8 +153,8 @@ class ArticleProposalNode(NodeProtocol):
         try:
             # Get LLM response with JSON article proposals
             # StlConnClient.invoke() is async and returns LangChainResponse
-            response = asyncio.run(
-                llm_client.invoke([{"role": "user", "content": proposal_prompt}])
+            response = await llm_client.invoke(
+                [{"role": "user", "content": proposal_prompt}]
             )
             response_content = (
                 response.content if hasattr(response, "content") else str(response)

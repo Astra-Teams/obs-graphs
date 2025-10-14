@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 class WorkflowGraphProtocol(Protocol):
     """Protocol for workflow graph implementations."""
 
-    def run_workflow(self, request: "WorkflowRunRequest") -> "WorkflowResult":
+    async def run_workflow(self, request: "WorkflowRunRequest") -> "WorkflowResult":
         """
         Execute a workflow from start to finish.
 

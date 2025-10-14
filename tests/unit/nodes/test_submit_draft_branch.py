@@ -36,21 +36,23 @@ def test_validate_input_missing_keys(node):
     assert node.validate_input(context) is False
 
 
-def test_execute_with_no_changes_skips_gateway(node, gateway_client):
+@pytest.mark.asyncio
+async def test_execute_with_no_changes_skips_gateway(node, gateway_client):
     context = {
         "strategy": "research_proposal",
         "accumulated_changes": [],
         "node_results": {},
     }
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert result.success is True
     assert result.metadata == {"branch_name": ""}
     gateway_client.create_drafts.assert_not_called()
 
 
-def test_execute_submits_single_draft(node, gateway_client):
+@pytest.mark.asyncio
+async def test_execute_submits_single_draft(node, gateway_client):
     change = FileChange(
         path="proposals/sample.md",
         action=FileAction.CREATE,
@@ -68,7 +70,7 @@ def test_execute_submits_single_draft(node, gateway_client):
         },
     }
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     gateway_client.create_drafts.assert_called_once_with(
         drafts=[{"file_name": "sample.md", "content": "# Sample Draft"}],
@@ -79,7 +81,8 @@ def test_execute_submits_single_draft(node, gateway_client):
     assert result.metadata["draft_file"] == "proposals/sample.md"
 
 
-def test_execute_raises_when_multiple_drafts(node):
+@pytest.mark.asyncio
+async def test_execute_raises_when_multiple_drafts(node):
     change_a = FileChange(
         path="proposals/a.md",
         action=FileAction.CREATE,
@@ -97,13 +100,14 @@ def test_execute_raises_when_multiple_drafts(node):
         "node_results": {},
     }
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert result.success is False
     assert "Multiple draft files detected" in result.message
 
 
-def test_execute_handles_gateway_exception(node, gateway_client):
+@pytest.mark.asyncio
+async def test_execute_handles_gateway_exception(node, gateway_client):
     change = FileChange(
         path="proposals/sample.md",
         action=FileAction.CREATE,
@@ -117,7 +121,7 @@ def test_execute_handles_gateway_exception(node, gateway_client):
 
     gateway_client.create_drafts.side_effect = RuntimeError("gateway down")
 
-    result = node.execute(context)
+    result = await node.execute(context)
 
     assert result.success is False
     assert "gateway down" in result.message
