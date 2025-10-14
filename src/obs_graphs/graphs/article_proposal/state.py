@@ -6,7 +6,7 @@ from typing import Annotated, Dict, List, Optional, TypedDict
 
 # Re-export Pydantic models for backward compatibility
 from src.obs_graphs.graphs.article_proposal.schemas import (
-    AgentResultModel,
+    NodeResultModel,
     GraphStateModel,
     VaultSummaryModel,
 )
@@ -53,14 +53,14 @@ class FileChange:
 
 
 @dataclass
-class AgentResult:
+class NodeResult:
     """
-    Result returned by agent execution.
+    Result returned by node execution.
 
     Attributes:
-        success: Whether the agent execution completed successfully
+        success: Whether the node execution completed successfully
         changes: List of file changes to apply to the vault
-        message: Human-readable description of what the agent did
+        message: Human-readable description of what the node did
         metadata: Additional information about the execution (e.g., metrics, warnings)
     """
 
@@ -102,10 +102,10 @@ __all__ = [
     "WorkflowStrategy",
     "FileAction",
     "FileChange",
-    "AgentResult",
+    "NodeResult",
     "VaultSummary",
     "GraphState",
     "VaultSummaryModel",
-    "AgentResultModel",
+    "NodeResultModel",
     "GraphStateModel",
 ]

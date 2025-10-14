@@ -1,4 +1,4 @@
-"""Agent responsible for delegating draft creation to the obs-gtwy gateway."""
+"""Node responsible for delegating draft creation to the obs-gtwy gateway."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from pathlib import Path
 from obs_gtwy_sdk import GatewayClientProtocol
 
 from src.obs_graphs.graphs.article_proposal.state import (
-    AgentResult,
+    NodeResult,
     FileAction,
     FileChange,
 )
 from src.obs_graphs.protocols import NodeProtocol
 
 
-class SubmitPullRequestAgent(NodeProtocol):
+class SubmitPullRequestNode(NodeProtocol):
     """Transforms accumulated changes into a draft branch via obs-gtwy."""
 
     name = "submit_pull_request"
@@ -27,7 +27,7 @@ class SubmitPullRequestAgent(NodeProtocol):
         required_keys = ["strategy", "accumulated_changes", "node_results"]
         return all(key in context for key in required_keys)
 
-    def execute(self, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> NodeResult:
         if not self.validate_input(context):
             raise ValueError(
                 "Invalid context: strategy, accumulated_changes, and node_results are required"
@@ -37,7 +37,7 @@ class SubmitPullRequestAgent(NodeProtocol):
         node_results: dict = context["node_results"]
 
         if not accumulated_changes:
-            return AgentResult(
+            return NodeResult(
                 success=True,
                 changes=[],
                 message="No changes detected; skipping gateway submission",
@@ -65,7 +65,7 @@ class SubmitPullRequestAgent(NodeProtocol):
 
             message = f"Draft branch created successfully: {created_branch}"
 
-            return AgentResult(
+            return NodeResult(
                 success=True,
                 changes=[],
                 message=message,
@@ -76,7 +76,7 @@ class SubmitPullRequestAgent(NodeProtocol):
             )
 
         except Exception as exc:  # pragma: no cover - handled by workflow logging
-            return AgentResult(
+            return NodeResult(
                 success=False,
                 changes=[],
                 message=f"Failed to submit draft branch: {exc}",

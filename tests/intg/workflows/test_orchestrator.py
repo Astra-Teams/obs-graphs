@@ -1,7 +1,7 @@
 """Unit tests for the ArticleProposalGraph orchestration."""
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,38 +11,63 @@ from src.obs_graphs.graphs.article_proposal.graph import (
     WorkflowPlan,
     WorkflowResult,
 )
-from src.obs_graphs.graphs.article_proposal.state import AgentResult
+from src.obs_graphs.graphs.article_proposal.state import NodeResult
 
 
 class MockAgent(MagicMock):
-    def execute(self, context: dict) -> AgentResult:
-        return AgentResult(
+    def execute(self, context: dict) -> NodeResult:
+        return NodeResult(
             success=True, changes=[], message=f"{self.__class__.__name__} executed"
         )
 
 
 @pytest.fixture
-def mock_container():
-    """Return a mock DependencyContainer."""
-    from src.obs_graphs.container import DependencyContainer
-
-    mock_container = MagicMock(spec=DependencyContainer)
-    mock_vault_service = MagicMock()
-    mock_container.get_vault_service.return_value = mock_vault_service
-
-    def mock_get_node(name: str):
-        return MockAgent()
-
-    mock_container.get_node.side_effect = mock_get_node
-    return mock_container
+def mock_vault_service():
+    """Return a mock VaultService."""
+    mock_vault = MagicMock()
+    mock_vault.get_vault_summary.return_value = MagicMock()
+    return mock_vault
 
 
-def test_determine_workflow_plan_requires_prompt(mock_container):
+@pytest.fixture
+def mock_llm_client_provider():
+    """Return a mock LLM client provider."""
+    mock_client = MagicMock()
+
+    def provider(backend=None):
+        return mock_client
+
+    return provider
+
+
+@pytest.fixture
+def mock_gateway_client():
+    """Return a mock gateway client."""
+    return MagicMock()
+
+
+@pytest.fixture
+def mock_research_client():
+    """Return a mock research client."""
+    return MagicMock()
+
+
+@pytest.fixture
+def article_proposal_graph(
+    mock_vault_service, mock_llm_client_provider, mock_gateway_client, mock_research_client
+):
+    """Return an ArticleProposalGraph with mocked dependencies."""
+    return ArticleProposalGraph(
+        vault_service=mock_vault_service,
+        llm_client_provider=mock_llm_client_provider,
+        gateway_client=mock_gateway_client,
+        research_client=mock_research_client,
+    )
+
+
+def test_determine_workflow_plan_requires_prompt(article_proposal_graph):
     """determine_workflow_plan should work with valid prompts."""
-    article_proposal_graph = ArticleProposalGraph()
-
     plan = article_proposal_graph.determine_workflow_plan(
-        mock_container.get_vault_service(),
         SimpleNamespace(prompts=["test prompt"], primary_prompt="test prompt"),
     )
 
@@ -51,15 +76,12 @@ def test_determine_workflow_plan_requires_prompt(mock_container):
 
 
 def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
-    mock_container,
+    article_proposal_graph,
 ):
     """determine_workflow_plan should choose the research path when a prompt is given."""
-    article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompts=["Research transformers"])
 
-    plan = article_proposal_graph.determine_workflow_plan(
-        mock_container.get_vault_service(), request
-    )
+    plan = article_proposal_graph.determine_workflow_plan(request)
 
     assert isinstance(plan, WorkflowPlan)
     assert plan.strategy == "research_proposal"
@@ -76,12 +98,14 @@ def test_determine_workflow_plan_validates_whitespace_only_prompt():
         WorkflowRunRequest(prompts=["   "])
 
 
-def test_execute_workflow(mock_container):
+def test_execute_workflow(article_proposal_graph):
     """execute_workflow should run each node and aggregate results."""
-    plan = WorkflowPlan(strategy="test_plan", nodes=["article_proposal"])
-    article_proposal_graph = ArticleProposalGraph()
+    # Mock _get_node to return mock agents instead of real nodes
+    article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
 
-    result = article_proposal_graph.execute_workflow(plan, mock_container)
+    plan = WorkflowPlan(strategy="test_plan", nodes=["article_proposal"])
+
+    result = article_proposal_graph.execute_workflow(plan)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
@@ -89,16 +113,18 @@ def test_execute_workflow(mock_container):
     assert "article_proposal" in result.node_results
 
 
-def test_execute_workflow_with_research_proposal_strategy(mock_container):
+def test_execute_workflow_with_research_proposal_strategy(article_proposal_graph):
     """execute_workflow should handle the research workflow plan."""
+    # Mock _get_node to return mock agents instead of real nodes
+    article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
+
     plan = WorkflowPlan(
         strategy="research_proposal",
         nodes=["article_proposal", "deep_research", "submit_pull_request"],
     )
-    article_proposal_graph = ArticleProposalGraph()
 
     result = article_proposal_graph.execute_workflow(
-        plan, mock_container, prompts=["Research quantum computing"]
+        plan, prompts=["Research quantum computing"]
     )
 
     assert isinstance(result, WorkflowResult)
@@ -112,8 +138,11 @@ def test_execute_workflow_with_research_proposal_strategy(mock_container):
     assert "research_proposal" in result.summary
 
 
-def test_execute_workflow_with_multiple_nodes(mock_container):
+def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
     """execute_workflow should process multiple nodes sequentially."""
+    # Mock _get_node to return mock agents instead of real nodes
+    article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
+
     plan = WorkflowPlan(
         strategy="research_proposal",
         nodes=[
@@ -122,39 +151,48 @@ def test_execute_workflow_with_multiple_nodes(mock_container):
             "submit_pull_request",
         ],
     )
-    article_proposal_graph = ArticleProposalGraph()
 
-    result = article_proposal_graph.execute_workflow(plan, mock_container)
+    result = article_proposal_graph.execute_workflow(plan)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
     assert len(result.node_results) == 3
-    assert mock_container.get_node.call_count == 3
 
 
-def test_execute_workflow_passes_backend_to_nodes(mock_container):
+def test_execute_workflow_passes_backend_to_nodes(
+    mock_vault_service, mock_llm_client_provider, mock_gateway_client, mock_research_client
+):
     """The backend selection should appear in the node execution context."""
 
     captured_backends: list[str] = []
 
     class RecordingAgent(MockAgent):
-        def execute(self, context: dict) -> AgentResult:  # type: ignore[override]
+        def execute(self, context: dict) -> NodeResult:  # type: ignore[override]
             captured_backends.append(context.get("backend"))
             return super().execute(context)
 
-    def node_factory(name: str):
+    # Create a custom graph with mocked nodes that record backend
+    graph = ArticleProposalGraph(
+        vault_service=mock_vault_service,
+        llm_client_provider=mock_llm_client_provider,
+        gateway_client=mock_gateway_client,
+        research_client=mock_research_client,
+    )
+
+    # Override _get_node to return recording agents
+    original_get_node = graph._get_node
+
+    def recording_node_factory(name: str):
         return RecordingAgent()
 
-    mock_container.get_node.side_effect = node_factory
+    graph._get_node = recording_node_factory  # type: ignore[assignment]
 
     plan = WorkflowPlan(
         strategy="test_plan", nodes=["article_proposal", "deep_research"]
     )
-    article_proposal_graph = ArticleProposalGraph()
 
-    article_proposal_graph.execute_workflow(
+    graph.execute_workflow(
         plan,
-        mock_container,
         prompts=["Backend propagation test"],
         backend="mlx",
     )
@@ -162,20 +200,26 @@ def test_execute_workflow_passes_backend_to_nodes(mock_container):
     assert captured_backends == ["mlx", "mlx"]
 
 
-@patch("src.obs_graphs.graphs.article_proposal.graph.get_container")
-def test_run_workflow_collects_branch_metadata(mock_get_container):
+def test_run_workflow_collects_branch_metadata(
+    mock_vault_service, mock_llm_client_provider, mock_gateway_client, mock_research_client
+):
     """run_workflow should propagate branch metadata from the submit node."""
-    mock_container = MagicMock()
-    mock_vault_service = MagicMock()
-    mock_vault_service.get_vault_summary.return_value = MagicMock()
-    mock_container.get_vault_service.return_value = mock_vault_service
 
+    # Create graph with mocked dependencies
+    graph = ArticleProposalGraph(
+        vault_service=mock_vault_service,
+        llm_client_provider=mock_llm_client_provider,
+        gateway_client=mock_gateway_client,
+        research_client=mock_research_client,
+    )
+
+    # Override _get_node to return custom agents
     def node_factory(name: str):
         if name == "submit_pull_request":
             agent = MagicMock()
 
-            def execute(context: dict) -> AgentResult:
-                return AgentResult(
+            def execute(context: dict) -> NodeResult:
+                return NodeResult(
                     success=True,
                     changes=[],
                     message="Submitted",
@@ -188,42 +232,45 @@ def test_run_workflow_collects_branch_metadata(mock_get_container):
             return agent
         return MockAgent()
 
-    mock_container.get_node.side_effect = node_factory
-    mock_get_container.return_value = mock_container
+    graph._get_node = node_factory  # type: ignore[assignment]
 
-    article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompts=["Test research"])
 
-    result = article_proposal_graph.run_workflow(request)
+    result = graph.run_workflow(request)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
     assert result.branch_name == "obsidian-agents/workflow-123"
 
 
-@patch("src.obs_graphs.graphs.article_proposal.graph.get_container")
-def test_run_workflow_handles_failure(mock_get_container):
+def test_run_workflow_handles_failure(
+    mock_vault_service, mock_llm_client_provider, mock_gateway_client, mock_research_client
+):
     """run_workflow should return a failure result if a node raises."""
-    mock_container = MagicMock()
-    mock_vault_service = MagicMock()
-    mock_vault_service.get_vault_summary.return_value = MagicMock()
-    mock_container.get_vault_service.return_value = mock_vault_service
 
+    # Create graph with mocked dependencies
+    graph = ArticleProposalGraph(
+        vault_service=mock_vault_service,
+        llm_client_provider=mock_llm_client_provider,
+        gateway_client=mock_gateway_client,
+        research_client=mock_research_client,
+    )
+
+    # Create a failing agent
     failing_agent = MagicMock()
     failing_agent.execute.side_effect = RuntimeError("node failure")
 
+    # Override _get_node to return failing agent for article_proposal
     def node_factory(name: str):
         if name == "article_proposal":
             return failing_agent
         return MockAgent()
 
-    mock_container.get_node.side_effect = node_factory
-    mock_get_container.return_value = mock_container
+    graph._get_node = node_factory  # type: ignore[assignment]
 
-    article_proposal_graph = ArticleProposalGraph()
     request = WorkflowRunRequest(prompts=["Test research failure path"])
 
-    result = article_proposal_graph.run_workflow(request)
+    result = graph.run_workflow(request)
 
     assert isinstance(result, WorkflowResult)
     assert not result.success

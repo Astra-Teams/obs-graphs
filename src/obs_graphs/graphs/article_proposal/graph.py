@@ -1,17 +1,24 @@
 """LangGraph-based workflow orchestration for Obsidian Vault nodes."""
 
 from dataclasses import dataclass, field
+from typing import Callable
 
 from langgraph.graph import END, StateGraph
+from obs_gtwy_sdk import GatewayClientProtocol
+from olm_d_rch_sdk import ResearchClientProtocol
 
 from src.obs_graphs.api.schemas import WorkflowRunRequest
 from src.obs_graphs.config import obs_graphs_settings
-from src.obs_graphs.container import DependencyContainer, get_container
 from src.obs_graphs.graphs.article_proposal.state import (
-    AgentResult,
+    NodeResult,
     FileChange,
     GraphState,
     WorkflowStrategy,
+)
+from src.obs_graphs.protocols import (
+    LLMClientProtocol,
+    NodeProtocol,
+    VaultServiceProtocol,
 )
 
 
@@ -57,6 +64,67 @@ class ArticleProposalGraph:
     then executes them in the appropriate order using a state graph.
     """
 
+    def __init__(
+        self,
+        vault_service: VaultServiceProtocol,
+        llm_client_provider: Callable[[str | None], LLMClientProtocol],
+        gateway_client: GatewayClientProtocol,
+        research_client: ResearchClientProtocol,
+    ):
+        """
+        Initialize the ArticleProposalGraph with required dependencies.
+
+        Args:
+            vault_service: Service for vault file operations
+            llm_client_provider: Provider function for creating LLM clients
+            gateway_client: Client for Obsidian gateway operations
+            research_client: Client for deep research operations
+        """
+        self.vault_service = vault_service
+        self.llm_client_provider = llm_client_provider
+        self.gateway_client = gateway_client
+        self.research_client = research_client
+
+        # Initialize nodes
+        self._nodes: dict[str, NodeProtocol] = {}
+
+    def _get_node(self, node_name: str) -> NodeProtocol:
+        """
+        Get or create a node instance by name.
+
+        Args:
+            node_name: Name of the node to retrieve
+
+        Returns:
+            NodeProtocol instance for the specified node
+
+        Raises:
+            ValueError: If node_name is unknown
+        """
+        if node_name not in self._nodes:
+            if node_name == "article_proposal":
+                from src.obs_graphs.graphs.article_proposal.nodes.node1_article_proposal import (
+                    ArticleProposalNode,
+                )
+
+                self._nodes[node_name] = ArticleProposalNode(self.llm_client_provider)
+            elif node_name == "deep_research":
+                from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
+                    DeepResearchNode,
+                )
+
+                self._nodes[node_name] = DeepResearchNode(self.research_client)
+            elif node_name == "submit_pull_request":
+                from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_pull_request import (
+                    SubmitPullRequestNode,
+                )
+
+                self._nodes[node_name] = SubmitPullRequestNode(self.gateway_client)
+            else:
+                raise ValueError(f"Unknown node: {node_name}")
+
+        return self._nodes[node_name]
+
     def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
         """
         Run the complete workflow: execute nodes and submit the draft via obs-gtwy.
@@ -69,12 +137,8 @@ class ArticleProposalGraph:
         """
 
         try:
-            # Instantiate DependencyContainer
-            container = get_container()
-
             # Analyze vault to create workflow plan
-            vault_service = container.get_vault_service()
-            workflow_plan = self.determine_workflow_plan(vault_service, request)
+            workflow_plan = self.determine_workflow_plan(request)
 
             # Override strategy if specified in request
             if request.strategy:
@@ -83,7 +147,6 @@ class ArticleProposalGraph:
             # Execute workflow
             workflow_result = self.execute_workflow(
                 workflow_plan,
-                container,
                 prompts=request.prompts,
                 backend=request.backend,
             )
@@ -107,7 +170,6 @@ class ArticleProposalGraph:
 
     def determine_workflow_plan(
         self,
-        vault_service,
         request: WorkflowRunRequest,
     ) -> WorkflowPlan:
         """
@@ -116,7 +178,6 @@ class ArticleProposalGraph:
         The workflow now requires a prompt and always uses the research_proposal strategy.
 
         Args:
-            vault_service: Vault service instance
             request: Workflow run request
 
         Returns:
@@ -134,7 +195,6 @@ class ArticleProposalGraph:
     def execute_workflow(
         self,
         workflow_plan: WorkflowPlan,
-        container: DependencyContainer,
         prompts: list[str] | None = None,
         backend: str | None = None,
     ) -> WorkflowResult:
@@ -143,15 +203,14 @@ class ArticleProposalGraph:
 
         Args:
             workflow_plan: Plan specifying which nodes to run
-            container: Dependency container
             prompts: User prompts for research workflows (list of strings)
+            backend: Backend LLM to use
 
         Returns:
             WorkflowResult with aggregated changes and results
         """
         # Initialize workflow state
-        vault_service = container.get_vault_service()
-        vault_summary = vault_service.get_vault_summary()
+        vault_summary = self.vault_service.get_vault_summary()
 
         selected_backend = (backend or obs_graphs_settings.llm_backend).strip().lower()
 
@@ -168,7 +227,7 @@ class ArticleProposalGraph:
         }
 
         # Build state graph based on workflow plan
-        graph = self._build_graph(workflow_plan, container)
+        graph = self._build_graph(workflow_plan)
 
         # Execute the workflow
         try:
@@ -196,15 +255,12 @@ class ArticleProposalGraph:
                 node_results={},
             )
 
-    def _build_graph(
-        self, workflow_plan: WorkflowPlan, container: DependencyContainer
-    ) -> StateGraph:
+    def _build_graph(self, workflow_plan: WorkflowPlan) -> StateGraph:
         """
         Build LangGraph state graph based on workflow plan.
 
         Args:
             workflow_plan: Plan specifying node execution order
-            container: Dependency container
 
         Returns:
             Configured StateGraph ready for execution
@@ -214,7 +270,7 @@ class ArticleProposalGraph:
 
         # Add node nodes
         for node_name in workflow_plan.nodes:
-            workflow.add_node(node_name, self._create_node_node(node_name, container))
+            workflow.add_node(node_name, self._create_node_node(node_name))
 
         # Add edges to create sequential execution
         workflow.set_entry_point(workflow_plan.nodes[0])
@@ -229,13 +285,12 @@ class ArticleProposalGraph:
 
         return workflow.compile()
 
-    def _create_node_node(self, node_name: str, container: DependencyContainer):
+    def _create_node_node(self, node_name: str):
         """
         Create a node function for the specified node.
 
         Args:
             node_name: Name of the node to create node for
-            container: Dependency container
 
         Returns:
             Callable node function for use in state graph
@@ -243,7 +298,7 @@ class ArticleProposalGraph:
 
         def node_node(state: GraphState) -> GraphState:
             """Execute the node and update state."""
-            node = container.get_node(node_name)
+            node = self._get_node(node_name)
 
             # Prepare context for node
             context = {
@@ -261,7 +316,7 @@ class ArticleProposalGraph:
                     context.update(prev_result["metadata"])
 
             # Execute node (nodes no longer receive vault_path, they use VaultService)
-            result: AgentResult = node.execute(context)
+            result: NodeResult = node.execute(context)
 
             # Update state with results
             state["accumulated_changes"].extend(result.changes)

@@ -1,4 +1,4 @@
-"""Agent for conducting deep research using ollama-deep-researcher service."""
+"""Node for conducting deep research using ollama-deep-researcher service."""
 
 import logging
 from datetime import datetime
@@ -6,7 +6,7 @@ from datetime import datetime
 from olm_d_rch_sdk import ResearchClientProtocol, ResearchResponse
 
 from src.obs_graphs.graphs.article_proposal.state import (
-    AgentResult,
+    NodeResult,
     FileAction,
     FileChange,
 )
@@ -15,11 +15,11 @@ from src.obs_graphs.protocols import NodeProtocol
 logger = logging.getLogger(__name__)
 
 
-class DeepResearchAgent(NodeProtocol):
+class DeepResearchNode(NodeProtocol):
     """
-    Agent responsible for delegating deep research and persisting returned articles.
+    Node responsible for delegating deep research and persisting returned articles.
 
-    This agent takes topic metadata from the article_proposal node, calls the
+    This node takes topic metadata from the article_proposal node, calls the
     research API to gather findings, and writes the generated Markdown article
     directly to disk without additional formatting.
     """
@@ -27,7 +27,7 @@ class DeepResearchAgent(NodeProtocol):
     name = "deep_research"
 
     def __init__(self, research_client: ResearchClientProtocol):
-        """Initialize the deep research agent."""
+        """Initialize the deep research node."""
         self.research_client = research_client
 
     def validate_input(self, context: dict) -> bool:
@@ -47,7 +47,7 @@ class DeepResearchAgent(NodeProtocol):
             and len(context["topic_title"].strip()) > 0
         )
 
-    def execute(self, context: dict) -> AgentResult:
+    def execute(self, context: dict) -> NodeResult:
         """
         Execute deep research and persist the returned article.
         """
@@ -113,7 +113,7 @@ class DeepResearchAgent(NodeProtocol):
 
             message = f"Generated research proposal: {filename}"
 
-            return AgentResult(
+            return NodeResult(
                 success=True,
                 changes=[file_change],
                 message=message,
@@ -122,7 +122,7 @@ class DeepResearchAgent(NodeProtocol):
 
         except Exception as e:
             logger.error(f"Deep research failed: {e}")
-            return AgentResult(
+            return NodeResult(
                 success=False,
                 changes=[],
                 message=f"Failed to conduct research: {str(e)}",

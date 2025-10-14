@@ -1,11 +1,11 @@
-"""Unit tests for SubmitPullRequestAgent with obs-gtwy integration."""
+"""Unit tests for SubmitPullRequestNode with obs-gtwy integration."""
 
 from unittest.mock import MagicMock
 
 import pytest
 
 from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_pull_request import (
-    SubmitPullRequestAgent,
+    SubmitPullRequestNode,
 )
 from src.obs_graphs.graphs.article_proposal.state import FileAction, FileChange
 
@@ -18,39 +18,39 @@ def gateway_client():
 
 
 @pytest.fixture
-def agent(gateway_client):
-    return SubmitPullRequestAgent(gateway_client)
+def node(gateway_client):
+    return SubmitPullRequestNode(gateway_client)
 
 
-def test_validate_input_valid(agent):
+def test_validate_input_valid(node):
     context = {
         "strategy": "research_proposal",
         "accumulated_changes": [],
         "node_results": {},
     }
-    assert agent.validate_input(context) is True
+    assert node.validate_input(context) is True
 
 
-def test_validate_input_missing_keys(agent):
+def test_validate_input_missing_keys(node):
     context = {"strategy": "research_proposal"}
-    assert agent.validate_input(context) is False
+    assert node.validate_input(context) is False
 
 
-def test_execute_with_no_changes_skips_gateway(agent, gateway_client):
+def test_execute_with_no_changes_skips_gateway(node, gateway_client):
     context = {
         "strategy": "research_proposal",
         "accumulated_changes": [],
         "node_results": {},
     }
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
     assert result.success is True
     assert result.metadata == {"branch_name": ""}
     gateway_client.create_drafts.assert_not_called()
 
 
-def test_execute_submits_single_draft(agent, gateway_client):
+def test_execute_submits_single_draft(node, gateway_client):
     change = FileChange(
         path="proposals/sample.md",
         action=FileAction.CREATE,
@@ -68,7 +68,7 @@ def test_execute_submits_single_draft(agent, gateway_client):
         },
     }
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
     gateway_client.create_drafts.assert_called_once_with(
         drafts=[{"file_name": "sample.md", "content": "# Sample Draft"}],
@@ -79,7 +79,7 @@ def test_execute_submits_single_draft(agent, gateway_client):
     assert result.metadata["draft_file"] == "proposals/sample.md"
 
 
-def test_execute_raises_when_multiple_drafts(agent):
+def test_execute_raises_when_multiple_drafts(node):
     change_a = FileChange(
         path="proposals/a.md",
         action=FileAction.CREATE,
@@ -97,13 +97,13 @@ def test_execute_raises_when_multiple_drafts(agent):
         "node_results": {},
     }
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
     assert result.success is False
     assert "Multiple draft files detected" in result.message
 
 
-def test_execute_handles_gateway_exception(agent, gateway_client):
+def test_execute_handles_gateway_exception(node, gateway_client):
     change = FileChange(
         path="proposals/sample.md",
         action=FileAction.CREATE,
@@ -117,18 +117,18 @@ def test_execute_handles_gateway_exception(agent, gateway_client):
 
     gateway_client.create_drafts.side_effect = RuntimeError("gateway down")
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
     assert result.success is False
     assert "gateway down" in result.message
 
 
-def test_branch_name_derives_from_filename(agent):
-    branch = agent._derive_branch_name("My Draft.md", {})
+def test_branch_name_derives_from_filename(node):
+    branch = node._derive_branch_name("My Draft.md", {})
     assert branch == "draft/my-draft"
 
 
-def test_branch_name_uses_metadata_filename(agent):
+def test_branch_name_uses_metadata_filename(node):
     node_results = {"deep_research": {"metadata": {"proposal_filename": "AI.md"}}}
-    branch = agent._derive_branch_name("ignored.md", node_results)
+    branch = node._derive_branch_name("ignored.md", node_results)
     assert branch == "draft/ai"

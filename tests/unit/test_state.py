@@ -1,9 +1,9 @@
-"""Unit tests for state module (FileAction, FileChange, AgentResult)."""
+"""Unit tests for state module (FileAction, FileChange, NodeResult)."""
 
 import pytest
 
 from src.obs_graphs.graphs.article_proposal.state import (
-    AgentResult,
+    NodeResult,
     FileAction,
     FileChange,
 )
@@ -93,13 +93,13 @@ class TestFileChange:
         assert change1 != change2
 
 
-class TestAgentResult:
-    """Test the AgentResult dataclass."""
+class TestNodeResult:
+    """Test the NodeResult dataclass."""
 
-    def test_successful_agent_result(self):
-        """Test creating a successful AgentResult."""
+    def test_successful_node_result(self):
+        """Test creating a successful NodeResult."""
         changes = [FileChange("test.md", FileAction.CREATE, "content")]
-        result = AgentResult(
+        result = NodeResult(
             success=True,
             changes=changes,
             message="Created new article",
@@ -110,9 +110,9 @@ class TestAgentResult:
         assert result.message == "Created new article"
         assert result.metadata == {"count": 1}
 
-    def test_failed_agent_result(self):
-        """Test creating a failed AgentResult."""
-        result = AgentResult(
+    def test_failed_node_result(self):
+        """Test creating a failed NodeResult."""
+        result = NodeResult(
             success=False,
             changes=[],
             message="Failed to create article",
@@ -123,22 +123,22 @@ class TestAgentResult:
         assert result.message == "Failed to create article"
         assert "error" in result.metadata
 
-    def test_agent_result_with_empty_changes(self):
-        """Test AgentResult with empty changes list."""
-        result = AgentResult(
+    def test_node_result_with_empty_changes(self):
+        """Test NodeResult with empty changes list."""
+        result = NodeResult(
             success=True, changes=[], message="No changes needed", metadata={}
         )
         assert result.success is True
         assert len(result.changes) == 0
 
-    def test_agent_result_with_multiple_changes(self):
-        """Test AgentResult with multiple file changes."""
+    def test_node_result_with_multiple_changes(self):
+        """Test NodeResult with multiple file changes."""
         changes = [
             FileChange("test1.md", FileAction.CREATE, "content1"),
             FileChange("test2.md", FileAction.UPDATE, "content2"),
             FileChange("test3.md", FileAction.DELETE, None),
         ]
-        result = AgentResult(
+        result = NodeResult(
             success=True,
             changes=changes,
             message="Multiple operations completed",
@@ -147,8 +147,8 @@ class TestAgentResult:
         assert len(result.changes) == 3
         assert result.metadata["operations"] == 3
 
-    def test_agent_result_default_metadata(self):
-        """Test that AgentResult has default empty metadata."""
-        result = AgentResult(success=True, changes=[], message="Test")
+    def test_node_result_default_metadata(self):
+        """Test that NodeResult has default empty metadata."""
+        result = NodeResult(success=True, changes=[], message="Test")
         assert isinstance(result.metadata, dict)
         assert len(result.metadata) == 0

@@ -1,13 +1,13 @@
-"""Unit tests for ArticleProposalAgent."""
+"""Unit tests for ArticleProposalNode."""
 
 from unittest.mock import MagicMock
 
 import pytest
 
 from src.obs_graphs.graphs.article_proposal.nodes.node1_article_proposal import (
-    ArticleProposalAgent,
+    ArticleProposalNode,
 )
-from src.obs_graphs.graphs.article_proposal.state import AgentResult
+from src.obs_graphs.graphs.article_proposal.state import NodeResult
 
 
 @pytest.fixture
@@ -33,9 +33,9 @@ def llm_provider(mock_llm):
 
 
 @pytest.fixture
-def agent(llm_provider):
-    """Create ArticleProposalAgent instance."""
-    return ArticleProposalAgent(llm_provider)
+def node(llm_provider):
+    """Create ArticleProposalNode instance."""
+    return ArticleProposalNode(llm_provider)
 
 
 @pytest.fixture
@@ -46,34 +46,34 @@ def vault_path(tmp_path):
     return vault
 
 
-def test_validate_input_valid(agent):
+def test_validate_input_valid(node):
     """Test that validate_input accepts valid context with prompt."""
     context = {"prompts": ["Research transformers in NLP"]}
-    assert agent.validate_input(context) is True
+    assert node.validate_input(context) is True
 
 
-def test_validate_input_missing_prompt(agent):
+def test_validate_input_missing_prompt(node):
     """Test that validate_input rejects missing prompt."""
     context = {}
-    assert agent.validate_input(context) is False
+    assert node.validate_input(context) is False
 
 
-def test_validate_input_empty_prompt(agent):
+def test_validate_input_empty_prompt(node):
     """Test that validate_input rejects empty prompt."""
     context = {"prompts": ["   "]}
-    assert agent.validate_input(context) is False
+    assert node.validate_input(context) is False
 
 
-def test_execute_with_valid_prompt(agent, vault_path):
+def test_execute_with_valid_prompt(node, vault_path):
     """Test that execute returns topic proposal successfully."""
     context = {
         "prompts": ["Research the impact of transformers on NLP"],
         "strategy": "research_proposal",
     }
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
-    assert isinstance(result, AgentResult)
+    assert isinstance(result, NodeResult)
     assert result.success is True
     assert result.changes == []
     assert "topic_title" in result.metadata
@@ -85,7 +85,7 @@ def test_execute_with_valid_prompt(agent, vault_path):
     assert result.metadata["tags"][0] == "transformers"
 
 
-def test_execute_passes_backend_to_provider(agent, llm_provider):
+def test_execute_passes_backend_to_provider(node, llm_provider):
     """Ensure the backend from context is forwarded to the provider."""
     context = {
         "prompts": ["Investigate MLX performance"],
@@ -93,37 +93,37 @@ def test_execute_passes_backend_to_provider(agent, llm_provider):
         "backend": "mlx",
     }
 
-    agent.execute(context)
+    node.execute(context)
 
     llm_provider.assert_called_once_with("mlx")
 
 
-def test_execute_without_backend_uses_default(agent, llm_provider):
+def test_execute_without_backend_uses_default(node, llm_provider):
     """Provider should be called with None when backend not supplied."""
     context = {
         "prompts": ["Investigate default backend"],
         "strategy": "research_proposal",
     }
 
-    agent.execute(context)
+    node.execute(context)
 
     llm_provider.assert_called_once_with(None)
 
 
-def test_execute_with_malformed_json(agent, vault_path, mock_llm):
+def test_execute_with_malformed_json(node, vault_path, mock_llm):
     """Test that execute handles malformed JSON response."""
     mock_llm.invoke.return_value = "This is not valid JSON"
 
     context = {"prompts": ["Test prompt"], "strategy": "research_proposal"}
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
-    assert isinstance(result, AgentResult)
+    assert isinstance(result, NodeResult)
     assert result.success is False
     assert "malformed_json" in result.metadata.get("error", "")
 
 
-def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
+def test_execute_with_invalid_tags(node, vault_path, mock_llm):
     """Test that execute accepts any number of tags."""
     # Only 2 tags - should be accepted now
     mock_llm.invoke.return_value = """
@@ -137,22 +137,22 @@ def test_execute_with_invalid_tags(agent, vault_path, mock_llm):
 
     context = {"prompts": ["Test prompt"], "strategy": "research_proposal"}
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
-    assert isinstance(result, AgentResult)
+    assert isinstance(result, NodeResult)
     assert result.success is True
     assert result.metadata["tags"] == ["tag1", "tag2"]
 
 
-def test_execute_with_invalid_context(agent, vault_path):
+def test_execute_with_invalid_context(node, vault_path):
     """Test that execute raises error with invalid context."""
     context = {}
 
     with pytest.raises(ValueError, match="required fields missing"):
-        agent.execute(context)
+        node.execute(context)
 
 
-def test_execute_tags_lowercase(agent, vault_path, mock_llm):
+def test_execute_tags_lowercase(node, vault_path, mock_llm):
     """Test that tags are preserved as-is without lowercase conversion."""
     mock_llm.invoke.return_value = """
     {
@@ -165,8 +165,8 @@ def test_execute_tags_lowercase(agent, vault_path, mock_llm):
 
     context = {"prompts": ["Test prompt"], "strategy": "research_proposal"}
 
-    result = agent.execute(context)
+    result = node.execute(context)
 
-    assert isinstance(result, AgentResult)
+    assert isinstance(result, NodeResult)
     assert result.success is True
     assert result.metadata["tags"] == ["Machine-Learning", "NLP", "Deep-Learning"]

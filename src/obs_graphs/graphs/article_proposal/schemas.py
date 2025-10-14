@@ -19,8 +19,8 @@ class VaultSummaryModel(BaseModel):
     recent_updates: List[str]
 
 
-class AgentResultModel(BaseModel):
-    """Pydantic model for agent execution results."""
+class NodeResultModel(BaseModel):
+    """Pydantic model for node execution results."""
 
     success: bool
     changes: List["FileChange"]
@@ -37,7 +37,7 @@ class GraphStateModel(BaseModel):
     strategy: "WorkflowStrategy"
     prompt: List[str]
     accumulated_changes: List["FileChange"]
-    node_results: Dict[str, AgentResultModel]
+    node_results: Dict[str, NodeResultModel]
     messages: List[str]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)

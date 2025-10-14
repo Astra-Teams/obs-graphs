@@ -83,19 +83,39 @@ def run_workflow_task(self, workflow_id: int) -> None:
         # 3. Prepare local workflow directory from vault submodule
         temp_vault_dir = _prepare_workflow_directory(workflow_id)
 
-        # Set the path in the container
-        from src.obs_graphs.container import get_container
-
-        container = get_container()
-        container.set_vault_path(temp_vault_dir)
-
-        # 4. Get graph builder for workflow type and run workflow
+        # 4. Create dependencies with the temporary vault path
+        from src.obs_graphs import dependencies
         from src.obs_graphs.api.schemas import WorkflowRunRequest
         from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
         from src.obs_graphs.graphs.factory import get_graph_builder
+        from src.obs_graphs.services import VaultService
 
-        # Get appropriate graph builder based on workflow type
-        graph_builder = get_graph_builder(workflow.workflow_type or "article-proposal")
+        # Create vault service with temporary path
+        vault_service = VaultService(vault_path=temp_vault_dir)
+
+        # Get other dependencies - call provider functions with actual settings
+        llm_client_provider = dependencies.get_llm_client_provider(
+            settings=dependencies.get_app_settings(),
+            ollama_settings=dependencies.get_ollama_settings(),
+            mlx_settings=dependencies.get_mlx_settings(),
+        )
+        gateway_client = dependencies.get_gateway_client(
+            settings=dependencies.get_app_settings(),
+            gateway_settings=dependencies.get_gateway_settings(),
+        )
+        research_client = dependencies.get_research_client(
+            settings=dependencies.get_app_settings(),
+            research_settings=dependencies.get_research_api_settings(),
+        )
+
+        # Get appropriate graph builder based on workflow type with dependencies
+        graph_builder = get_graph_builder(
+            workflow_type=workflow.workflow_type or "article-proposal",
+            vault_service=vault_service,
+            llm_client_provider=llm_client_provider,
+            gateway_client=gateway_client,
+            research_client=research_client,
+        )
 
         # Handle legacy strategies by coercing unknown values to RESEARCH_PROPOSAL
         try:

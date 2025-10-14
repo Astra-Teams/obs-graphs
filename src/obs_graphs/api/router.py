@@ -1,12 +1,14 @@
 """API endpoints for workflow management."""
 
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from obs_gtwy_sdk import GatewayClientProtocol
+from olm_d_rch_sdk import ResearchClientProtocol
 from sqlalchemy.orm import Session
 
+from src.obs_graphs import dependencies
 from src.obs_graphs.api.schemas import (
     WorkflowListResponse,
     WorkflowResponse,
@@ -16,6 +18,7 @@ from src.obs_graphs.api.schemas import (
 from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.db.database import get_db
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
+from src.obs_graphs.protocols import LLMClientProtocol, VaultServiceProtocol
 
 router = APIRouter()
 
@@ -30,6 +33,12 @@ async def run_workflow(
     workflow_type: str,
     request: WorkflowRunRequest,
     db: Session = Depends(get_db),
+    vault_service: VaultServiceProtocol = Depends(dependencies.get_vault_service),
+    llm_client_provider: Callable[[str | None], LLMClientProtocol] = Depends(
+        dependencies.get_llm_client_provider
+    ),
+    gateway_client: GatewayClientProtocol = Depends(dependencies.get_gateway_client),
+    research_client: ResearchClientProtocol = Depends(dependencies.get_research_client),
 ) -> WorkflowRunResponse:
     """
     Run a workflow of the specified type.
@@ -53,11 +62,17 @@ async def run_workflow(
         - article-proposal: Research topic proposal and article creation
     """
     try:
-        # Validate workflow type using factory
+        # Validate workflow type and create graph builder with dependencies
         from src.obs_graphs.graphs.factory import get_graph_builder
 
         try:
-            graph_builder = get_graph_builder(workflow_type)
+            graph_builder = get_graph_builder(
+                workflow_type=workflow_type,
+                vault_service=vault_service,
+                llm_client_provider=llm_client_provider,
+                gateway_client=gateway_client,
+                research_client=research_client,
+            )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -104,23 +119,7 @@ async def run_workflow(
             workflow.started_at = datetime.now(timezone.utc)
             db.commit()
 
-            # Set vault path for synchronous execution
-            from src.obs_graphs.container import get_container
-
-            container = get_container()
-            # Find project root by searching for pyproject.toml
-            current_path = Path(__file__).resolve().parent
-            project_root = current_path
-            while project_root.parent != project_root:  # Stop at filesystem root
-                if (project_root / "pyproject.toml").exists():
-                    break
-                project_root = project_root.parent
-
-            raw_path = Path(obs_graphs_settings.vault_submodule_path)
-            vault_path = raw_path if raw_path.is_absolute() else project_root / raw_path
-            container.set_vault_path(vault_path)
-
-            # Use factory to get graph builder and run workflow
+            # Run workflow with injected dependencies (vault_service already configured)
             result = graph_builder.run_workflow(request)
 
             # Update workflow based on result
