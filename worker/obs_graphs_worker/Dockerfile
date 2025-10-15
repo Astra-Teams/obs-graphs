@@ -40,7 +40,7 @@ RUN --mount=type=cache,target=/root/.cache \
   --mount=type=secret,id=github_token \
   if [ -s /run/secrets/github_token ]; then \
   git config --global credential.helper store && \
-  printf "https://oauth2:%s@github.com" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
+  printf "https://oauth2:%s@github.com\n" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
   fi && \
   uv sync --no-dev
 
@@ -58,7 +58,7 @@ RUN chown appuser:appgroup /app
 RUN --mount=type=secret,id=github_token \
   if [ -s /run/secrets/github_token ]; then \
   git config --global credential.helper store && \
-  printf "https://oauth2:%s@github.com" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
+  printf "https://oauth2:%s@github.com\n" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
   fi
 
 COPY --chown=appuser:appgroup src/ ./src
