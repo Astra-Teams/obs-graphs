@@ -3,7 +3,6 @@
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 from src.obs_graphs.db.models.workflow import WorkflowStatus
 from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
 

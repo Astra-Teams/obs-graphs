@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 
 from langgraph.graph import END, StateGraph
-
 from src.obs_graphs.api.schemas import WorkflowRunRequest
 from src.obs_graphs.graphs.article_proposal.state import (
     FileChange,

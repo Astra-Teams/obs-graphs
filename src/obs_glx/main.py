@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-
 from src.obs_graphs.api.router import router as workflows_router
 
 app = FastAPI(

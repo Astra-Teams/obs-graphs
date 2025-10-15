@@ -1,6 +1,6 @@
-# Obsidian Graphs
+# Obsidian Galaxy
 
-Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through nexus managed draft branches.
+Obsidian Galaxy is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through nexus managed draft branches.
 
 ## What's in the box?
 
@@ -66,10 +66,10 @@ just setup
 
 All configuration is centralised in `.env`. Update it to reflect your environment. Important options include:
 
-- `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true`, but you can point to a live service by setting it to `false`.
+- `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_STARPROBE=true`, but you can point to a live service by setting it to `false`.
 - `USE_MOCK_OBS_GTWY` – when `true`, obs-graphs uses an in-process mock of the obs-gtwy gateway while the real API is not deployed.
 - `OBS_GTWY_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
-- `VAULT_SUBMODULE_PATH` – filesystem path to the local Obsidian vault submodule checkout.
+
 - `STL_CONN_BASE_URL` – base URL for the stl-conn service providing LLM access.
 - `USE_MOCK_STL_CONN` – when `true`, uses mock LLM responses for development and testing.
 
@@ -125,7 +125,7 @@ curl http://127.0.0.1:8001/health
 curl http://127.0.0.1:8001/api/workflows/status
 ```
 
-By default the research API client uses the in-repo mock. To exercise the real service, run the `starprobe` submodule (or another compatible deployment), set `USE_MOCK_OLLAMA_DEEP_RESEARCHER=false`, and ensure the research API settings point to that endpoint.
+By default the research API client uses the in-repo mock. To exercise the real service, run the `starprobe` submodule (or another compatible deployment), set `USE_MOCK_STARPROBE=false`, and ensure the research API settings point to that endpoint.
 
 ### Workflow run payload
 
@@ -211,5 +211,5 @@ This design keeps runtime execution deterministic and avoids invoking Git operat
 ## Troubleshooting
 
 - **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `submodules/constellations` and `submodules/starprobe`.
-- **Using a different vault?** Update the `submodules/constellations` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
-- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Leave `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true` for local mocks, or flip it to `false` and point the research client at a live `starprobe` deployment.
+- **Using a different vault?** Update the `submodules/constellations` remote to point to your desired repository.
+- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Leave `USE_MOCK_STARPROBE=true` for local mocks, or flip it to `false` and point the research client at a live `starprobe` deployment.

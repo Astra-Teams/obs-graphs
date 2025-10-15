@@ -7,10 +7,10 @@ from celery import Celery
 # Initialize Celery app with environment variables directly
 # This avoids importing settings during module load, which allows tests to mock
 celery_app = Celery(
-    "obs_graphs_worker",
-    broker=os.getenv("OBS_GRAPHS_CELERY_BROKER_URL", "redis://localhost:6379/0"),
-    backend=os.getenv("OBS_GRAPHS_CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
-    include=["worker.obs_graphs_worker.tasks"],
+    "obs_glx_worker",
+    broker=os.getenv("OBS_GLX_CELERY_BROKER_URL", "redis://localhost:6379/0"),
+    backend=os.getenv("OBS_GLX_CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
+    include=["worker.obs_glx_worker.tasks"],
 )
 
 # Celery configuration
@@ -26,7 +26,7 @@ celery_app.conf.update(
     task_soft_time_limit=540,
     # Task routing
     task_routes={
-        "worker.obs_graphs_worker.tasks.run_workflow_task": {"queue": "workflows"},
+        "worker.obs_glx_worker.tasks.run_workflow_task": {"queue": "workflows"},
     },
     # Result backend settings
     result_expires=3600,  # Results expire after 1 hour
@@ -39,4 +39,4 @@ celery_app.conf.update(
 )
 
 # Auto-discover tasks
-celery_app.autodiscover_tasks(["worker.obs_graphs_worker.tasks"])
+celery_app.autodiscover_tasks(["worker.obs_glx_worker.tasks"])

@@ -2,7 +2,6 @@ import threading
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-
 from src.obs_graphs.config import db_settings, obs_graphs_settings
 
 # --- Lazy Initialization for Database Engine and Session Factory ---

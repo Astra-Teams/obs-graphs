@@ -1614,7 +1614,7 @@ wheels = [
 [[package]]
 name = "nexus-api"
 version = "0.1.0"
-source = { git = "https://github.com/asterismhq/nexus.git#5a8f75c05c456c6eace6fbaaa365acb0e7b0565d" }
+source = { git = "https://github.com/asterismhq/nexus.git#888f58d348ec8d0d653c16140f403b73dca59001" }
 dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
@@ -1687,7 +1687,7 @@ wheels = [
 ]
 
 [[package]]
-name = "obs-graph"
+name = "obs-glx"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [

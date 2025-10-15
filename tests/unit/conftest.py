@@ -20,7 +20,7 @@ def set_unit_test_env(monkeypatch):
     monkeypatch.setenv("USE_SQLITE", "true")
     monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
     monkeypatch.setenv("USE_MOCK_REDIS", "true")
-    monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
+    monkeypatch.setenv("USE_MOCK_STARPROBE", "true")
     monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
 
     try:

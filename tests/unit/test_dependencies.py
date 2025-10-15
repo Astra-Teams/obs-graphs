@@ -1,14 +1,13 @@
 """Unit tests for the dependency injection system."""
 
 from nexus_sdk import MockNexusClient
-from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
-
 from src.obs_graphs import dependencies
 from src.obs_graphs.config import (
-    GatewaySettings,
+    NexusSettings,
     ObsGraphsSettings,
     StlConnSettings,
 )
+from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 
 class TestConfigurationProviders:
@@ -24,10 +23,14 @@ class TestConfigurationProviders:
         settings = dependencies.get_stl_conn_settings()
         assert isinstance(settings, StlConnSettings)
 
-    def test_get_gateway_settings(self):
-        """Test that get_gateway_settings returns GatewaySettings."""
-        settings = dependencies.get_gateway_settings()
-        assert isinstance(settings, GatewaySettings)
+
+def test_get_nexus_settings(monkeypatch: MonkeyPatch):
+    """Test that get_nexus_settings returns NexusSettings."""
+    # Mock environment variables if necessary
+    settings = get_nexus_settings()
+    assert isinstance(settings, NexusSettings)
+    # Clear the cache for other tests
+    get_nexus_settings.cache_clear()
 
     def test_settings_are_cached(self):
         """Test that settings providers use lru_cache and return same instance."""
@@ -107,19 +110,12 @@ class TestLLMClientFactory:
 class TestServiceProviders:
     """Test service provider functions."""
 
-    def test_get_vault_service(self, monkeypatch):
+    def test_get_vault_service(self):
         """Test that get_vault_service returns VaultServiceProtocol."""
-        # Set vault path
-        monkeypatch.setenv("OBS_GRAPHS_VAULT_SUBMODULE_PATH", "/tmp/test_vault")
+        settings = ObsGraphsSettings(vault_submodule_path="/tmp/test_vault")
 
-        # Clear cache
-        dependencies.get_app_settings.cache_clear()
-
-        vault_service = dependencies.get_vault_service(
-            settings=dependencies.get_app_settings()
-        )
+        vault_service = dependencies.get_vault_service(settings=settings)
         assert vault_service is not None
-        # VaultService should have the protocol methods
 
     def test_get_gateway_client(self, monkeypatch):
         """Test that get_gateway_client returns appropriate client."""
@@ -138,7 +134,7 @@ class TestServiceProviders:
 
     def test_get_research_client(self, monkeypatch):
         """Test that get_research_client returns appropriate client."""
-        monkeypatch.setenv("OBS_GRAPHS_USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
+        monkeypatch.setenv("USE_MOCK_STARPROBE", "true")
 
         # Clear cache
         dependencies.get_app_settings.cache_clear()

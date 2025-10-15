@@ -1,6 +1,6 @@
 ## 🚀 Overview
 
-**Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes by delegating draft branches to the **nexus** gateway service.
+**Obsidian Galaxy** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes by delegating draft branches to the **nexus** gateway service.
 
 **Core Tech**: FastAPI, LangGraph, stl-conn (Stella Connector), PostgreSQL/SQLite, Celery, Redis, Docker.
 
@@ -84,7 +84,7 @@
 
 ## 📦 Submodules
 
-This project uses Git submodules to manage external dependencies. **Submodules are located in the `submodules/` directory and MUST NOT BE EDITED DIRECTLY.** If changes are required, please contact the respective repository maintainers or request updates from the user.
+This project uses Git submodules to manage external dependencies. Submodules are located in the `submodules/` directory and should never be edited directly. If changes are required, please contact the respective repository maintainers or request updates from the user.
 
 ### constellations (submodules/constellations)
 Provides the Obsidian Vault structure and utilities for managing knowledge bases, handling file operations, vault organization, and integration with Obsidian's markdown-based knowledge management system.

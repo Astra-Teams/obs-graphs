@@ -6,8 +6,6 @@ from typing import Callable, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from nexus_sdk import NexusClientProtocol
 from sqlalchemy.orm import Session
-from starprobe_sdk import ResearchClientProtocol
-
 from src.obs_graphs import dependencies
 from src.obs_graphs.api.schemas import (
     WorkflowListResponse,
@@ -18,6 +16,7 @@ from src.obs_graphs.api.schemas import (
 from src.obs_graphs.config import obs_graphs_settings
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 from src.obs_graphs.protocols import StlConnClientProtocol, VaultServiceProtocol
+from starprobe_sdk import ResearchClientProtocol
 
 router = APIRouter()
 

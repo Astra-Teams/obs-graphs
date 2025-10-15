@@ -1,11 +1,11 @@
-"""Gateway service configuration."""
+"""Nexus service configuration."""
 
 from pydantic import Field, HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class GatewaySettings(BaseSettings):
-    """Configuration for the nexus gateway client."""
+class NexusSettings(BaseSettings):
+    """Configuration for the nexus client."""
 
     model_config = SettingsConfigDict(
         env_file=".env",

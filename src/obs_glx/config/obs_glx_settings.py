@@ -1,4 +1,4 @@
-"""Main application configuration for the obs-graphs project."""
+"""Main application configuration for the obs-glx project."""
 
 from typing import Any
 
@@ -6,8 +6,8 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ObsGraphsSettings(BaseSettings):
-    """The configurable fields for the obs-graphs application."""
+class ObsGlxSettings(BaseSettings):
+    """The configurable fields for the obs-glx application."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -20,13 +20,13 @@ class ObsGraphsSettings(BaseSettings):
         default=False,
         title="Debug Mode",
         description="Enable mock client mode for development and testing.",
-        alias="OBS_GRAPHS_DEBUG_MODE",
+        alias="OBS_GLX_DEBUG_MODE",
     )
     secret_key: str = Field(
         default="your-secret-key",
         title="Secret Key",
         description="A secret key for signing session data.",
-        alias="OBS_GRAPHS_API_SECRET_KEY",
+        alias="OBS_GLX_API_SECRET_KEY",
     )
     api_max_page_size: int = Field(
         default=100,
@@ -48,24 +48,23 @@ class ObsGraphsSettings(BaseSettings):
         description="Return a mocked Redis client when enabled.",
         alias="USE_MOCK_REDIS",
     )
-    use_mock_ollama_deep_researcher: bool = Field(
+    use_mock_starprobe: bool = Field(
         default=True,
-        title="Use Mock Ollama Deep Researcher",
-        description="Return a mocked ollama deep researcher client when enabled.",
-        alias="USE_MOCK_OLLAMA_DEEP_RESEARCHER",
+        title="Use Mock Starprobe",
+        description="Return a mocked starprobe client when enabled.",
+        alias="USE_MOCK_STARPROBE",
     )
     use_mock_obs_gateway: bool = Field(
         default=True,
         title="Use Mock nexus Gateway",
         description="Return a mocked nexus client when enabled.",
-        alias="USE_MOCK_OBS_GTWY",
+        alias="USE_MOCK_NEXUS",
     )
 
     vault_submodule_path: str = Field(
         default="submodules/constellations",
         title="Vault Submodule Path",
         description="Filesystem path to the locally checked out Obsidian vault submodule.",
-        alias="VAULT_SUBMODULE_PATH",
     )
 
     @field_validator("debug", mode="before")

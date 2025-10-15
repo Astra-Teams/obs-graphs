@@ -1,4 +1,4 @@
-"""Celery tasks for executing Obsidian Vault workflows."""
+"""Celery tasks for executing Obsidian Galaxy workflows."""
 
 import asyncio
 import logging
@@ -10,20 +10,20 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from src.obs_graphs.config import obs_graphs_settings, workflow_settings
-from src.obs_graphs.db.database import get_db
-from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
-from worker.obs_graphs_worker.app import celery_app
+from src.obs_glx.config import obs_glx_settings, workflow_settings
+from src.obs_glx.db.database import get_db
+from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
+from worker.obs_glx_worker.app import celery_app
 
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]  # /app for worker container
-WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_graphs" / "workflows"
+WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_glx" / "workflows"
 
 
 def _resolve_submodule_path() -> Path:
     """Resolve the configured vault submodule path to an absolute path."""
-    raw_path = Path(obs_graphs_settings.vault_submodule_path)
+    raw_path = Path(obs_glx_settings.vault_submodule_path)
     source = raw_path if raw_path.is_absolute() else PROJECT_ROOT / raw_path
     return source
 
@@ -85,16 +85,16 @@ def run_workflow_task(self, workflow_id: int) -> None:
         temp_vault_dir = _prepare_workflow_directory(workflow_id)
 
         # 4. Create dependencies with the temporary vault path
-        from src.obs_graphs.api.schemas import WorkflowRunRequest
-        from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
-        from src.obs_graphs.services import VaultService
+        from src.obs_glx.api.schemas import WorkflowRunRequest
+        from src.obs_glx.graphs.article_proposal.state import WorkflowStrategy
+        from src.obs_glx.services import VaultService
 
         # Create vault service with temporary path
         vault_service = VaultService(vault_path=temp_vault_dir)
 
         # Get appropriate graph builder based on workflow type with dependencies
         # For Celery, we need to override the vault_service with the temporary path
-        from src.obs_graphs.graphs.factory import get_graph_builder
+        from src.obs_glx.graphs.factory import get_graph_builder
 
         graph_builder = get_graph_builder(
             workflow_type=workflow.workflow_type,

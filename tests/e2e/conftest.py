@@ -12,7 +12,6 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
-
 from src.obs_graphs.protocols import StlConnClientProtocol
 
 
@@ -94,8 +93,8 @@ def e2e_setup() -> Generator[None, None, None]:
         "true"  # E2E uses mock stl-conn (requires separate LLM server)
     )
     env["USE_MOCK_REDIS"] = "false"  # E2E uses real Redis
-    env["USE_MOCK_OLLAMA_DEEP_RESEARCHER"] = "true"
-    env["USE_MOCK_OBS_GTWY"] = "true"
+    env["USE_MOCK_STARPROBE"] = "true"
+    env["USE_MOCK_NEXUS"] = "true"
 
     host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")
     host_port = os.getenv("TEST_PORT", "8002")

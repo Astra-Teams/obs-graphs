@@ -12,21 +12,21 @@ from starprobe_sdk import ResearchApiClient, ResearchClientProtocol
 from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 from dev.mocks.clients import MockRedisClient, MockResearchApiClient
-from src.obs_graphs.config import (
+from src.obs_glx.config import (
     DBSettings,
-    GatewaySettings,
+    NexusSettings,
     ObsGraphsSettings,
     RedisSettings,
     ResearchAPISettings,
     StlConnSettings,
     WorkflowSettings,
 )
-from src.obs_graphs.db.database import create_db_session
-from src.obs_graphs.protocols import (
+from src.obs_glx.db.database import create_db_session
+from src.obs_glx.protocols import (
     StlConnClientProtocol,
     VaultServiceProtocol,
 )
-from src.obs_graphs.services import VaultService
+from src.obs_glx.services import VaultService
 
 # ============================================================================
 # Configuration Providers
@@ -46,9 +46,9 @@ def get_stl_conn_settings() -> StlConnSettings:
 
 
 @lru_cache()
-def get_gateway_settings() -> GatewaySettings:
-    """Get the gateway settings singleton."""
-    return GatewaySettings()
+def get_nexus_settings() -> NexusSettings:
+    """Get the nexus settings singleton."""
+    return NexusSettings()
 
 
 @lru_cache()
@@ -180,14 +180,14 @@ def get_vault_service(
 
 def get_gateway_client(
     settings: ObsGraphsSettings = Depends(get_app_settings),
-    gateway_settings: GatewaySettings = Depends(get_gateway_settings),
+    nexus_settings: NexusSettings = Depends(get_nexus_settings),
 ) -> NexusClientProtocol:
     """
     Get the nexus gateway client instance.
 
     Args:
         settings: Application settings for mock configuration
-        gateway_settings: Gateway-specific configuration
+        nexus_settings: Gateway-specific configuration
 
     Returns:
         Gateway client (mock or real based on settings)
@@ -195,7 +195,7 @@ def get_gateway_client(
     if settings.use_mock_obs_gateway:
         return MockNexusClient()
 
-    gateway_base = str(gateway_settings.base_url).rstrip("/")
+    gateway_base = str(nexus_settings.base_url).rstrip("/")
     return NexusClient(base_url=gateway_base)
 
 
@@ -213,7 +213,7 @@ def get_research_client(
     Returns:
         Research client (mock or real based on settings)
     """
-    if settings.use_mock_ollama_deep_researcher:
+    if settings.use_mock_starprobe:
         return MockResearchApiClient()
 
     return ResearchApiClient(
@@ -261,7 +261,7 @@ def get_article_proposal_node(
     Returns:
         ArticleProposalNode configured with LLM client provider
     """
-    from src.obs_graphs.graphs.article_proposal.nodes.node1_article_proposal import (
+    from src.obs_glx.graphs.article_proposal.nodes.node1_article_proposal import (
         ArticleProposalNode,
     )
 
@@ -280,7 +280,7 @@ def get_deep_research_node(
     Returns:
         DeepResearchNode configured with research client
     """
-    from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
+    from src.obs_glx.graphs.article_proposal.nodes.node2_deep_research import (
         DeepResearchNode,
     )
 
@@ -299,7 +299,7 @@ def get_submit_draft_branch_node(
     Returns:
         SubmitDraftBranchNode configured with gateway client
     """
-    from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_draft_branch import (
+    from src.obs_glx.graphs.article_proposal.nodes.node3_submit_draft_branch import (
         SubmitDraftBranchNode,
     )
 

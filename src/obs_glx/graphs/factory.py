@@ -3,11 +3,10 @@
 from typing import Callable
 
 from nexus_sdk import NexusClientProtocol
-from starprobe_sdk import ResearchClientProtocol
-
 from src.obs_graphs.graphs.article_proposal.graph import ArticleProposalGraph
 from src.obs_graphs.graphs.protocol import WorkflowGraphProtocol
 from src.obs_graphs.protocols import StlConnClientProtocol, VaultServiceProtocol
+from starprobe_sdk import ResearchClientProtocol
 
 
 def get_graph_builder(

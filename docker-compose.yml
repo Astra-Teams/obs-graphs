@@ -1,6 +1,6 @@
 secrets:
   github_token:
-    environment: "OBS_GRAPHS_TOKEN"
+    environment: "OBS_GLX_TOKEN"
 
 services:
   db:
@@ -31,14 +31,14 @@ services:
     networks:
       - backend
 
-  obs-api:
+  obs-glx-api:
     build:
       context: .
       dockerfile: Dockerfile
       target: production
       secrets:
         - github_token
-    image: ${OBS_GRAPHS_API_IMAGE:-ghcr.io/asterismhq/obs-graphs-api}
+    image: ${OBS_GLX_API_IMAGE:-ghcr.io/asterismhq/obs-glx-api}
     ports:
       - "${HOST_BIND_IP}:${HOST_PORT}:8000"
     depends_on:
@@ -61,14 +61,14 @@ services:
     networks:
       - backend
 
-  worker:
+  obs-glx-worker:
     build:
       context: .
-      dockerfile: worker/obs_graphs_worker/Dockerfile
+      dockerfile: worker/obs_glx_worker/Dockerfile
       target: production
       secrets:
         - github_token
-    image: ${OBS_GRAPHS_WORKER_IMAGE:-ghcr.io/asterismhq/obs-graphs-worker}
+    image: ${OBS_GLX_WORKER_IMAGE:-ghcr.io/asterismhq/obs-glx-worker}
     depends_on:
       redis:
         condition: service_healthy
