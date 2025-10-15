@@ -7,3 +7,6 @@
 [submodule "submodules/starprobe"] # v2.0.0
 	path = submodules/starprobe
 	url = https://github.com/asterismhq/starprobe
+[submodule "submodules/constellations"]
+	path = submodules/constellations
+	url = https://github.com/asterismhq/constellations.git
