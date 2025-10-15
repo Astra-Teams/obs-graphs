@@ -8,9 +8,12 @@ import os
 import subprocess
 import time
 from typing import Generator
+from unittest.mock import AsyncMock
 
 import httpx
 import pytest
+
+from src.obs_graphs.protocols import StlConnClientProtocol
 
 
 @pytest.fixture(scope="session")
@@ -19,6 +22,19 @@ def api_base_url() -> str:
     host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")
     host_port = os.getenv("TEST_PORT", "8002")
     return f"http://{host_bind_ip}:{host_port}"
+
+
+@pytest.fixture(scope="session")
+def mock_llm_client() -> AsyncMock:
+    """Create a mock LLM client for E2E tests."""
+    client = AsyncMock(spec=StlConnClientProtocol)
+    
+    # Mock response for research_topic_proposal
+    mock_response = AsyncMock()
+    mock_response.content = "Test Research Topic"
+    client.invoke.return_value = mock_response
+    
+    return client
 
 
 def _wait_for_health_check(url: str, timeout: int = 120, interval: int = 5) -> None:

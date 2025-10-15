@@ -98,7 +98,7 @@ async def test_execute_without_backend_uses_default(node, llm_provider):
 
 @pytest.mark.asyncio
 async def test_execute_with_malformed_response(node, vault_path, mock_llm):
-    """Test that execute handles malformed response with fallback."""
+    """Test that execute handles malformed response by failing."""
 
     async def mock_invoke_malformed(messages):
         class MockResponse:
@@ -113,9 +113,9 @@ async def test_execute_with_malformed_response(node, vault_path, mock_llm):
     result = await node.execute(context)
 
     assert isinstance(result, NodeResult)
-    assert result.success is True  # Now succeeds with fallback
-    assert "topic_title" in result.metadata
-    assert result.metadata["topic_title"] == "Research on Test prompt"
+    assert result.success is False
+    assert "Failed to generate research topic" in result.message
+    assert "Failed to parse topic title from LLM response" in result.metadata["error"]
 
 
 @pytest.mark.asyncio

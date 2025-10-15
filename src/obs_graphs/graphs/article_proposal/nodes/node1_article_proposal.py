@@ -100,8 +100,7 @@ class ArticleProposalNode(NodeProtocol):
             topic_title = self._parse_topic_title(response_content)
 
             if topic_title is None:
-                # Fallback to default topic for testing/mocking scenarios
-                topic_title = f"Research on {prompt[:50]}"
+                raise ValueError("Failed to parse topic title from LLM response")
 
             # Store topic metadata for downstream nodes
             metadata = {

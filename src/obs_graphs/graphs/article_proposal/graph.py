@@ -254,6 +254,10 @@ class ArticleProposalGraph:
             # Execute node with the graph state directly (avoid redundant copy)
             result: NodeResult = await node.execute(state)
 
+            # Check if node failed and raise exception to stop workflow
+            if not result.success:
+                raise Exception(f"Node {node_name} failed: {result.message}")
+
             # Update state with results
             state["accumulated_changes"].extend(result.changes)
             state["node_results"][node_name] = {
@@ -265,6 +269,10 @@ class ArticleProposalGraph:
             state["messages"].append(
                 f"{node_name}: {result.message} ({len(result.changes)} changes)"
             )
+
+            # Merge node metadata into state for downstream nodes
+            if result.metadata:
+                state.update(result.metadata)
 
             return state
 

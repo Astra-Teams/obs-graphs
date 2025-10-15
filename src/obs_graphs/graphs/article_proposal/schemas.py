@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Annotated, Dict, List, TypedDict, Optional
+from typing import TYPE_CHECKING, Annotated, Dict, List, Optional, TypedDict
 
 from pydantic import BaseModel
 
