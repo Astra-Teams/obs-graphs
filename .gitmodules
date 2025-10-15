@@ -8,3 +8,6 @@
 [submodule "submodules/stl-conn"] # v1.3.0
 	path = submodules/stl-conn
 	url = https://github.com/asterismhq/stl-conn
+[submodule "submodules/starprobe"] # v2.0.0
+	path = submodules/starprobe
+	url = https://github.com/asterismhq/starprobe
