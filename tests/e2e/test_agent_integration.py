@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from src.obs_graphs.api.schemas import WorkflowRunRequest
-from src.obs_graphs.graphs.article_proposal.state import FileAction
+from src.obs_glx.api.schemas import WorkflowRunRequest
+from src.obs_glx.graphs.article_proposal.state import FileAction
 
 
 class TestAgentIntegration:
@@ -13,8 +13,8 @@ class TestAgentIntegration:
         self, vault_fixture
     ) -> None:
         """An empty vault should still run the research workflow and produce changes."""
-        from src.obs_graphs.graphs.factory import get_graph_builder
-        from src.obs_graphs.services import VaultService
+        from src.obs_glx.graphs.factory import get_graph_builder
+        from src.obs_glx.services import VaultService
 
         vault_path = vault_fixture("empty_vault")
         vault_service = VaultService(vault_path=vault_path)
@@ -45,8 +45,8 @@ class TestAgentIntegration:
 
     async def test_improvement_strategy_runs_all_agents(self, vault_fixture) -> None:
         """A populated vault should trigger the improvement strategy and execute all agents."""
-        from src.obs_graphs.graphs.factory import get_graph_builder
-        from src.obs_graphs.services import VaultService
+        from src.obs_glx.graphs.factory import get_graph_builder
+        from src.obs_glx.services import VaultService
 
         vault_path = vault_fixture("well_maintained_vault")
         vault_service = VaultService(vault_path=vault_path)

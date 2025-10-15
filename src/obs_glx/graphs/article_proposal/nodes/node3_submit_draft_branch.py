@@ -6,12 +6,13 @@ import re
 from pathlib import Path
 
 from nexus_sdk import NexusClientProtocol
-from src.obs_graphs.graphs.article_proposal.state import (
+
+from src.obs_glx.graphs.article_proposal.state import (
     FileAction,
     FileChange,
     NodeResult,
 )
-from src.obs_graphs.protocols import NodeProtocol
+from src.obs_glx.protocols import NodeProtocol
 
 
 class SubmitDraftBranchNode(NodeProtocol):

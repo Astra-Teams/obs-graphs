@@ -11,7 +11,8 @@ from sqlalchemy import (
     String,
     Text,
 )
-from src.obs_graphs.db.database import Base
+
+from src.obs_glx.db.database import Base
 
 
 class WorkflowStatus(enum.Enum):

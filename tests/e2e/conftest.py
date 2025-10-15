@@ -12,7 +12,8 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
-from src.obs_graphs.protocols import StlConnClientProtocol
+
+from src.obs_glx.protocols import StlConnClientProtocol
 
 
 @pytest.fixture(scope="session")
@@ -68,7 +69,7 @@ def e2e_setup() -> Generator[None, None, None]:
     use_sudo = os.getenv("SUDO") == "true"
     docker_command = ["sudo", "docker"] if use_sudo else ["docker"]
 
-    project_name = os.getenv("PROJECT_NAME", "obs-graph")
+    project_name = os.getenv("PROJECT_NAME", "obs-glx")
     test_project_name = f"{project_name}-test"
 
     compose_common_args = [
@@ -104,7 +105,7 @@ def e2e_setup() -> Generator[None, None, None]:
         print("\n🚀 Starting E2E test services with docker compose...")
         subprocess.run(compose_up_command, check=True, timeout=300, env=env)
 
-        print("⏳ Waiting for service 'obs-api' to become healthy...")
+        print("⏳ Waiting for service 'obs-glx-api' to become healthy...")
         _wait_for_health_check(api_health_url)
 
         print("✅ All services are ready")

@@ -5,10 +5,10 @@ from unittest.mock import MagicMock
 import pytest
 from starprobe_sdk import ResearchResponse
 
-from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
+from src.obs_glx.graphs.article_proposal.nodes.node2_deep_research import (
     DeepResearchNode,
 )
-from src.obs_graphs.graphs.article_proposal.state import FileAction, NodeResult
+from src.obs_glx.graphs.article_proposal.state import FileAction, NodeResult
 
 
 @pytest.fixture

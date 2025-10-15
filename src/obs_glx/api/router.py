@@ -6,17 +6,18 @@ from typing import Callable, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from nexus_sdk import NexusClientProtocol
 from sqlalchemy.orm import Session
-from src.obs_graphs import dependencies
-from src.obs_graphs.api.schemas import (
+from starprobe_sdk import ResearchClientProtocol
+
+from src.obs_glx import dependencies
+from src.obs_glx.api.schemas import (
     WorkflowListResponse,
     WorkflowResponse,
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
-from src.obs_graphs.config import obs_graphs_settings
-from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
-from src.obs_graphs.protocols import StlConnClientProtocol, VaultServiceProtocol
-from starprobe_sdk import ResearchClientProtocol
+from src.obs_glx.config import obs_glx_settings
+from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
+from src.obs_glx.protocols import StlConnClientProtocol, VaultServiceProtocol
 
 router = APIRouter()
 
@@ -61,7 +62,7 @@ async def run_workflow(
     """
     try:
         # Validate workflow type and create graph builder with dependencies
-        from src.obs_graphs.graphs.factory import get_graph_builder
+        from src.obs_glx.graphs.factory import get_graph_builder
 
         try:
             graph_builder = get_graph_builder(
@@ -90,7 +91,7 @@ async def run_workflow(
 
         if request.async_execution:
             # Asynchronous execution using Celery
-            from worker.obs_graphs_worker.tasks import run_workflow_task
+            from worker.obs_glx_worker.tasks import run_workflow_task
 
             # Queue task only AFTER database commit is complete
             task = run_workflow_task.delay(workflow.id)
@@ -207,7 +208,7 @@ async def list_workflows(
     limit: int = Query(
         10,
         ge=1,
-        le=obs_graphs_settings.api_max_page_size,
+        le=obs_glx_settings.api_max_page_size,
         description="Maximum number of workflows to return",
     ),
     offset: int = Query(

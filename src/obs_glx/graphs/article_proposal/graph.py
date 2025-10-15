@@ -3,14 +3,15 @@
 from dataclasses import dataclass, field
 
 from langgraph.graph import END, StateGraph
-from src.obs_graphs.api.schemas import WorkflowRunRequest
-from src.obs_graphs.graphs.article_proposal.state import (
+
+from src.obs_glx.api.schemas import WorkflowRunRequest
+from src.obs_glx.graphs.article_proposal.state import (
     FileChange,
     GraphState,
     NodeResult,
     WorkflowStrategy,
 )
-from src.obs_graphs.protocols import (
+from src.obs_glx.protocols import (
     NodeProtocol,
     VaultServiceProtocol,
 )

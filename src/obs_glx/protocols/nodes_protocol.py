@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from src.obs_graphs.graphs.article_proposal.state import GraphState, NodeResult
+from src.obs_glx.graphs.article_proposal.state import GraphState, NodeResult
 
 
 class NodeProtocol(Protocol):

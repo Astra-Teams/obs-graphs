@@ -1,6 +1,6 @@
 """Unit tests for API router prompt validation."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,10 +8,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from src.obs_graphs.api.router import router
-from src.obs_graphs.db.database import Base
-from src.obs_graphs.db.models.workflow import Workflow
-from src.obs_graphs.graphs.article_proposal.state import WorkflowStrategy
+from src.obs_glx.api.router import router
+from src.obs_glx.db.database import Base
+from src.obs_glx.db.models.workflow import Workflow
+from src.obs_glx.graphs.article_proposal.state import NodeResult, WorkflowStrategy
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -48,7 +48,7 @@ def client(test_db):
 
     from fastapi import FastAPI
 
-    from src.obs_graphs import dependencies
+    from src.obs_glx import dependencies
 
     app = FastAPI()
     app.include_router(router, prefix="/api")
@@ -63,13 +63,30 @@ def client(test_db):
         lambda: mock_llm_provider
     )
 
+    # Mock other clients
+    app.dependency_overrides[dependencies.get_gateway_client] = lambda: MagicMock()
+    app.dependency_overrides[dependencies.get_research_client] = lambda: MagicMock()
+    app.dependency_overrides[dependencies.get_vault_service] = lambda: MagicMock()
+
+    mock_node = MagicMock()
+    mock_node.execute = AsyncMock(
+        return_value=NodeResult(
+            success=True, changes=[], message="Mocked node execution"
+        )
+    )
+    app.dependency_overrides[dependencies.get_article_proposal_node] = lambda: mock_node
+    app.dependency_overrides[dependencies.get_deep_research_node] = lambda: mock_node
+    app.dependency_overrides[dependencies.get_submit_draft_branch_node] = (
+        lambda: mock_node
+    )
+
     return TestClient(app)
 
 
 @pytest.fixture
 def mock_celery_task():
     """Mock Celery task to prevent actual task execution."""
-    with patch("worker.obs_graphs_worker.tasks.run_workflow_task") as mock_task:
+    with patch("worker.obs_glx_worker.tasks.run_workflow_task") as mock_task:
         mock_result = MagicMock()
         mock_result.id = "test-task-id"
         mock_task.delay.return_value = mock_result
@@ -88,7 +105,6 @@ def test_workflow_run_with_valid_prompts(client, mock_celery_task):
     }
 
     response = client.post("/api/workflows/article-proposal/run", json=payload)
-
     assert response.status_code == 201
     data = response.json()
     assert {"id", "status"}.issubset(data)

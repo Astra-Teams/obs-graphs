@@ -5,13 +5,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.obs_graphs.api.schemas import WorkflowRunRequest
-from src.obs_graphs.graphs.article_proposal.graph import (
+from src.obs_glx.api.schemas import WorkflowRunRequest
+from src.obs_glx.graphs.article_proposal.graph import (
     ArticleProposalGraph,
     WorkflowPlan,
     WorkflowResult,
 )
-from src.obs_graphs.graphs.article_proposal.state import NodeResult
+from src.obs_glx.graphs.article_proposal.state import NodeResult
 
 
 class MockAgent(MagicMock):
@@ -24,7 +24,7 @@ class MockAgent(MagicMock):
 @pytest.fixture
 def mock_vault_service():
     """Return a mock VaultService."""
-    from src.obs_graphs.graphs.article_proposal.state import VaultSummary
+    from src.obs_glx.graphs.article_proposal.state import VaultSummary
 
     mock_vault = MagicMock()
     mock_vault.get_vault_summary.return_value = VaultSummary(

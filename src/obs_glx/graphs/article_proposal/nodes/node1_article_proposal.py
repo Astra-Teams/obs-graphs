@@ -3,9 +3,9 @@
 import json
 from typing import Callable
 
-from src.obs_graphs.graphs.article_proposal.prompts import render_prompt
-from src.obs_graphs.graphs.article_proposal.state import NodeResult
-from src.obs_graphs.protocols import NodeProtocol, StlConnClientProtocol
+from src.obs_glx.graphs.article_proposal.prompts import render_prompt
+from src.obs_glx.graphs.article_proposal.state import NodeResult
+from src.obs_glx.protocols import NodeProtocol, StlConnClientProtocol
 
 
 class ArticleProposalNode(NodeProtocol):

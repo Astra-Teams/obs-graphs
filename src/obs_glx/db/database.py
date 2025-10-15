@@ -2,7 +2,8 @@ import threading
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from src.obs_graphs.config import db_settings, obs_graphs_settings
+
+from src.obs_glx.config import db_settings, obs_glx_settings
 
 # --- Lazy Initialization for Database Engine and Session Factory ---
 
@@ -25,7 +26,7 @@ def _initialize_factory():
             # Use configuration flag to determine database type
             # use_sqlite=True -> SQLite (offline development/testing)
             # use_sqlite=False -> PostgreSQL (production)
-            if obs_graphs_settings.use_sqlite:
+            if obs_glx_settings.use_sqlite:
                 # Use SQLite (for DEBUG mode or local testing)
                 # test_db.sqlite3 file will be created in project root
                 sqlite_file_path = "test_db.sqlite3"
@@ -40,7 +41,7 @@ def _initialize_factory():
                 # Use PostgreSQL (for production/dev containers)
                 if not db_settings.database_url:
                     raise ValueError(
-                        "OBS_GRAPHS_DATABASE_URL must be set when USE_SQLITE is False."
+                        "OBS_GLX_DATABASE_URL must be set when USE_SQLITE is False."
                     )
                 db_url = db_settings.database_url
                 _engine = create_engine(db_url, pool_pre_ping=True)

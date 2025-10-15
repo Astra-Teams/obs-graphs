@@ -8,7 +8,7 @@
 
 ## 📂 Repository Structure
 
--   `src/obs_graphs/`: Main application source.
+-   `src/obs_glx/`: Main application source.
 -   `tests/`: Test suite (Unit, Integration, E2E, DB).
 -   `dev/`: Mock clients and responses for offline development.
 -   `submodules/`: Git submodules for dependencies like `constellations`.
@@ -22,7 +22,7 @@
 
 ## 🏛️ Core Architecture
 
-### 1. Application Core (`src/obs_graphs/`)
+### 1. Application Core (`src/obs_glx/`)
 -   **API (`api/`)**: FastAPI endpoints with path-based workflow type routing (`/api/workflows/{workflow_type}/run`), Pydantic schemas for validation.
 -   **Workflow Engine (`graphs/`)**:
     -   Factory pattern (`factory.py`) for extensible workflow graph creation with dependency injection

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from src.obs_graphs.api.router import router as workflows_router
+
+from src.obs_glx.api.router import router as workflows_router
 
 app = FastAPI(
     title="FastAPI Template",

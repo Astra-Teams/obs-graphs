@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import List, Optional
 
-from src.obs_graphs.graphs.article_proposal.state import VaultSummary
-from src.obs_graphs.protocols import VaultServiceProtocol
+from src.obs_glx.graphs.article_proposal.state import VaultSummary
+from src.obs_glx.protocols import VaultServiceProtocol
 
 
 class VaultService(VaultServiceProtocol):

@@ -3,8 +3,8 @@
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from src.obs_graphs.api.schemas import WorkflowRunRequest
-    from src.obs_graphs.graphs.article_proposal.graph import WorkflowResult
+    from src.obs_glx.api.schemas import WorkflowRunRequest
+    from src.obs_glx.graphs.article_proposal.graph import WorkflowResult
 
 
 class WorkflowGraphProtocol(Protocol):

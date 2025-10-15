@@ -15,7 +15,7 @@ from dev.mocks.clients import MockRedisClient, MockResearchApiClient
 from src.obs_glx.config import (
     DBSettings,
     NexusSettings,
-    ObsGraphsSettings,
+    ObsGlxSettings,
     RedisSettings,
     StarprobeSettings,
     StlConnSettings,
@@ -34,9 +34,9 @@ from src.obs_glx.services import VaultService
 
 
 @lru_cache()
-def get_app_settings() -> ObsGraphsSettings:
+def get_app_settings() -> ObsGlxSettings:
     """Get the application settings singleton."""
-    return ObsGraphsSettings()
+    return ObsGlxSettings()
 
 
 @lru_cache()
@@ -164,7 +164,7 @@ def get_db_session() -> Generator[Session, None, None]:
 
 
 def get_vault_service(
-    settings: ObsGraphsSettings = Depends(get_app_settings),
+    settings: ObsGlxSettings = Depends(get_app_settings),
 ) -> VaultServiceProtocol:
     """
     Get the vault service instance.
@@ -179,7 +179,7 @@ def get_vault_service(
 
 
 def get_gateway_client(
-    settings: ObsGraphsSettings = Depends(get_app_settings),
+    settings: ObsGlxSettings = Depends(get_app_settings),
     nexus_settings: NexusSettings = Depends(get_nexus_settings),
 ) -> NexusClientProtocol:
     """
@@ -200,7 +200,7 @@ def get_gateway_client(
 
 
 def get_research_client(
-    settings: ObsGraphsSettings = Depends(get_app_settings),
+    settings: ObsGlxSettings = Depends(get_app_settings),
     starprobe_settings: StarprobeSettings = Depends(get_starprobe_settings),
 ) -> ResearchClientProtocol:
     """
@@ -223,7 +223,7 @@ def get_research_client(
 
 
 def get_redis_client(
-    settings: ObsGraphsSettings = Depends(get_app_settings),
+    settings: ObsGlxSettings = Depends(get_app_settings),
     redis_settings: RedisSettings = Depends(get_redis_settings),
 ) -> Union[redis.Redis, "redis.FakeRedis"]:
     """

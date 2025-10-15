@@ -3,7 +3,8 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
+
+from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
 
 
 @pytest.fixture(autouse=True)

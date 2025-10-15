@@ -96,7 +96,7 @@ COPY --chown=appuser:appgroup dev/ ./dev
 USER appuser
 
 ENTRYPOINT ["python", "-m", "celery"]
-CMD ["-A", "worker.obs_graphs_worker.app", "worker", "--loglevel=debug"]
+CMD ["-A", "worker.obs_glx_worker.app", "worker", "--loglevel=debug"]
 
 
 # ==============================================================================
@@ -121,4 +121,4 @@ COPY --from=app-code --chown=appuser:appgroup /app ./
 USER appuser
 
 ENTRYPOINT ["python", "-m", "celery"]
-CMD ["-A", "worker.obs_graphs_worker.app", "worker", "--loglevel=info"]
+CMD ["-A", "worker.obs_glx_worker.app", "worker", "--loglevel=info"]

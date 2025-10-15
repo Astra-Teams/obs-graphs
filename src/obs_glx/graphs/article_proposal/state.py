@@ -3,7 +3,7 @@
 from enum import Enum
 
 # Re-export Pydantic models for backward compatibility
-from src.obs_graphs.graphs.article_proposal.schemas import (
+from src.obs_glx.graphs.article_proposal.schemas import (
     FileAction,
     FileChange,
     GraphStateModel,

@@ -3,7 +3,7 @@ name: Run Local Tests
 on:
   workflow_call:
     secrets:
-      OBS_GRAPHS_TOKEN:
+      OBS_GLX_TOKEN:
         required: true
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       UV_CACHE_DIR: ./.uv-cache
-      OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
+      OBS_GLX_TOKEN: ${{ secrets.OBS_GLX_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -30,10 +30,10 @@ jobs:
 
       - name: Configure Git for private repositories
         env:
-          AUTH_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
+          AUTH_TOKEN: ${{ secrets.OBS_GLX_TOKEN }}
         run: |
           if [ -z "$AUTH_TOKEN" ]; then
-            echo "OBS_GRAPHS_TOKEN secret is required to access private repositories." >&2
+            echo "OBS_GLX_TOKEN secret is required to access private repositories." >&2
             exit 1
           fi
           git config --global url."https://oauth2:${AUTH_TOKEN}@github.com/".insteadOf "https://github.com/"

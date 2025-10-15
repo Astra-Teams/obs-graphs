@@ -3,13 +3,14 @@
 import logging
 from datetime import datetime
 
-from src.obs_graphs.graphs.article_proposal.state import (
+from starprobe_sdk import ResearchClientProtocol, ResearchResponse
+
+from src.obs_glx.graphs.article_proposal.state import (
     FileAction,
     FileChange,
     NodeResult,
 )
-from src.obs_graphs.protocols import NodeProtocol
-from starprobe_sdk import ResearchClientProtocol, ResearchResponse
+from src.obs_glx.protocols import NodeProtocol
 
 logger = logging.getLogger(__name__)
 

@@ -3,10 +3,11 @@
 from typing import Callable
 
 from nexus_sdk import NexusClientProtocol
-from src.obs_graphs.graphs.article_proposal.graph import ArticleProposalGraph
-from src.obs_graphs.graphs.protocol import WorkflowGraphProtocol
-from src.obs_graphs.protocols import StlConnClientProtocol, VaultServiceProtocol
 from starprobe_sdk import ResearchClientProtocol
+
+from src.obs_glx.graphs.article_proposal.graph import ArticleProposalGraph
+from src.obs_glx.graphs.protocol import WorkflowGraphProtocol
+from src.obs_glx.protocols import StlConnClientProtocol, VaultServiceProtocol
 
 
 def get_graph_builder(
@@ -35,7 +36,7 @@ def get_graph_builder(
     Supported workflow types:
         - article-proposal: Research topic proposal and article creation
     """
-    from src.obs_graphs import dependencies
+    from src.obs_glx import dependencies
 
     # Use provided dependencies or get defaults
     vault_service = vault_service or dependencies.get_vault_service()
@@ -44,7 +45,7 @@ def get_graph_builder(
     )
     gateway_client = gateway_client or dependencies.get_gateway_client(
         settings=dependencies.get_app_settings(),
-        gateway_settings=dependencies.get_gateway_settings(),
+        nexus_settings=dependencies.get_nexus_settings(),
     )
     research_client = research_client or dependencies.get_research_client(
         settings=dependencies.get_app_settings(),

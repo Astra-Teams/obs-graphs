@@ -1,13 +1,15 @@
 """Unit tests for the dependency injection system."""
 
 from nexus_sdk import MockNexusClient
-from src.obs_graphs import dependencies
-from src.obs_graphs.config import (
+from pytest import MonkeyPatch
+from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
+
+from src.obs_glx import dependencies
+from src.obs_glx.config import (
     NexusSettings,
-    ObsGraphsSettings,
+    ObsGlxSettings,
     StlConnSettings,
 )
-from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 
 class TestConfigurationProviders:
@@ -16,7 +18,7 @@ class TestConfigurationProviders:
     def test_get_app_settings(self):
         """Test that get_app_settings returns ObsGraphsSettings."""
         settings = dependencies.get_app_settings()
-        assert isinstance(settings, ObsGraphsSettings)
+        assert isinstance(settings, ObsGlxSettings)
 
     def test_get_stl_conn_settings(self):
         """Test that get_stl_conn_settings returns StlConnSettings."""
@@ -27,10 +29,10 @@ class TestConfigurationProviders:
 def test_get_nexus_settings(monkeypatch: MonkeyPatch):
     """Test that get_nexus_settings returns NexusSettings."""
     # Mock environment variables if necessary
-    settings = get_nexus_settings()
+    settings = dependencies.get_nexus_settings()
     assert isinstance(settings, NexusSettings)
     # Clear the cache for other tests
-    get_nexus_settings.cache_clear()
+    dependencies.get_nexus_settings.cache_clear()
 
     def test_settings_are_cached(self):
         """Test that settings providers use lru_cache and return same instance."""
@@ -112,22 +114,22 @@ class TestServiceProviders:
 
     def test_get_vault_service(self):
         """Test that get_vault_service returns VaultServiceProtocol."""
-        settings = ObsGraphsSettings(vault_submodule_path="/tmp/test_vault")
+        settings = ObsGlxSettings(vault_submodule_path="/tmp/test_vault")
 
         vault_service = dependencies.get_vault_service(settings=settings)
         assert vault_service is not None
 
     def test_get_gateway_client(self, monkeypatch):
         """Test that get_gateway_client returns appropriate client."""
-        monkeypatch.setenv("OBS_GRAPHS_USE_MOCK_OBS_GATEWAY", "true")
+        monkeypatch.setenv("USE_MOCK_OBS_GATEWAY", "true")
 
         # Clear cache
         dependencies.get_app_settings.cache_clear()
-        dependencies.get_gateway_settings.cache_clear()
+        dependencies.get_nexus_settings.cache_clear()
 
         client = dependencies.get_gateway_client(
             settings=dependencies.get_app_settings(),
-            gateway_settings=dependencies.get_gateway_settings(),
+            nexus_settings=dependencies.get_nexus_settings(),
         )
         assert client is not None
         assert isinstance(client, MockNexusClient)
@@ -148,7 +150,7 @@ class TestServiceProviders:
 
     def test_get_redis_client(self, monkeypatch):
         """Test that get_redis_client returns appropriate client."""
-        monkeypatch.setenv("OBS_GRAPHS_USE_MOCK_REDIS", "true")
+        monkeypatch.setenv("USE_MOCK_REDIS", "true")
 
         # Clear cache
         dependencies.get_app_settings.cache_clear()

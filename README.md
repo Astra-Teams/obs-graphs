@@ -14,7 +14,7 @@ Obsidian Galaxy is an AI-powered workflow automation service for Obsidian vaults
 ## Directory Structure
 
 ```
-├── src/obs_graphs/       # Main application package
+├── src/obs_glx/       # Main application package
 │   ├── api/             # FastAPI endpoints and schemas
 │   ├── celery/          # Celery tasks for async workflow execution
 │   ├── clients/         # External service clients (LLM adapters; gateway/research SDKs live in submodules)
