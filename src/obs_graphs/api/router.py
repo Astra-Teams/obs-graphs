@@ -91,7 +91,7 @@ async def run_workflow(
 
         if request.async_execution:
             # Asynchronous execution using Celery
-            from src.obs_graphs.celery.tasks import run_workflow_task
+            from worker.obs_graphs_worker.tasks import run_workflow_task
 
             # Queue task only AFTER database commit is complete
             task = run_workflow_task.delay(workflow.id)

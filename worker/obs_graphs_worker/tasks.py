@@ -10,14 +10,14 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from src.obs_graphs.celery.app import celery_app
 from src.obs_graphs.config import obs_graphs_settings, workflow_settings
 from src.obs_graphs.db.database import get_db
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
+from worker.obs_graphs_worker.app import celery_app
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # /app for worker container
 WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_graphs" / "workflows"
 
 
@@ -146,7 +146,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
         workflow.completed_at = datetime.now(timezone.utc)
         db.commit()
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - propagate to Celery for retry/backoff
         # Update workflow to FAILED
         if workflow:
             workflow.status = WorkflowStatus.FAILED
@@ -188,6 +188,6 @@ def cleanup_old_workflows() -> None:
             if dir_age > workflow_settings.temp_dir_cleanup_seconds:
                 try:
                     shutil.rmtree(temp_dir)
-                    logger.info(f"Cleaned up old workflow directory: {temp_dir}")
-                except Exception as e:
-                    logger.error(f"Failed to clean up {temp_dir}: {e}")
+                    logger.info("Cleaned up old workflow directory: %s", temp_dir)
+                except Exception as e:  # noqa: BLE001 - log cleanup failure
+                    logger.error("Failed to clean up %s: %s", temp_dir, e)

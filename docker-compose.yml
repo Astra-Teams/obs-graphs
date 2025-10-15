@@ -1,3 +1,7 @@
+secrets:
+  github_token:
+    environment: "OBS_GRAPHS_TOKEN"
+
 services:
   db:
     image: ${POSTGRES_IMAGE:-postgres:16-alpine}
@@ -34,6 +38,7 @@ services:
       target: production
       secrets:
         - github_token
+    image: ${API_IMAGE:-ghcr.io/your-org/obs-graphs-api}
     ports:
       - "${HOST_BIND_IP}:${HOST_PORT}:8000"
     depends_on:
@@ -56,14 +61,14 @@ services:
     networks:
       - backend
 
-  celery-worker:
+  worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: worker/obs_graphs_worker/Dockerfile
       target: production
       secrets:
         - github_token
-    command: celery -A src.obs_graphs.celery.app worker --loglevel=info
+    image: ${WORKER_IMAGE:-ghcr.io/your-org/obs-graphs-worker}
     depends_on:
       redis:
         condition: service_healthy
@@ -88,7 +93,3 @@ volumes:
 networks:
   backend:
     driver: bridge
-
-secrets:
-  github_token:
-    environment: "OBS_GRAPHS_TOKEN"

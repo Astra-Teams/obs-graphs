@@ -7,10 +7,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.obs_graphs.celery.tasks import run_workflow_task
 from src.obs_graphs.db.database import Base
 from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
 from tests.db.conftest import create_pending_workflow
+from worker.obs_graphs_worker.tasks import run_workflow_task
 
 
 # Test database setup
@@ -30,7 +30,7 @@ def test_db():
 @pytest.fixture
 def celery_eager_mode():
     """Configure Celery to run tasks synchronously in eager mode."""
-    from src.obs_graphs.celery.app import celery_app
+    from worker.obs_graphs_worker.app import celery_app
 
     celery_app.conf.update(task_always_eager=True, task_eager_propagates=True)
     yield celery_app
@@ -40,8 +40,8 @@ def celery_eager_mode():
 class TestRunWorkflowTask:
     """Tests for run_workflow_task Celery task."""
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_retrieves_workflow_from_database(
         self,
@@ -84,8 +84,8 @@ class TestRunWorkflowTask:
         assert updated_workflow.status == WorkflowStatus.COMPLETED
         assert updated_workflow.branch_name == "test-branch"
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_updates_status_to_running(
         self,
@@ -119,8 +119,8 @@ class TestRunWorkflowTask:
         assert workflow.status == WorkflowStatus.FAILED
         assert workflow.started_at is not None
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_calls_run_workflow_and_updates_db(
         self,
@@ -161,8 +161,8 @@ class TestRunWorkflowTask:
         )
         assert updated_workflow.status == WorkflowStatus.COMPLETED
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_records_branch_name(
         self,
@@ -200,8 +200,8 @@ class TestRunWorkflowTask:
         )
         assert updated_workflow.branch_name == "test-branch"
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_updates_workflow_to_completed(
         self,
@@ -240,8 +240,8 @@ class TestRunWorkflowTask:
         assert updated_workflow.status == WorkflowStatus.COMPLETED
         assert updated_workflow.completed_at is not None
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_updates_workflow_to_failed_on_error(
         self,
@@ -279,8 +279,8 @@ class TestRunWorkflowTask:
         assert updated_workflow.error_message == "Workflow error"
         assert updated_workflow.completed_at is not None
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     def test_task_raises_error_for_nonexistent_workflow(
         self, mock_get_db, mock_prepare_dir, test_db
     ):
@@ -293,8 +293,8 @@ class TestRunWorkflowTask:
 
         assert "not found" in str(exc_info.value).lower()
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_propagates_prompt_to_workflow_request(
         self,
@@ -345,8 +345,8 @@ class TestRunWorkflowTask:
         assert request.prompts == ["Test research prompt for propagation"]
         assert request.primary_prompt == "Test research prompt for propagation"
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_propagates_empty_prompt_when_null(
         self,
@@ -397,8 +397,8 @@ class TestRunWorkflowTask:
         assert request.prompts == ["Default research prompt"]
         assert request.primary_prompt == "Default research prompt"
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_propagates_prompt_with_strategy(
         self,
@@ -451,8 +451,8 @@ class TestRunWorkflowTask:
         assert request.primary_prompt == "Research quantum computing"
         assert request.strategy == WorkflowStrategy.RESEARCH_PROPOSAL
 
-    @patch("src.obs_graphs.celery.tasks._prepare_workflow_directory")
-    @patch("src.obs_graphs.celery.tasks.get_db")
+    @patch("worker.obs_graphs_worker.tasks._prepare_workflow_directory")
+    @patch("worker.obs_graphs_worker.tasks.get_db")
     @patch("src.obs_graphs.graphs.factory.get_graph_builder")
     def test_task_propagates_prompt_from_metadata(
         self,

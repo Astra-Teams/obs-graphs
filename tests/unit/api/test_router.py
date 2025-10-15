@@ -69,7 +69,7 @@ def client(test_db):
 @pytest.fixture
 def mock_celery_task():
     """Mock Celery task to prevent actual task execution."""
-    with patch("src.obs_graphs.celery.tasks.run_workflow_task") as mock_task:
+    with patch("worker.obs_graphs_worker.tasks.run_workflow_task") as mock_task:
         mock_result = MagicMock()
         mock_result.id = "test-task-id"
         mock_task.delay.return_value = mock_result

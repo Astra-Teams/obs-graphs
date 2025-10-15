@@ -20,9 +20,8 @@ services:
     environment:
       <<: *test-env
 
-  celery-worker:
+  worker:
     build:
       target: development
-    command: celery -A src.obs_graphs.celery.app worker --loglevel=debug
     environment:
       <<: *test-env

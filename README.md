@@ -76,7 +76,7 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 
 Use Docker Compose via `just` recipes. The compose hierarchy works as follows:
 
-- `docker-compose.yml` defines the core services (PostgreSQL, Redis, obs-api, celery-worker).
+- `docker-compose.yml` defines the core services (PostgreSQL, Redis, obs-api, worker).
 - `docker-compose.dev.override.yml` and `docker-compose.test.override.yml` add environment-specific tweaks.
 
 Common commands:
