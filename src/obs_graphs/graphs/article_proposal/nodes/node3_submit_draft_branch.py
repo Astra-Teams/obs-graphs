@@ -23,19 +23,19 @@ class SubmitDraftBranchNode(NodeProtocol):
     def __init__(self, gateway_client: GatewayClientProtocol):
         self._gateway_client = gateway_client
 
-    def validate_input(self, context: dict) -> bool:
+    def validate_input(self, state: dict) -> bool:
         required_keys = ["strategy", "accumulated_changes", "node_results"]
-        return all(key in context for key in required_keys)
+        return all(key in state for key in required_keys)
 
     # Async for protocol compatibility, no awaitable operations in this method
-    async def execute(self, context: dict) -> NodeResult:
-        if not self.validate_input(context):
+    async def execute(self, state: dict) -> NodeResult:
+        if not self.validate_input(state):
             raise ValueError(
                 "Invalid context: strategy, accumulated_changes, and node_results are required"
             )
 
-        accumulated_changes: list[FileChange] = context["accumulated_changes"]
-        node_results: dict = context["node_results"]
+        accumulated_changes: list[FileChange] = state["accumulated_changes"]
+        node_results: dict = state["node_results"]
 
         if not accumulated_changes:
             return NodeResult(

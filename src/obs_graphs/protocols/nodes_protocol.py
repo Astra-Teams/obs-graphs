@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from src.obs_graphs.graphs.article_proposal.state import NodeResult
+from src.obs_graphs.graphs.article_proposal.state import NodeResult, GraphState
 
 
 class NodeProtocol(Protocol):
@@ -10,18 +10,17 @@ class NodeProtocol(Protocol):
 
     name: str  # Class attribute for node name
 
-    async def execute(self, context: dict) -> NodeResult:
+    async def execute(self, state: GraphState) -> NodeResult:
         """
         Execute the node's task.
 
         Args:
-            context: Dictionary containing execution context including:
-                - branch_name: Branch to operate on
+            state: GraphState containing execution context including:
                 - vault_summary: Summary of vault state
                 - strategy: Workflow strategy
-                - prompt: User prompt (if any)
-                - previous_changes: FileChanges from previous nodes
-                - previous_results: Results from previous nodes
+                - prompts: User prompts (if any)
+                - accumulated_changes: FileChanges from previous nodes
+                - node_results: Results from previous nodes
 
         Returns:
             NodeResult containing success status, file changes, and metadata
@@ -32,12 +31,12 @@ class NodeProtocol(Protocol):
         """
         ...
 
-    def validate_input(self, context: dict) -> bool:
+    def validate_input(self, state: GraphState) -> bool:
         """
         Validate that the context contains required information for this node.
 
         Args:
-            context: Execution context dictionary
+            state: Execution context dictionary
 
         Returns:
             True if context is valid, False otherwise

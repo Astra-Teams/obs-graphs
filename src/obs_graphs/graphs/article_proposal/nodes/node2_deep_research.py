@@ -30,7 +30,7 @@ class DeepResearchNode(NodeProtocol):
         """Initialize the deep research node."""
         self.research_client = research_client
 
-    def validate_input(self, context: dict) -> bool:
+    def validate_input(self, state: dict) -> bool:
         """
         Validate that the context contains at least the topic title.
 
@@ -42,20 +42,20 @@ class DeepResearchNode(NodeProtocol):
         """
         # Only require topic_title as minimum, others can be generated/defaulted
         return (
-            "topic_title" in context
-            and isinstance(context["topic_title"], str)
-            and len(context["topic_title"].strip()) > 0
+            "topic_title" in state
+            and isinstance(state["topic_title"], str)
+            and len(state["topic_title"].strip()) > 0
         )
 
-    async def execute(self, context: dict) -> NodeResult:
+    async def execute(self, state: dict) -> NodeResult:
         """
         Execute deep research and persist the returned article.
         """
-        if not self.validate_input(context):
+        if not self.validate_input(state):
             raise ValueError("Invalid context: topic_title is required")
 
-        topic_title = context["topic_title"]
-        proposal_slug = context.get(
+        topic_title = state["topic_title"]
+        proposal_slug = state.get(
             "proposal_slug",
             topic_title.lower()
             .replace(" ", "-")

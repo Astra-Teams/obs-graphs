@@ -113,14 +113,14 @@ class ArticleProposalGraph:
 
         try:
             # Analyze vault to create workflow plan
-            workflow_plan = self.determine_workflow_plan(request)
+            workflow_plan = self.get_default_plan(request)
 
             # Override strategy if specified in request
             if request.strategy:
                 workflow_plan.strategy = request.strategy
 
             # Execute workflow
-            workflow_result = await self.execute_workflow(
+            workflow_result = await self._run_graph(
                 workflow_plan,
                 prompts=request.prompts,
             )
@@ -142,20 +142,15 @@ class ArticleProposalGraph:
                 node_results={},
             )
 
-    def determine_workflow_plan(
+    def get_default_plan(
         self,
         request: WorkflowRunRequest,
     ) -> WorkflowPlan:
         """
-        Analyze vault and request to determine which nodes to run and in what order.
+        Return the default static workflow plan.
 
-        The workflow now requires a prompt and always uses the research_proposal strategy.
-
-        Args:
-            request: Workflow run request
-
-        Returns:
-            WorkflowPlan with ordered list of nodes and strategy
+        Note: This currently returns a fixed plan. If dynamic plan determination
+        is needed in the future, replace this implementation with analysis logic.
         """
         strategy = WorkflowStrategy.RESEARCH_PROPOSAL.value
         nodes = [
@@ -166,20 +161,16 @@ class ArticleProposalGraph:
 
         return WorkflowPlan(nodes=nodes, strategy=strategy)
 
-    async def execute_workflow(
+    async def _run_graph(
         self,
         workflow_plan: WorkflowPlan,
         prompts: list[str] | None = None,
     ) -> WorkflowResult:
         """
-        Execute workflow using LangGraph state graph.
+        Run the compiled LangGraph using the provided workflow plan.
 
-        Args:
-            workflow_plan: Plan specifying which nodes to run
-            prompts: User prompts for research workflows (list of strings)
-
-        Returns:
-            WorkflowResult with aggregated changes and results
+        This method intentionally lets exceptions propagate to the caller so
+        that a single responsibility for error handling remains in `run_workflow`.
         """
         # Initialize workflow state
         vault_summary = self.vault_service.get_vault_summary()
@@ -198,31 +189,22 @@ class ArticleProposalGraph:
         # Build state graph based on workflow plan
         graph = self._build_graph(workflow_plan)
 
-        # Execute the workflow
-        try:
-            final_state = await graph.ainvoke(initial_state)
+        # Execute the workflow; let exceptions bubble up to caller
+        final_state = await graph.ainvoke(initial_state)
 
-            # Extract results from final state
-            all_changes = final_state["accumulated_changes"]
-            node_results = final_state["node_results"]
+        # Extract results from final state
+        all_changes = final_state["accumulated_changes"]
+        node_results = final_state["node_results"]
 
-            # Generate summary
-            summary = self._generate_summary(node_results, workflow_plan.strategy)
+        # Generate summary
+        summary = self._generate_summary(node_results, workflow_plan.strategy)
 
-            return WorkflowResult(
-                success=True,
-                changes=all_changes,
-                summary=summary,
-                node_results=node_results,
-            )
-
-        except Exception as e:
-            return WorkflowResult(
-                success=False,
-                changes=[],
-                summary=f"Workflow failed: {str(e)}",
-                node_results={},
-            )
+        return WorkflowResult(
+            success=True,
+            changes=all_changes,
+            summary=summary,
+            node_results=node_results,
+        )
 
     def _build_graph(self, workflow_plan: WorkflowPlan) -> StateGraph:
         """
@@ -269,22 +251,8 @@ class ArticleProposalGraph:
             """Execute the node and update state."""
             node = self._get_node(node_name)
 
-            # Prepare context for node
-            context = {
-                "vault_summary": state["vault_summary"],
-                "strategy": state["strategy"],
-                "prompts": state["prompts"],
-                "accumulated_changes": state["accumulated_changes"],
-                "node_results": state["node_results"],
-            }
-
-            # Add metadata from previous nodes to context
-            for _prev_node_name, prev_result in state["node_results"].items():
-                if "metadata" in prev_result:
-                    context.update(prev_result["metadata"])
-
-            # Execute node (nodes no longer receive vault_path, they use VaultService)
-            result: NodeResult = await node.execute(context)
+            # Execute node with the graph state directly (avoid redundant copy)
+            result: NodeResult = await node.execute(state)
 
             # Update state with results
             state["accumulated_changes"].extend(result.changes)

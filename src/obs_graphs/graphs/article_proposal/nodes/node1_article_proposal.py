@@ -23,7 +23,7 @@ class ArticleProposalNode(NodeProtocol):
         """Initialize the article proposal node."""
         self._llm_provider = llm_provider
 
-    def validate_input(self, context: dict) -> bool:
+    def validate_input(self, state: dict) -> bool:
         """
         Validate that the context contains required information.
 
@@ -33,18 +33,18 @@ class ArticleProposalNode(NodeProtocol):
         Returns:
             True if context is valid, False otherwise
         """
-        strategy = context.get("strategy", "research_proposal")
+        strategy = state.get("strategy", "research_proposal")
         if strategy == "new_article":
-            return "vault_summary" in context
+            return "vault_summary" in state
         else:
             return (
-                "prompts" in context
-                and isinstance(context["prompts"], list)
-                and len(context["prompts"]) > 0
-                and len(context["prompts"][0].strip()) > 0
+                "prompts" in state
+                and isinstance(state["prompts"], list)
+                and len(state["prompts"]) > 0
+                and len(state["prompts"][0].strip()) > 0
             )
 
-    async def execute(self, context: dict) -> NodeResult:
+    async def execute(self, state: dict) -> NodeResult:
         """
         Execute article proposal generation.
 
@@ -54,20 +54,20 @@ class ArticleProposalNode(NodeProtocol):
         Returns:
             NodeResult with article proposals or topic proposal
         """
-        if not self.validate_input(context):
+        if not self.validate_input(state):
             raise ValueError("required fields missing")
 
-        strategy = context.get("strategy", "new_article")
+        strategy = state.get("strategy", "new_article")
         # Backend parameter is ignored by stl-conn
         llm_client = self._llm_provider(None)
 
         if strategy == "research_proposal":
-            return await self._execute_research_topic_proposal(context, llm_client)
+            return await self._execute_research_topic_proposal(state, llm_client)
         else:
-            return await self._execute_new_article_proposal(context, llm_client)
+            return await self._execute_new_article_proposal(state, llm_client)
 
     async def _execute_research_topic_proposal(
-        self, context: dict, llm_client: StlConnClientProtocol
+        self, state: dict, llm_client: StlConnClientProtocol
     ) -> NodeResult:
         """
         Execute research topic proposal based on user prompt.
@@ -79,7 +79,7 @@ class ArticleProposalNode(NodeProtocol):
             NodeResult with topic metadata (title, summary, tags, slug)
         """
         # Use only the first prompt from the list for now
-        prompt = context["prompts"][0].strip()
+        prompt = state["prompts"][0].strip()
 
         # Check for intentional failure trigger
         if "fail intentionally" in prompt.lower():
@@ -123,7 +123,7 @@ class ArticleProposalNode(NodeProtocol):
             )
 
     async def _execute_new_article_proposal(
-        self, context: dict, llm_client: StlConnClientProtocol
+        self, state: dict, llm_client: StlConnClientProtocol
     ) -> NodeResult:
         """
         Execute new article proposal based on vault analysis.
@@ -134,7 +134,7 @@ class ArticleProposalNode(NodeProtocol):
         Returns:
             NodeResult with article proposals
         """
-        vault_summary = context["vault_summary"]
+        vault_summary = state["vault_summary"]
 
         # Generate new article proposals
         proposal_prompt = render_prompt(
