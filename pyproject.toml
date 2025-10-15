@@ -22,8 +22,8 @@ dependencies = [
     "sqlalchemy>=2.0.29,<3.0.0",
     "uvicorn>=0.35.0,<0.36.0",
     "uvloop>=0.19.0,<0.20.0",
-    "obs-gtwy-api @ git+https://github.com/asterismhq/obs-gtwy.git#v2.1.1",
-    "starprobe @ git+https://github.com/asterismhq/starprobe.git#v1.7.3",
+    "nexus @ git+https://github.com/asterismhq/nexus.git#v3.0.0",
+    "starprobe @ git+https://github.com/asterismhq/starprobe.git#v2.0.0",
     "stl-conn @ git+https://github.com/asterismhq/stl-conn.git#v1.3.0",
 ]
 

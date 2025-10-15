@@ -2,9 +2,6 @@
 	path = submodules/constellations
 	url = https://github.com/asterismhq/constellations.git
   branch = main
-[submodule "submodules/obs-gtwy"] # v2.1.1
-	path = submodules/obs-gtwy
-	url = https://github.com/asterismhq/obs-gtwy
 [submodule "submodules/stl-conn"] # v1.3.0
 	path = submodules/stl-conn
 	url = https://github.com/asterismhq/stl-conn
