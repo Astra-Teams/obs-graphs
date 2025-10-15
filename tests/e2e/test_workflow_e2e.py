@@ -70,30 +70,18 @@ class TestWorkflowE2E:
                 },
             )
             if response.status_code != 201:
-                print("\n=== DEBUG: Error Response ===")
                 print(f"Status: {response.status_code}")
                 print(f"Content: {response.text}")
-                print("=============================\n")
             assert response.status_code == 201
             payload = response.json()
-            print("\n=== DEBUG: Initial workflow response ===")
-            print(f"Payload: {payload}")
             workflow_id = payload["id"]
             assert "id" in payload
-            print(f"Status: {payload['status']}")
-            print(f"Error message: {payload.get('error_message')}")
-            print("===================================\n")
             assert payload["status"] in {"PENDING", "RUNNING"}
 
             # Poll until terminal state
             workflow_data = _poll_workflow_until_terminal(
                 client, workflow_id, timeout=300.0
             )
-
-            print("\n=== DEBUG: Final workflow data ===")
-            print(f"Status: {workflow_data['status']}")
-            print(f"Error message: {workflow_data.get('error_message')}")
-            print("===================================\n")
 
             # Verify completion
             assert workflow_data["id"] == workflow_id

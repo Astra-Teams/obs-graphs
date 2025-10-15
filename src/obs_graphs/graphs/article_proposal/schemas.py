@@ -2,7 +2,15 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Annotated, Dict, List, Optional, TypedDict
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Dict,
+    List,
+    NotRequired,
+    Optional,
+    TypedDict,
+)
 
 from pydantic import BaseModel
 
@@ -91,3 +99,4 @@ class GraphStateModel(TypedDict):
     accumulated_changes: List[FileChange]
     node_results: Dict
     messages: Annotated[List[str], "add_messages"]
+    topic_title: NotRequired[str]  # Optional field for research topic

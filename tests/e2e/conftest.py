@@ -28,12 +28,12 @@ def api_base_url() -> str:
 def mock_llm_client() -> AsyncMock:
     """Create a mock LLM client for E2E tests."""
     client = AsyncMock(spec=StlConnClientProtocol)
-    
+
     # Mock response for research_topic_proposal
     mock_response = AsyncMock()
     mock_response.content = "Test Research Topic"
     client.invoke.return_value = mock_response
-    
+
     return client
 
 
@@ -94,7 +94,7 @@ def e2e_setup() -> Generator[None, None, None]:
         "true"  # E2E uses mock stl-conn (requires separate LLM server)
     )
     env["USE_MOCK_REDIS"] = "false"  # E2E uses real Redis
-    env["USE_MOCK_OLLAMA_DEEP_RESEARCHER"] = "false"
+    env["USE_MOCK_OLLAMA_DEEP_RESEARCHER"] = "true"
     env["USE_MOCK_OBS_GTWY"] = "true"
 
     host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")

@@ -272,7 +272,9 @@ class ArticleProposalGraph:
 
             # Merge node metadata into state for downstream nodes
             if result.metadata:
-                state.update(result.metadata)
+                # Update state in place
+                for key, value in result.metadata.items():
+                    state[key] = value
 
             return state
 

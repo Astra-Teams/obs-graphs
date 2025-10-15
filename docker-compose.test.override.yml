@@ -13,6 +13,9 @@ services:
       - "${HOST_BIND_IP}:${TEST_PORT}:8000"
     environment:
       - POSTGRES_DB=${POSTGRES_TEST_DB}
+      - USE_MOCK_STL_CONN=true
+      - USE_MOCK_OBS_GTWY=true
+      - USE_MOCK_OLLAMA_DEEP_RESEARCHER=true
 
   celery-worker:
     build:
@@ -20,3 +23,6 @@ services:
     command: celery -A src.obs_graphs.celery.app worker --loglevel=debug
     environment:
       - POSTGRES_DB=${POSTGRES_TEST_DB}
+      - USE_MOCK_STL_CONN=true
+      - USE_MOCK_OBS_GTWY=true
+      - USE_MOCK_OLLAMA_DEEP_RESEARCHER=true
