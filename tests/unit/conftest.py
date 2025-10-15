@@ -17,11 +17,11 @@ def set_unit_test_env(monkeypatch):
     Note: Monkeypatch only works for in-process execution.
     For subprocess-based tests, use subprocess env parameter.
     """
-    monkeypatch.setenv("USE_SQLITE", "true")
-    monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
-    monkeypatch.setenv("USE_MOCK_REDIS", "true")
-    monkeypatch.setenv("USE_MOCK_STARPROBE", "true")
-    monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
+    monkeypatch.setenv("OBS_GLX_USE_SQLITE", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_REDIS", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_STARPROBE", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
 
     try:
         monkeypatch.setattr(

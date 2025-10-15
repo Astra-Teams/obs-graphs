@@ -7,11 +7,11 @@ import pytest
 def configure_sdk_test_env(monkeypatch):
     """Force SDK tests to operate entirely with mocks."""
 
-    monkeypatch.setenv("USE_SQLITE", "true")
-    monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
-    monkeypatch.setenv("USE_MOCK_REDIS", "true")
-    monkeypatch.setenv("USE_MOCK_STARPROBE", "true")
-    monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
+    monkeypatch.setenv("OBS_GLX_USE_SQLITE", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_REDIS", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_STARPROBE", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
 
     class _BlockedHttpClient:  # pragma: no cover - constructor raises immediately
         def __init__(self, *args, **kwargs):

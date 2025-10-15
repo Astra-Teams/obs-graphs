@@ -125,7 +125,7 @@ intg-test:
 # Run database tests with SQLite
 sqlt-test:
     @echo "🚀 Running database tests with SQLite..."
-    @USE_SQLITE=true uv run pytest tests/db
+    @OBS_GLX_USE_SQLITE=true uv run pytest tests/db
 
 # Run all Docker-based tests
 docker-test:
@@ -146,13 +146,13 @@ build-test:
 # Run database tests with PostgreSQL
 psql-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
+    @OBS_GLX_USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
     @echo "Waiting for database to be ready..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api sh -c "while ! pg_isready -h db -U ${POSTGRES_USER} -d ${POSTGRES_TEST_DB}; do echo 'Waiting for database...'; sleep 2; done"
+    @OBS_GLX_USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api sh -c "while ! pg_isready -h db -U ${POSTGRES_USER} -d ${POSTGRES_TEST_DB}; do echo 'Waiting for database...'; sleep 2; done"
     @echo "Running migrations..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api alembic upgrade head
+    @OBS_GLX_USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api alembic upgrade head
     @echo "Running database tests inside api container (against PostgreSQL)..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api pytest tests/db; \
+    @OBS_GLX_USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api pytest tests/db; \
     EXIT_CODE=$?; \
     echo "🔴 Stopping TEST containers..."; \
     {{TEST_COMPOSE}} down --remove-orphans; \
@@ -161,7 +161,7 @@ psql-test:
 # Run e2e tests against containerized application stack
 e2e-test:
     @echo "🚀 Running e2e tests..."
-    @USE_SQLITE=false uv run pytest tests/e2e
+    @OBS_GLX_USE_SQLITE=false uv run pytest tests/e2e
 
 # ==============================================================================
 # CODE QUALITY

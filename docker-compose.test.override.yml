@@ -1,8 +1,8 @@
 x-test-env: &test-env
   POSTGRES_DB: ${POSTGRES_TEST_DB}
-  USE_MOCK_STL_CONN: true
-  USE_MOCK_NEXUS: true
-  USE_MOCK_STARPROBE: true
+  OBS_GLX_USE_MOCK_STL_CONN: true
+  OBS_GLX_USE_MOCK_NEXUS: true
+  OBS_GLX_USE_MOCK_STARPROBE: true
 services:
   db:
     ports:
@@ -15,7 +15,7 @@ services:
     build:
       target: development
     ports: !override
-      - "${HOST_BIND_IP}:${TEST_PORT}:8000"
+      - "${OBS_GLX_HOST_BIND_IP}:${OBS_GLX_TEST_PORT}:8000"
     environment:
       <<: *test-env
 

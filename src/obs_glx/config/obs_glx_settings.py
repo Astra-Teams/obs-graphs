@@ -40,25 +40,25 @@ class ObsGlxSettings(BaseSettings):
         default=True,
         title="Use SQLite",
         description="Toggle between SQLite (True) and PostgreSQL (False) databases.",
-        alias="USE_SQLITE",
+        alias="OBS_GLX_USE_SQLITE",
     )
     use_mock_redis: bool = Field(
         default=False,
         title="Use Mock Redis",
         description="Return a mocked Redis client when enabled.",
-        alias="USE_MOCK_REDIS",
+        alias="OBS_GLX_USE_MOCK_REDIS",
     )
     use_mock_starprobe: bool = Field(
         default=True,
         title="Use Mock Starprobe",
         description="Return a mocked starprobe client when enabled.",
-        alias="USE_MOCK_STARPROBE",
+        alias="OBS_GLX_USE_MOCK_STARPROBE",
     )
     use_mock_obs_gateway: bool = Field(
         default=True,
         title="Use Mock nexus Gateway",
         description="Return a mocked nexus client when enabled.",
-        alias="USE_MOCK_NEXUS",
+        alias="OBS_GLX_USE_MOCK_NEXUS",
     )
 
     vault_submodule_path: str = Field(

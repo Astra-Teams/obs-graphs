@@ -18,11 +18,11 @@ class WorkflowSettings(BaseSettings):
         default=86400,
         title="Workflow Temp Directory Cleanup Interval",
         description="Number of seconds before temporary workflow directories are removed.",
-        alias="WORKFLOW_TEMP_DIR_CLEANUP_SECONDS",
+        alias="OBS_GLX_WORKFLOW_TEMP_DIR_CLEANUP_SECONDS",
     )
     default_branch: str = Field(
         default="main",
         title="Workflow Default Branch",
         description="Base branch reference used when preparing draft submissions.",
-        alias="WORKFLOW_DEFAULT_BRANCH",
+        alias="OBS_GLX_WORKFLOW_DEFAULT_BRANCH",
     )

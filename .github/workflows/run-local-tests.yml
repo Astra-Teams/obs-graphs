@@ -49,5 +49,5 @@ jobs:
 
       - name: Run local tests
         env:
-          USE_SQLITE: "true"
+          OBS_GLX_USE_SQLITE: "true"
         run: just ${{ matrix.test_target }}-test
