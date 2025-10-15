@@ -56,8 +56,8 @@ class ObsGraphsSettings(BaseSettings):
     )
     use_mock_obs_gateway: bool = Field(
         default=True,
-        title="Use Mock obs-gtwy Gateway",
-        description="Return a mocked obs-gtwy client when enabled.",
+        title="Use Mock nexus Gateway",
+        description="Return a mocked nexus client when enabled.",
         alias="USE_MOCK_OBS_GTWY",
     )
 

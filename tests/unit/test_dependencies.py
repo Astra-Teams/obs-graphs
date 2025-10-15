@@ -1,6 +1,6 @@
 """Unit tests for the dependency injection system."""
 
-from obs_gtwy_sdk import MockObsGatewayClient
+from nexus_sdk import MockNexusClient
 from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 from src.obs_graphs import dependencies
@@ -134,7 +134,7 @@ class TestServiceProviders:
             gateway_settings=dependencies.get_gateway_settings(),
         )
         assert client is not None
-        assert isinstance(client, MockObsGatewayClient)
+        assert isinstance(client, MockNexusClient)
 
     def test_get_research_client(self, monkeypatch):
         """Test that get_research_client returns appropriate client."""

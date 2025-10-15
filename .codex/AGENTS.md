@@ -1,6 +1,6 @@
 ## 🚀 Overview
 
-**Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes by delegating draft branches to the **obs-gtwy** gateway service.
+**Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes by delegating draft branches to the **nexus** gateway service.
 
 **Core Tech**: FastAPI, LangGraph, stl-conn (Stella Connector), PostgreSQL/SQLite, Celery, Redis, Docker.
 
@@ -32,7 +32,7 @@
     -   Currently supports: `article-proposal` workflow type
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
--   **Clients (`clients/`)**: LLM integration via `stl-conn` SDK (`StlConnClient`, `MockStlConnClient`) implementing `StlConnClientProtocol`; gateway and research integrations consume shared `obs_gtwy_sdk` and `starprobe_sdk` packages.
+-   **Clients (`clients/`)**: LLM integration via `stl-conn` SDK (`StlConnClient`, `MockStlConnClient`) implementing `StlConnClientProtocol`; gateway and research integrations consume shared `nexus_sdk` and `starprobe_sdk` packages.
 -   **SDK (`sdk/obs_graphs_sdk/`)**: First-party workflow client packaged as an optional dependency and aligned with the `starprobe` SDK conventions.
 -   **Async Tasks (`worker/obs_graphs_worker/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
 -   **Configuration (`config/`)**: Environment-based settings for stl-conn endpoint (`stl_conn_settings.py`), database, Redis, gateway, and research API configurations.
@@ -84,7 +84,7 @@
 
 ## 📦 Submodules
 
-This project uses Git submodules to manage external dependencies. Submodules are located in the `submodules/` directory and should never be edited directly. If changes are required, please contact the respective repository maintainers or request updates from the user.
+This project uses Git submodules to manage external dependencies. **Submodules are located in the `submodules/` directory and MUST NOT BE EDITED DIRECTLY.** If changes are required, please contact the respective repository maintainers or request updates from the user.
 
 ### constellations (submodules/constellations)
 Provides the Obsidian Vault structure and utilities for managing knowledge bases, handling file operations, vault organization, and integration with Obsidian's markdown-based knowledge management system.
@@ -95,7 +95,7 @@ Implements AI-driven research workflows, document analysis, and content generati
 ### stl-conn (submodules/stl-conn)
 Provides a unified interface for connecting to various Large Language Models, handling authentication, and managing API interactions as the Stella Connector for LLM integration.
 
-### obs-gtwy (submodules/obs-gtwy)
+### nexus (submodules/nexus)
 Acts as a bridge between the Obsidian Graphs service and external systems, handling draft branch submissions and workflow delegations as the gateway service for Obsidian integrations.
 
 ---

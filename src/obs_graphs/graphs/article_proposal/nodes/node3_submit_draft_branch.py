@@ -1,11 +1,11 @@
-"""Node responsible for delegating draft creation to the obs-gtwy gateway."""
+"""Node responsible for delegating draft creation to the nexus gateway."""
 
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
-from obs_gtwy_sdk import GatewayClientProtocol
+from nexus_sdk import NexusClientProtocol
 
 from src.obs_graphs.graphs.article_proposal.state import (
     FileAction,
@@ -20,7 +20,7 @@ class SubmitDraftBranchNode(NodeProtocol):
 
     name = "submit_draft_branch"
 
-    def __init__(self, gateway_client: GatewayClientProtocol):
+    def __init__(self, gateway_client: NexusClientProtocol):
         self._gateway_client = gateway_client
 
     def validate_input(self, state: dict) -> bool:

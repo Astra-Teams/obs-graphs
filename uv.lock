@@ -1612,6 +1612,18 @@ wheels = [
 ]
 
 [[package]]
+name = "nexus-api"
+version = "0.1.0"
+source = { git = "https://github.com/asterismhq/nexus.git#5a8f75c05c456c6eace6fbaaa365acb0e7b0565d" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[[package]]
 name = "numpy"
 version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1689,7 +1701,7 @@ dependencies = [
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
     { name = "langgraph" },
-    { name = "obs-gtwy-api" },
+    { name = "nexus-api" },
     { name = "ollama" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
@@ -1736,7 +1748,7 @@ requires-dist = [
     { name = "langchain-ollama", specifier = ">=0.3.6,<0.4.0" },
     { name = "langchain-openai", specifier = ">=0.0.5,<0.3.0" },
     { name = "langgraph", specifier = ">=0.0.20,<0.3.0" },
-    { name = "obs-gtwy-api", git = "https://github.com/asterismhq/obs-gtwy.git" },
+    { name = "nexus-api", git = "https://github.com/asterismhq/nexus.git" },
     { name = "ollama", specifier = ">=0.5.3,<0.6.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1,<4.0" },
     { name = "pydantic", marker = "extra == 'sdk'", specifier = ">=2.9.0,<3.0.0" },
@@ -1764,18 +1776,6 @@ dev = [
     { name = "ruff", specifier = ">=0.12.10" },
     { name = "testcontainers", extras = ["postgres"], specifier = ">=4.6.0" },
     { name = "watchdog", extras = ["watchmedo"], specifier = ">=4.0.1" },
-]
-
-[[package]]
-name = "obs-gtwy-api"
-version = "0.1.0"
-source = { git = "https://github.com/asterismhq/obs-gtwy.git#cd18894375c2b84c210ffb4b7818ba95ff536e88" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "pydantic-settings" },
-    { name = "python-dotenv" },
-    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [[package]]

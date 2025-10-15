@@ -1,4 +1,4 @@
-"""Unit tests for SubmitDraftBranchNode with obs-gtwy integration."""
+"""Unit tests for SubmitDraftBranchNode with nexus integration."""
 
 from unittest.mock import AsyncMock, MagicMock
 

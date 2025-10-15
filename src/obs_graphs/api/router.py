@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 from typing import Callable, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from obs_gtwy_sdk import GatewayClientProtocol
-from starprobe_sdk import ResearchClientProtocol
+from nexus_sdk import NexusClientProtocol
 from sqlalchemy.orm import Session
+from starprobe_sdk import ResearchClientProtocol
 
 from src.obs_graphs import dependencies
 from src.obs_graphs.api.schemas import (
@@ -36,7 +36,7 @@ async def run_workflow(
     llm_client_provider: Callable[[], StlConnClientProtocol] = Depends(
         dependencies.get_llm_client_provider
     ),
-    gateway_client: GatewayClientProtocol = Depends(dependencies.get_gateway_client),
+    gateway_client: NexusClientProtocol = Depends(dependencies.get_gateway_client),
     research_client: ResearchClientProtocol = Depends(dependencies.get_research_client),
 ) -> WorkflowRunResponse:
     """

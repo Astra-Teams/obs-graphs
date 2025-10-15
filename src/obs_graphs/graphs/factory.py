@@ -2,7 +2,7 @@
 
 from typing import Callable
 
-from obs_gtwy_sdk import GatewayClientProtocol
+from nexus_sdk import NexusClientProtocol
 from starprobe_sdk import ResearchClientProtocol
 
 from src.obs_graphs.graphs.article_proposal.graph import ArticleProposalGraph
@@ -14,7 +14,7 @@ def get_graph_builder(
     workflow_type: str,
     vault_service: VaultServiceProtocol | None = None,
     llm_client_provider: Callable[[], StlConnClientProtocol] | None = None,
-    gateway_client: GatewayClientProtocol | None = None,
+    gateway_client: NexusClientProtocol | None = None,
     research_client: ResearchClientProtocol | None = None,
 ) -> WorkflowGraphProtocol:
     """

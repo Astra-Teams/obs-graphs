@@ -6,9 +6,9 @@ from typing import Callable, Generator, Union
 
 import redis
 from fastapi import Depends
-from obs_gtwy_sdk import GatewayClientProtocol, MockObsGatewayClient, ObsGatewayClient
-from starprobe_sdk import ResearchApiClient, ResearchClientProtocol
+from nexus_sdk import MockNexusClient, NexusClient, NexusClientProtocol
 from sqlalchemy.orm import Session
+from starprobe_sdk import ResearchApiClient, ResearchClientProtocol
 from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 from dev.mocks.clients import MockRedisClient, MockResearchApiClient
@@ -181,9 +181,9 @@ def get_vault_service(
 def get_gateway_client(
     settings: ObsGraphsSettings = Depends(get_app_settings),
     gateway_settings: GatewaySettings = Depends(get_gateway_settings),
-) -> GatewayClientProtocol:
+) -> NexusClientProtocol:
     """
-    Get the obs-gtwy gateway client instance.
+    Get the nexus gateway client instance.
 
     Args:
         settings: Application settings for mock configuration
@@ -193,10 +193,10 @@ def get_gateway_client(
         Gateway client (mock or real based on settings)
     """
     if settings.use_mock_obs_gateway:
-        return MockObsGatewayClient()
+        return MockNexusClient()
 
     gateway_base = str(gateway_settings.base_url).rstrip("/")
-    return ObsGatewayClient(base_url=gateway_base)
+    return NexusClient(base_url=gateway_base)
 
 
 def get_research_client(
@@ -288,7 +288,7 @@ def get_deep_research_node(
 
 
 def get_submit_draft_branch_node(
-    gateway_client: GatewayClientProtocol = Depends(get_gateway_client),
+    gateway_client: NexusClientProtocol = Depends(get_gateway_client),
 ):
     """
     Get the submit draft branch node.

@@ -1,6 +1,6 @@
 # Obsidian Graphs
 
-Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through obs-gtwy managed draft branches.
+Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through nexus managed draft branches.
 
 ## What's in the box?
 
@@ -9,7 +9,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
 - **Pluggable LLM backends** via the stl-conn SDK, providing a unified interface to various LLM providers.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
-- **SDK integrations** for obs-gtwy and deep research through the shared `obs_gtwy_sdk` and `starprobe_sdk` packages, plus a first-party `obs_graphs_sdk` for workflow execution.
+- **SDK integrations** for nexus and deep research through the shared `nexus_sdk` and `starprobe_sdk` packages, plus a first-party `obs_graphs_sdk` for workflow execution.
 
 ## Directory Structure
 
