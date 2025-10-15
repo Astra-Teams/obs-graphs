@@ -1,7 +1,3 @@
-[submodule "submodules/obsidian-vault"]
-	path = submodules/obsidian-vault
-	url = https://github.com/asterismhq/constellations.git
-	branch = main
 [submodule "submodules/obs-gtwy"] # v2.1.1
 	path = submodules/obs-gtwy
 	url = https://github.com/asterismhq/obs-gtwy
