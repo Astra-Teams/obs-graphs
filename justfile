@@ -102,14 +102,20 @@ test:
 
 # Run lightweight local test suite
 local-test:
-  @just unit-test
-  @just intg-test
-  @just sqlt-test
+    @just unit-test
+    @just sdk-test
+    @just intg-test
+    @just sqlt-test
 
 # Run unit tests locally
 unit-test:
     @echo "🚀 Running unit tests..."
-    @uv run pytest tests/unit
+    @uv run --extra sdk pytest tests/unit
+
+# Run SDK tests locally
+sdk-test:
+    @echo "🚀 Running SDK tests..."
+    @uv run --extra sdk pytest tests/sdk
 
 # Run integration tests locally
 intg-test:

@@ -12,6 +12,7 @@
 -   `tests/`: Test suite (Unit, Integration, E2E, DB).
 -   `dev/`: Mock clients and responses for offline development.
 -   `submodules/`: Git submodules for dependencies like `obsidian-vault`.
+-   `sdk/`: First-party Python SDK mirroring the `olm-d-rch` structure for workflow execution.
 -   `alembic/`: Database migrations.
 -   `docker-compose*.yml`: Container orchestration files.
 -   `justfile`: Task runner for automation.
@@ -32,6 +33,7 @@
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
 -   **Clients (`clients/`)**: LLM integration via `stl-conn` SDK (`StlConnClient`, `MockStlConnClient`) implementing `StlConnClientProtocol`; gateway and research integrations consume shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
+-   **SDK (`sdk/obs_graphs_sdk/`)**: First-party workflow client packaged as an optional dependency and aligned with the `olm-d-rch` SDK conventions.
 -   **Async Tasks (`worker/obs_graphs_worker/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
 -   **Configuration (`config/`)**: Environment-based settings for stl-conn endpoint (`stl_conn_settings.py`), database, Redis, gateway, and research API configurations.
 -   **DI (`dependencies.py`)**: FastAPI-native dependency injection hub with provider functions for services, clients, and configuration. LLM client creation delegated to stl-conn SDK.
@@ -39,6 +41,7 @@
 
 ### 2. Testing (`tests/`)
 -   **Unit**: Isolated component tests (fast) - all services mocked.
+-   **SDK**: Tests for the exported `obs_graphs_sdk` package with HTTP access patched out.
 -   **Integration**: Multi-component interaction tests - all services mocked.
 -   **E2E**: Full system tests in a containerized environment (slow) - uses real Redis for Celery testing.
 -   **Database**: Migration and data integrity validation.
