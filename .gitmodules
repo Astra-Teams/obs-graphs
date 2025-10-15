@@ -1,3 +1,7 @@
+[submodule "submodules/constellations"]
+	path = submodules/constellations
+	url = https://github.com/asterismhq/constellations.git
+  branch = main
 [submodule "submodules/obs-gtwy"] # v2.1.1
 	path = submodules/obs-gtwy
 	url = https://github.com/asterismhq/obs-gtwy
@@ -7,6 +11,3 @@
 [submodule "submodules/starprobe"] # v2.0.0
 	path = submodules/starprobe
 	url = https://github.com/asterismhq/starprobe
-[submodule "submodules/constellations"]
-	path = submodules/constellations
-	url = https://github.com/asterismhq/constellations.git

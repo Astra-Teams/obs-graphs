@@ -79,3 +79,23 @@
 
 -   **Configuration**: Managed via `.env` files and Docker Compose overrides for different environments.
 -   **Quality Assurance**: Enforced through type hints (mypy), linting/formatting (Ruff), and a CI/CD pipeline that runs all automated tests and security scans.
+
+---
+
+## 📦 Submodules
+
+This project uses Git submodules to manage external dependencies. Submodules are located in the `submodules/` directory and should never be edited directly. If changes are required, please contact the respective repository maintainers or request updates from the user.
+
+### constellations (submodules/constellations)
+Provides the Obsidian Vault structure and utilities for managing knowledge bases, handling file operations, vault organization, and integration with Obsidian's markdown-based knowledge management system.
+
+### starprobe (submodules/starprobe)
+Implements AI-driven research workflows, document analysis, and content generation using LangGraph agents as a research and document generation service.
+
+### stl-conn (submodules/stl-conn)
+Provides a unified interface for connecting to various Large Language Models, handling authentication, and managing API interactions as the Stella Connector for LLM integration.
+
+### obs-gtwy (submodules/obs-gtwy)
+Acts as a bridge between the Obsidian Graphs service and external systems, handling draft branch submissions and workflow delegations as the gateway service for Obsidian integrations.
+
+---
