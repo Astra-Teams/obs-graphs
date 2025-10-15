@@ -5,7 +5,7 @@ from typing import Callable, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from obs_gtwy_sdk import GatewayClientProtocol
-from olm_d_rch_sdk import ResearchClientProtocol
+from starprobe_sdk import ResearchClientProtocol
 from sqlalchemy.orm import Session
 
 from src.obs_graphs import dependencies

@@ -3,7 +3,7 @@
 from typing import Callable
 
 from obs_gtwy_sdk import GatewayClientProtocol
-from olm_d_rch_sdk import ResearchClientProtocol
+from starprobe_sdk import ResearchClientProtocol
 
 from src.obs_graphs.graphs.article_proposal.graph import ArticleProposalGraph
 from src.obs_graphs.graphs.protocol import WorkflowGraphProtocol

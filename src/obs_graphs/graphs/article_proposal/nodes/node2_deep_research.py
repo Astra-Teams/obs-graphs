@@ -3,7 +3,7 @@
 import logging
 from datetime import datetime
 
-from olm_d_rch_sdk import ResearchClientProtocol, ResearchResponse
+from starprobe_sdk import ResearchClientProtocol, ResearchResponse
 
 from src.obs_graphs.graphs.article_proposal.state import (
     FileAction,

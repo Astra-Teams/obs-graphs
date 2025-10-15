@@ -7,7 +7,7 @@ from typing import Callable, Generator, Union
 import redis
 from fastapi import Depends
 from obs_gtwy_sdk import GatewayClientProtocol, MockObsGatewayClient, ObsGatewayClient
-from olm_d_rch_sdk import ResearchApiClient, ResearchClientProtocol
+from starprobe_sdk import ResearchApiClient, ResearchClientProtocol
 from sqlalchemy.orm import Session
 from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 

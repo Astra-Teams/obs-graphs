@@ -38,7 +38,7 @@ services:
       target: production
       secrets:
         - github_token
-    image: ${API_IMAGE:-ghcr.io/your-org/obs-graphs-api}
+    image: ${OBS_GRAPHS_API_IMAGE:-ghcr.io/asterismhq/obs-graphs-api}
     ports:
       - "${HOST_BIND_IP}:${HOST_PORT}:8000"
     depends_on:
@@ -68,7 +68,7 @@ services:
       target: production
       secrets:
         - github_token
-    image: ${WORKER_IMAGE:-ghcr.io/your-org/obs-graphs-worker}
+    image: ${OBS_GRAPHS_WORKER_IMAGE:-ghcr.io/asterismhq/obs-graphs-worker}
     depends_on:
       redis:
         condition: service_healthy

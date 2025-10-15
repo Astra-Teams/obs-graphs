@@ -9,7 +9,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
 - **Pluggable LLM backends** via the stl-conn SDK, providing a unified interface to various LLM providers.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
-- **SDK integrations** for obs-gtwy and deep research through the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages, plus a first-party `obs_graphs_sdk` for workflow execution.
+- **SDK integrations** for obs-gtwy and deep research through the shared `obs_gtwy_sdk` and `starprobe_sdk` packages, plus a first-party `obs_graphs_sdk` for workflow execution.
 
 ## Directory Structure
 
@@ -31,9 +31,9 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 ├── tests/               # Unit, database, and end-to-end tests
 ├── dev/                 # Development fixtures and mocks
 ├── submodules/          # Git submodules for external dependencies
-│   ├── obsidian-vault/              # Local checkout of the vault used during workflows
-│   └── olm-d-rch/                   # Reference implementation of the external research API
-├── sdk/                 # First-party Python SDK mirroring the olm-d-rch layout
+│   ├── constellations/              # Local checkout of the vault used during workflows
+│   └── starprobe/                   # Reference implementation of the external research API
+├── sdk/                 # First-party Python SDK mirroring the starprobe layout
 └── justfile             # Helpful automation commands (setup, tests, linting)
 ```
 
@@ -125,7 +125,7 @@ curl http://127.0.0.1:8001/health
 curl http://127.0.0.1:8001/api/workflows/status
 ```
 
-By default the research API client uses the in-repo mock. To exercise the real service, run the `olm-d-rch` submodule (or another compatible deployment), set `USE_MOCK_OLLAMA_DEEP_RESEARCHER=false`, and ensure the research API settings point to that endpoint.
+By default the research API client uses the in-repo mock. To exercise the real service, run the `starprobe` submodule (or another compatible deployment), set `USE_MOCK_OLLAMA_DEEP_RESEARCHER=false`, and ensure the research API settings point to that endpoint.
 
 ### Workflow run payload
 
@@ -155,7 +155,7 @@ Validation rules:
 
 ## SDK
 
-This repository includes a Python SDK that mirrors the `olm-d-rch` SDK layout and exposes the workflow run endpoint.
+This repository includes a Python SDK that mirrors the `starprobe` SDK layout and exposes the workflow run endpoint.
 
 ### Installation
 
@@ -198,7 +198,7 @@ For tests, `obs_graphs_sdk.MockWorkflowApiClient` records invocations and return
 
 ## Workflow model
 
-Workflows create a temporary directory, copy the contents of `submodules/obsidian-vault` into it, and then execute agents against that isolated copy. Agents interact with the local workspace through `VaultService`, which exposes helpers for summarising the vault and committing changes back via the GitHub API.
+Workflows create a temporary directory, copy the contents of `submodules/constellations` into it, and then execute agents against that isolated copy. Agents interact with the local workspace through `VaultService`, which exposes helpers for summarising the vault and committing changes back via the GitHub API.
 
 This design keeps runtime execution deterministic and avoids invoking Git operations inside the workflow beyond the initial submodule checkout.
 
@@ -210,6 +210,6 @@ This design keeps runtime execution deterministic and avoids invoking Git operat
 
 ## Troubleshooting
 
-- **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `submodules/obsidian-vault` and `submodules/olm-d-rch`.
-- **Using a different vault?** Update the `submodules/obsidian-vault` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
-- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Leave `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true` for local mocks, or flip it to `false` and point the research client at a live `olm-d-rch` deployment.
+- **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `submodules/constellations` and `submodules/starprobe`.
+- **Using a different vault?** Update the `submodules/constellations` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
+- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Leave `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true` for local mocks, or flip it to `false` and point the research client at a live `starprobe` deployment.

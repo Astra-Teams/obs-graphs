@@ -79,7 +79,7 @@ RUN --mount=type=secret,id=github_token \
 COPY --chown=appuser:appgroup src/ ./src
 COPY --chown=appuser:appgroup worker/ ./worker
 COPY --chown=appuser:appgroup alembic/ ./alembic
-COPY --chown=appuser:appgroup submodules/obsidian-vault/ ./submodules/obsidian-vault/
+COPY --chown=appuser:appgroup submodules/constellations/ ./submodules/constellations/
 COPY --chown=appuser:appgroup pyproject.toml .
 COPY --chown=appuser:appgroup entrypoint.sh .
 # Initialize submodules if .git exists

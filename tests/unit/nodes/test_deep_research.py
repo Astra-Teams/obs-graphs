@@ -3,7 +3,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from olm_d_rch_sdk import ResearchResponse
+from starprobe_sdk import ResearchResponse
 
 from src.obs_graphs.graphs.article_proposal.nodes.node2_deep_research import (
     DeepResearchNode,

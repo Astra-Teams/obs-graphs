@@ -62,7 +62,7 @@ class ObsGraphsSettings(BaseSettings):
     )
 
     vault_submodule_path: str = Field(
-        default="submodules/obsidian-vault",
+        default="submodules/constellations",
         title="Vault Submodule Path",
         description="Filesystem path to the locally checked out Obsidian vault submodule.",
         alias="VAULT_SUBMODULE_PATH",
