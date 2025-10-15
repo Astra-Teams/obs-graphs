@@ -1,12 +1,13 @@
 """Pydantic models for article proposal graph schemas."""
 
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Annotated, Dict, List
 
 from pydantic import BaseModel, ConfigDict
 
 if TYPE_CHECKING:
     from src.obs_graphs.graphs.article_proposal.state import (
         FileChange,
+        VaultSummary,
         WorkflowStrategy,
     )
 
@@ -33,11 +34,11 @@ class NodeResultModel(BaseModel):
 class GraphStateModel(BaseModel):
     """Pydantic model for validating and serializing graph state."""
 
-    vault_summary: VaultSummaryModel
-    strategy: "WorkflowStrategy"
-    prompt: List[str]
+    vault_summary: "VaultSummary"
+    strategy: str
+    prompts: List[str]
     accumulated_changes: List["FileChange"]
-    node_results: Dict[str, NodeResultModel]
-    messages: List[str]
+    node_results: Dict
+    messages: Annotated[List[str], "add_messages"]
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")

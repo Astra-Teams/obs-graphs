@@ -18,6 +18,13 @@ class WorkflowStrategy(str, Enum):
     RESEARCH_PROPOSAL = "research_proposal"
 
 
+class WorkflowStatus(str, Enum):
+    """Enumeration of workflow execution statuses."""
+
+    CONTINUE = "continue"
+    FINISH = "finish"
+
+
 class FileAction(str, Enum):
     """Enum representing file operation types."""
 
@@ -86,19 +93,14 @@ class VaultSummary:
     recent_updates: List[str]
 
 
-class GraphState(TypedDict):
+class GraphState(GraphStateModel):
     """State passed between nodes in the workflow graph."""
-
-    vault_summary: VaultSummary
-    strategy: str
-    prompts: List[str]
-    accumulated_changes: List[FileChange]
-    node_results: Dict
-    messages: Annotated[List, "add_messages"]
+    pass
 
 
 __all__ = [
     "WorkflowStrategy",
+    "WorkflowStatus",
     "FileAction",
     "FileChange",
     "NodeResult",
