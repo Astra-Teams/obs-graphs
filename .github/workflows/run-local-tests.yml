@@ -9,6 +9,8 @@ on:
 jobs:
   run-local-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       UV_CACHE_DIR: ./.uv-cache
       OBS_GLX_TOKEN: ${{ secrets.OBS_GLX_TOKEN }}

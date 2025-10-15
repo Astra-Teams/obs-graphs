@@ -12,6 +12,8 @@ permissions:
 jobs:
   run-docker-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:

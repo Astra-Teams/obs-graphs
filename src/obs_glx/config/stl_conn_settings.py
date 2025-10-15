@@ -30,5 +30,5 @@ class StlConnSettings(BaseSettings):
         default=False,
         title="Use Mock Stella Connector Client",
         description="Use the mock Stella Connector client instead of the real implementation",
-        alias="USE_MOCK_STL_CONN",
+        alias="OBS_GLX_USE_MOCK_STL_CONN",
     )
