@@ -3,6 +3,13 @@
 import pytest
 
 
+class _BlockedHttpClient:  # pragma: no cover - constructor raises immediately
+    def __init__(self, *args, **kwargs):
+        raise RuntimeError(
+            "HTTP clients are blocked in unit tests; inject a stub client instead."
+        )
+
+
 @pytest.fixture(autouse=True)
 def set_unit_test_env(monkeypatch):
     """Setup environment variables for unit tests.
@@ -15,3 +22,13 @@ def set_unit_test_env(monkeypatch):
     monkeypatch.setenv("USE_MOCK_REDIS", "true")
     monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
     monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
+
+    try:
+        monkeypatch.setattr(
+            "obs_graphs_sdk.workflow_client.client.httpx.Client",
+            _BlockedHttpClient,
+            raising=True,
+        )
+    except ModuleNotFoundError:
+        # Allow unit tests to proceed when the SDK extra is not installed.
+        pass

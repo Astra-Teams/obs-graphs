@@ -9,7 +9,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
 - **Pluggable LLM backends** via the stl-conn SDK, providing a unified interface to various LLM providers.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
-- **SDK integrations** for obs-gtwy and deep research through the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
+- **SDK integrations** for obs-gtwy and deep research through the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages, plus a first-party `obs_graphs_sdk` for workflow execution.
 
 ## Directory Structure
 
@@ -33,6 +33,7 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 ├── submodules/          # Git submodules for external dependencies
 │   ├── obsidian-vault/              # Local checkout of the vault used during workflows
 │   └── olm-d-rch/                   # Reference implementation of the external research API
+├── sdk/                 # First-party Python SDK mirroring the olm-d-rch layout
 └── justfile             # Helpful automation commands (setup, tests, linting)
 ```
 
@@ -94,6 +95,7 @@ The `just` recipes wrap the supported test suites:
 
 ```bash
 just unit-test         # Unit tests (host, fast)
+just sdk-test          # SDK-specific tests (host, fast)
 just intg-test         # Integration tests (host, all dependencies mocked)
 just sqlt-test         # SQLite-backed DB tests (host)
 just docker-test       # Build production image, then run Postgres + e2e suite
@@ -150,6 +152,49 @@ Validation rules:
 - The `prompts` array must contain at least one item.
 - Every entry is normalised with `str.strip()` and must remain non-empty after trimming.
 - Optional fields such as `strategy` continue to work as before.
+
+## SDK
+
+This repository includes a Python SDK that mirrors the `olm-d-rch` SDK layout and exposes the workflow run endpoint.
+
+### Installation
+
+Install the SDK with the optional dependency group:
+
+```bash
+poetry install --extras sdk
+```
+
+When consuming from an installed build, enable the extra via pip:
+
+```bash
+pip install "obs-graph[sdk]"
+```
+
+### Usage
+
+```python
+from obs_graphs_sdk import WorkflowApiClient, WorkflowRequest
+
+client = WorkflowApiClient(base_url="http://localhost:8001")
+payload = WorkflowRequest(
+  prompts=[
+    "Generate research topic ideas for retrieval-augmented generation",
+    "Select the most actionable topic",
+    "Draft a 2 paragraph article outline",
+  ],
+  async_execution=True,
+)
+
+response = client.run_workflow("article-proposal", payload)
+
+if response.status == "COMPLETED":
+  print("Workflow executed successfully")
+else:
+  print(response.message)
+```
+
+For tests, `obs_graphs_sdk.MockWorkflowApiClient` records invocations and returns deterministic responses without performing network IO.
 
 ## Workflow model
 

@@ -1683,7 +1683,6 @@ dependencies = [
     { name = "celery", extra = ["redis"] },
     { name = "fastapi" },
     { name = "gitpython" },
-    { name = "httpx" },
     { name = "jinja2" },
     { name = "langchain" },
     { name = "langchain-community" },
@@ -1702,11 +1701,18 @@ dependencies = [
     { name = "uvloop" },
 ]
 
+[package.optional-dependencies]
+sdk = [
+    { name = "httpx" },
+    { name = "pydantic" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "black" },
     { name = "fakeredis" },
     { name = "filelock" },
+    { name = "httpx" },
     { name = "ipython" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -1723,7 +1729,7 @@ requires-dist = [
     { name = "celery", extras = ["redis"], specifier = ">=5.3.0,<6.0.0" },
     { name = "fastapi", specifier = ">=0.116.1,<0.117.0" },
     { name = "gitpython", specifier = ">=3.1.0,<4.0.0" },
-    { name = "httpx", specifier = ">=0.27.0,<1.0.0" },
+    { name = "httpx", marker = "extra == 'sdk'", specifier = ">=0.27.0,<1.0.0" },
     { name = "jinja2", specifier = ">=3.1.4,<4.0.0" },
     { name = "langchain", specifier = ">=0.1.0,<0.4.0" },
     { name = "langchain-community", specifier = ">=0.3.0,<0.4.0" },
@@ -1734,6 +1740,7 @@ requires-dist = [
     { name = "ollama", specifier = ">=0.5.3,<0.6.0" },
     { name = "olm-d-rch", git = "https://github.com/asterismhq/olm-d-rch.git" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1,<4.0" },
+    { name = "pydantic", marker = "extra == 'sdk'", specifier = ">=2.9.0,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.4.0,<3.0.0" },
     { name = "pygithub", specifier = ">=2.1.0,<3.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.29,<3.0.0" },
@@ -1741,12 +1748,14 @@ requires-dist = [
     { name = "uvicorn", specifier = ">=0.35.0,<0.36.0" },
     { name = "uvloop", specifier = ">=0.19.0,<0.20.0" },
 ]
+provides-extras = ["sdk"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "black", specifier = ">=25.1.0" },
     { name = "fakeredis", specifier = ">=2.20.0" },
     { name = "filelock", specifier = ">=3.12.2,<4.0.0" },
+    { name = "httpx", specifier = ">=0.27.0,<1.0.0" },
     { name = "ipython", specifier = ">=9.4.0" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-asyncio", specifier = ">=0.23.7" },
