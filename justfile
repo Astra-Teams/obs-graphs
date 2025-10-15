@@ -138,8 +138,8 @@ build-test:
     @echo "Building Docker image for testing..."
     @API_TAG=$(date +%s)-api-build-test; \
     WORKER_TAG=$(date +%s)-worker-build-test; \
-    DOCKER_BUILDKIT=1 docker build --target production --tag temp-api-build-test:$API_TAG --secret id=github_token,env=OBS_GRAPHS_TOKEN -f Dockerfile . && \
-    DOCKER_BUILDKIT=1 docker build --target production --tag temp-worker-build-test:$WORKER_TAG --secret id=github_token,env=OBS_GRAPHS_TOKEN -f worker/obs_glx_worker/Dockerfile . && \
+    DOCKER_BUILDKIT=1 docker build --target production --tag temp-api-build-test:$API_TAG --secret id=github_token,env=OBS_GLX_TOKEN -f Dockerfile . && \
+    DOCKER_BUILDKIT=1 docker build --target production --tag temp-worker-build-test:$WORKER_TAG --secret id=github_token,env=OBS_GLX_TOKEN -f worker/obs_glx_worker/Dockerfile . && \
     echo "Build successful. Cleaning up temporary images..." && \
     docker rmi temp-api-build-test:$API_TAG temp-worker-build-test:$WORKER_TAG || true
 

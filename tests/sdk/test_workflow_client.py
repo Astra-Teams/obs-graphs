@@ -1,4 +1,4 @@
-"""Unit-like tests for the obs_graphs_sdk workflow client module."""
+"""Unit-like tests for the obs_glx_sdk workflow client module."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from importlib import import_module
 
 import pytest
 
-_sdk = import_module("obs_graphs_sdk")
+_sdk = import_module("obs_glx_sdk")
 WorkflowApiClient = _sdk.WorkflowApiClient
 WorkflowRequest = _sdk.WorkflowRequest
 MockWorkflowApiClient = _sdk.MockWorkflowApiClient

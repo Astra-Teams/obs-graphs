@@ -54,7 +54,7 @@ class ObsGlxSettings(BaseSettings):
         description="Return a mocked starprobe client when enabled.",
         alias="OBS_GLX_USE_MOCK_STARPROBE",
     )
-    use_mock_obs_gateway: bool = Field(
+    use_mock_nexus: bool = Field(
         default=True,
         title="Use Mock nexus Gateway",
         description="Return a mocked nexus client when enabled.",

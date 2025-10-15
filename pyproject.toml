@@ -57,7 +57,7 @@ sdk = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/obs_glx", "worker/obs_glx_worker", "sdk/obs_graphs_sdk"]
+packages = ["src/obs_glx", "worker/obs_glx_worker", "sdk/obs_glx_sdk"]
 
 [tool.pytest.ini_options]
 python_files = "test_*.py"

@@ -46,7 +46,7 @@ class TestLLMClientFactory:
 
     def test_get_llm_client_mock(self, monkeypatch):
         """Test that get_llm_client returns MockStlConnClient when mock is enabled."""
-        monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
 
         # Clear cache to pick up new env vars
         dependencies.get_stl_conn_settings.cache_clear()
@@ -58,7 +58,7 @@ class TestLLMClientFactory:
 
     def test_get_llm_client_real(self, monkeypatch):
         """Test that get_llm_client returns StlConnClient when mock is disabled."""
-        monkeypatch.setenv("USE_MOCK_STL_CONN", "false")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "false")
 
         # Clear cache to pick up new env vars
         dependencies.get_stl_conn_settings.cache_clear()
@@ -77,7 +77,7 @@ class TestLLMClientFactory:
 
     def test_llm_client_provider_returns_client(self, monkeypatch):
         """Test that the provider function returns an LLM client."""
-        monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
 
         # Clear cache
         dependencies.get_stl_conn_settings.cache_clear()
@@ -90,7 +90,7 @@ class TestLLMClientFactory:
 
     def test_llm_client_provider_ignores_backend_parameter(self, monkeypatch):
         """Test that provider ignores backend parameter (for API compatibility)."""
-        monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
 
         # Clear cache
         dependencies.get_stl_conn_settings.cache_clear()
@@ -121,7 +121,7 @@ class TestServiceProviders:
 
     def test_get_gateway_client(self, monkeypatch):
         """Test that get_gateway_client returns appropriate client."""
-        monkeypatch.setenv("USE_MOCK_OBS_GATEWAY", "true")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
 
         # Clear cache
         dependencies.get_app_settings.cache_clear()
@@ -136,7 +136,7 @@ class TestServiceProviders:
 
     def test_get_research_client(self, monkeypatch):
         """Test that get_research_client returns appropriate client."""
-        monkeypatch.setenv("USE_MOCK_STARPROBE", "true")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_STARPROBE", "true")
 
         # Clear cache
         dependencies.get_app_settings.cache_clear()
@@ -150,7 +150,7 @@ class TestServiceProviders:
 
     def test_get_redis_client(self, monkeypatch):
         """Test that get_redis_client returns appropriate client."""
-        monkeypatch.setenv("USE_MOCK_REDIS", "true")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_REDIS", "true")
 
         # Clear cache
         dependencies.get_app_settings.cache_clear()

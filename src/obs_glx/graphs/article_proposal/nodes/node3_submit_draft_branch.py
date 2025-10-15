@@ -16,7 +16,7 @@ from src.obs_glx.protocols import NodeProtocol
 
 
 class SubmitDraftBranchNode(NodeProtocol):
-    """Transforms accumulated changes into a draft branch via obs-gtwy."""
+    """Transforms accumulated changes into a draft branch via nexus."""
 
     name = "submit_draft_branch"
 
@@ -52,11 +52,11 @@ class SubmitDraftBranchNode(NodeProtocol):
             drafts = [{"file_name": file_name, "content": content}]
             response = await self._gateway_client.create_draft_branch(drafts=drafts)
             if not isinstance(response, str):
-                raise ValueError("obs-gtwy SDK returned unexpected response payload")
+                raise ValueError("nexus SDK returned unexpected response payload")
 
             created_branch = response
             if not isinstance(created_branch, str) or not created_branch.strip():
-                raise ValueError("obs-gtwy SDK response is missing a valid branch name")
+                raise ValueError("nexus SDK response is missing a valid branch name")
 
             message = f"Draft branch created successfully: {created_branch}"
 

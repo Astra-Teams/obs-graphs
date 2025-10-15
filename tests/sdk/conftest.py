@@ -21,10 +21,10 @@ def configure_sdk_test_env(monkeypatch):
 
     try:
         monkeypatch.setattr(
-            "obs_graphs_sdk.workflow_client.client.httpx.Client",
+            "obs_glx_sdk.workflow_client.client.httpx.Client",
             _BlockedHttpClient,
         )
     except ModuleNotFoundError as exc:  # pragma: no cover - explicit failure path
         raise RuntimeError(
-            "obs_graphs_sdk is not available. Install the SDK extra before running SDK tests."
+            "obs_glx_sdk is not available. Install the SDK extra before running SDK tests."
         ) from exc

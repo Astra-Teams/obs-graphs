@@ -67,7 +67,7 @@ just setup
 All configuration is centralised in `.env`. Update it to reflect your environment. Important options include:
 
 - `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_STARPROBE=true`, but you can point to a live service by setting it to `false`.
-- `USE_MOCK_OBS_GTWY` – when `true`, obs-graphs uses an in-process mock of the obs-gtwy gateway while the real API is not deployed.
+- `OBS_GLX_USE_MOCK_NEXUS` – when `true`, obs-glx uses an in-process mock of the nexus gateway while the real API is not deployed.
 - `NEXUS_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
 
 - `STL_CONN_BASE_URL` – base URL for the stl-conn service providing LLM access.
@@ -157,24 +157,10 @@ Validation rules:
 
 This repository includes a Python SDK that mirrors the `starprobe` SDK layout and exposes the workflow run endpoint.
 
-### Installation
-
-Install the SDK with the optional dependency group:
-
-```bash
-poetry install --extras sdk
-```
-
-When consuming from an installed build, enable the extra via pip:
-
-```bash
-pip install "obs-graph[sdk]"
-```
-
 ### Usage
 
 ```python
-from obs_graphs_sdk import WorkflowApiClient, WorkflowRequest
+from obs_glx_sdk import WorkflowApiClient, WorkflowRequest
 
 client = WorkflowApiClient(base_url="http://localhost:8001")
 payload = WorkflowRequest(
@@ -194,7 +180,7 @@ else:
   print(response.message)
 ```
 
-For tests, `obs_graphs_sdk.MockWorkflowApiClient` records invocations and returns deterministic responses without performing network IO.
+For tests, `obs_glx_sdk.MockWorkflowApiClient` records invocations and returns deterministic responses without performing network IO.
 
 ## Workflow model
 

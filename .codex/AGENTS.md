@@ -96,6 +96,6 @@ Implements AI-driven research workflows, document analysis, and content generati
 Provides a unified interface for connecting to various Large Language Models, handling authentication, and managing API interactions as the Stella Connector for LLM integration.
 
 ### nexus (submodules/nexus)
-Acts as a bridge between the Obsidian Graphs service and external systems, handling draft branch submissions and workflow delegations as the gateway service for Obsidian integrations.
+Acts as a bridge between the Obsidian Galaxy service and external systems, handling draft branch submissions and workflow delegations as the gateway service for Obsidian integrations.
 
 ---

@@ -1,4 +1,4 @@
-"""Python SDK for interacting with the obs-graphs API."""
+"""Python SDK for interacting with the obs-glx API."""
 
 from .workflow_client import (
     MockWorkflowApiClient,

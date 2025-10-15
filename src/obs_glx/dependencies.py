@@ -192,7 +192,7 @@ def get_gateway_client(
     Returns:
         Gateway client (mock or real based on settings)
     """
-    if settings.use_mock_obs_gateway:
+    if settings.use_mock_nexus:
         return MockNexusClient()
 
     gateway_base = str(nexus_settings.base_url).rstrip("/")
