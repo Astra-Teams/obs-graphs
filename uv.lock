@@ -1785,7 +1785,7 @@ wheels = [
 [[package]]
 name = "olm-d-rch"
 version = "0.0.1"
-source = { git = "https://github.com/asterismhq/olm-d-rch.git#8fe4156a4fca47a8b723a6691abe6a42b99d6c55" }
+source = { git = "https://github.com/asterismhq/olm-d-rch.git#a79f756115f29d89fca96a2946881d19ec152333" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "ddgs" },

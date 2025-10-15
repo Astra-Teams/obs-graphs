@@ -15,13 +15,6 @@ RUN --mount=type=cache,target=/root/.cache \
 # Copy dependency definition files  
 COPY pyproject.toml uv.lock README.md ./
 
-# Configure git with GitHub token for private repositories
-RUN --mount=type=secret,id=github_token \
-  if [ -s /run/secrets/github_token ]; then \
-  git config --global credential.helper store && \
-  printf "https://oauth2:%s@github.com" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
-  fi
-
 
 # ==============================================================================
 # Stage 2: Dev Dependencies
@@ -45,8 +38,6 @@ RUN --mount=type=cache,target=/root/.cache \
 # ==============================================================================
 FROM base as prod-deps
 
-# No additional system dependencies needed for production
-
 # Install only production dependencies
 RUN --mount=type=cache,target=/root/.cache \
   uv sync --no-dev
@@ -64,6 +55,13 @@ RUN groupadd -r appgroup && useradd -r -g appgroup -d /home/appuser -m appuser
 
 WORKDIR /app
 RUN chown appuser:appgroup /app
+
+# Configure git with GitHub token for private repositories (needed for submodules)
+RUN --mount=type=secret,id=github_token \
+  if [ -s /run/secrets/github_token ]; then \
+  git config --global credential.helper store && \
+  printf "https://oauth2:%s@github.com" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
+  fi
 
 # Copy application code and submodules
 COPY --chown=appuser:appgroup src/ ./src
