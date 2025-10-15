@@ -1,5 +1,3 @@
-# AGENTS.md - AI Agent Context Document
-
 ## 🚀 Overview
 
 **Obsidian Graphs** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, submitting changes by delegating draft branches to the **obs-gtwy** gateway service.
@@ -34,7 +32,7 @@
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
 -   **Clients (`clients/`)**: LLM integration via `stl-conn` SDK (`StlConnClient`, `MockStlConnClient`) implementing `StlConnClientProtocol`; gateway and research integrations consume shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages.
--   **Async Tasks (`celery/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
+-   **Async Tasks (`worker/obs_graphs_worker/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
 -   **Configuration (`config/`)**: Environment-based settings for stl-conn endpoint (`stl_conn_settings.py`), database, Redis, gateway, and research API configurations.
 -   **DI (`dependencies.py`)**: FastAPI-native dependency injection hub with provider functions for services, clients, and configuration. LLM client creation delegated to stl-conn SDK.
 -   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions. Uses `StlConnClientProtocol` from stl-conn SDK for LLM operations.

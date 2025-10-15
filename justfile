@@ -130,10 +130,12 @@ docker-test:
 # Build Docker image for testing without leaving artifacts
 build-test:
     @echo "Building Docker image for testing..."
-    @TEMP_IMAGE_TAG=$(date +%s)-build-test; \
-    DOCKER_BUILDKIT=1 docker build --target production --tag temp-build-test:$TEMP_IMAGE_TAG --secret id=github_token,env=OBS_GRAPHS_TOKEN -f Dockerfile . && \
-    echo "Build successful. Cleaning up temporary image..." && \
-    docker rmi temp-build-test:$TEMP_IMAGE_TAG || true
+    @API_TAG=$(date +%s)-api-build-test; \
+    WORKER_TAG=$(date +%s)-worker-build-test; \
+    DOCKER_BUILDKIT=1 docker build --target production --tag temp-api-build-test:$API_TAG --secret id=github_token,env=OBS_GRAPHS_TOKEN -f Dockerfile . && \
+    DOCKER_BUILDKIT=1 docker build --target production --tag temp-worker-build-test:$WORKER_TAG --secret id=github_token,env=OBS_GRAPHS_TOKEN -f worker/obs_graphs_worker/Dockerfile . && \
+    echo "Build successful. Cleaning up temporary images..." && \
+    docker rmi temp-api-build-test:$API_TAG temp-worker-build-test:$WORKER_TAG || true
 
 # Run database tests with PostgreSQL
 psql-test:
