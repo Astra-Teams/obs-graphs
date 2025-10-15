@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.obs_graphs.services import VaultService
+from src.obs_glx.services import VaultService
 
 
 @pytest.fixture

@@ -49,7 +49,7 @@ if [ "$#" -gt 0 ]; then
 else
     WORKERS=${NUM_OF_UVICORN_WORKERS:-4}
     echo "Starting server on 0.0.0.0:8000 with ${WORKERS} worker(s)..."
-    exec uvicorn src.obs_graphs.main:app \
+    exec uvicorn src.obs_glx.main:app \
         --host "0.0.0.0" \
         --port "8000" \
         --workers "${WORKERS}" \

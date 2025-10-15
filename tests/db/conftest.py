@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.obs_graphs.db.models.workflow import Workflow, WorkflowStatus
+from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
 
 
 @pytest.fixture(autouse=True)
@@ -13,7 +13,7 @@ def set_db_test_env(monkeypatch):
     # monkeypatch.setenv("USE_SQLITE", "false")  # Commented out to allow db switching tests
     monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
     monkeypatch.setenv("USE_MOCK_REDIS", "true")
-    monkeypatch.setenv("USE_MOCK_OLLAMA_DEEP_RESEARCHER", "true")
+    monkeypatch.setenv("USE_MOCK_STARPROBE", "true")
     monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
     monkeypatch.setenv("RESEARCH_API_OLLAMA_MODEL", "tinyllama:1.1b")
 

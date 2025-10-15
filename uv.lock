@@ -1612,6 +1612,18 @@ wheels = [
 ]
 
 [[package]]
+name = "nexus-api"
+version = "0.1.0"
+source = { git = "https://github.com/asterismhq/nexus.git#5f34aa8c5836665ff436076d3678573debf87cdf" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[[package]]
 name = "numpy"
 version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1675,7 +1687,7 @@ wheels = [
 ]
 
 [[package]]
-name = "obs-graph"
+name = "obs-glx"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
@@ -1689,13 +1701,13 @@ dependencies = [
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
     { name = "langgraph" },
-    { name = "obs-gtwy-api" },
+    { name = "nexus-api" },
     { name = "ollama" },
-    { name = "olm-d-rch" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
     { name = "pygithub" },
     { name = "sqlalchemy" },
+    { name = "starprobe" },
     { name = "stl-conn" },
     { name = "uvicorn" },
     { name = "uvloop" },
@@ -1736,14 +1748,14 @@ requires-dist = [
     { name = "langchain-ollama", specifier = ">=0.3.6,<0.4.0" },
     { name = "langchain-openai", specifier = ">=0.0.5,<0.3.0" },
     { name = "langgraph", specifier = ">=0.0.20,<0.3.0" },
-    { name = "obs-gtwy-api", git = "https://github.com/asterismhq/obs-gtwy.git" },
+    { name = "nexus-api", git = "https://github.com/asterismhq/nexus.git" },
     { name = "ollama", specifier = ">=0.5.3,<0.6.0" },
-    { name = "olm-d-rch", git = "https://github.com/asterismhq/olm-d-rch.git" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1,<4.0" },
     { name = "pydantic", marker = "extra == 'sdk'", specifier = ">=2.9.0,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.4.0,<3.0.0" },
     { name = "pygithub", specifier = ">=2.1.0,<3.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.29,<3.0.0" },
+    { name = "starprobe", git = "https://github.com/asterismhq/starprobe.git" },
     { name = "stl-conn", git = "https://github.com/asterismhq/stl-conn.git" },
     { name = "uvicorn", specifier = ">=0.35.0,<0.36.0" },
     { name = "uvloop", specifier = ">=0.19.0,<0.20.0" },
@@ -1767,18 +1779,6 @@ dev = [
 ]
 
 [[package]]
-name = "obs-gtwy-api"
-version = "0.1.0"
-source = { git = "https://github.com/asterismhq/obs-gtwy.git#cd18894375c2b84c210ffb4b7818ba95ff536e88" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "pydantic-settings" },
-    { name = "python-dotenv" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[[package]]
 name = "ollama"
 version = "0.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1789,27 +1789,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/72/62/a36be4555e4218d6c8b35e72e0dfe0823845400097275cd81c9aec4ddf39/ollama-0.5.4.tar.gz", hash = "sha256:75857505a5d42e5e58114a1b78cc8c24596d8866863359d8a2329946a9b6d6f3", size = 45233, upload-time = "2025-09-16T00:25:25.785Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1b/af/d0a23c8fdec4c8ddb771191d9b36a57fbce6741835a78f1b18ab6d15ae7d/ollama-0.5.4-py3-none-any.whl", hash = "sha256:6374c9bb4f2a371b3583c09786112ba85b006516745689c172a7e28af4d4d1a2", size = 13548, upload-time = "2025-09-16T00:25:24.186Z" },
-]
-
-[[package]]
-name = "olm-d-rch"
-version = "0.0.1"
-source = { git = "https://github.com/asterismhq/olm-d-rch.git#a79f756115f29d89fca96a2946881d19ec152333" }
-dependencies = [
-    { name = "beautifulsoup4" },
-    { name = "ddgs" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "jinja2" },
-    { name = "langchain-community" },
-    { name = "langgraph" },
-    { name = "pydantic-settings" },
-    { name = "python-dotenv" },
-    { name = "python-json-logger" },
-    { name = "requests" },
-    { name = "stl-conn" },
-    { name = "tiktoken" },
-    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [[package]]
@@ -2422,11 +2401,11 @@ wheels = [
 
 [[package]]
 name = "pytokens"
-version = "0.1.10"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/30/5f/e959a442435e24f6fb5a01aec6c657079ceaca1b3baf18561c3728d681da/pytokens-0.1.10.tar.gz", hash = "sha256:c9a4bfa0be1d26aebce03e6884ba454e842f186a59ea43a6d3b25af58223c044", size = 12171, upload-time = "2025-02-19T14:51:22.001Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/c2/dbadcdddb412a267585459142bfd7cc241e6276db69339353ae6e241ab2b/pytokens-0.2.0.tar.gz", hash = "sha256:532d6421364e5869ea57a9523bf385f02586d4662acbcc0342afd69511b4dd43", size = 15368, upload-time = "2025-10-15T08:02:42.738Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/e5/63bed382f6a7a5ba70e7e132b8b7b8abbcf4888ffa6be4877698dcfbed7d/pytokens-0.1.10-py3-none-any.whl", hash = "sha256:db7b72284e480e69fb085d9f251f66b3d2df8b7166059261258ff35f50fb711b", size = 12046, upload-time = "2025-02-19T14:51:18.694Z" },
+    { url = "https://files.pythonhosted.org/packages/89/5a/c269ea6b348b6f2c32686635df89f32dbe05df1088dd4579302a6f8f99af/pytokens-0.2.0-py3-none-any.whl", hash = "sha256:74d4b318c67f4295c13782ddd9abcb7e297ec5630ad060eb90abf7ebbefe59f8", size = 12038, upload-time = "2025-10-15T08:02:41.694Z" },
 ]
 
 [[package]]
@@ -2749,6 +2728,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a7/a5/d6f429d43394057b67a6b5bbe6eae2f77a6bf7459d961fdb224bf206eee6/starlette-0.48.0.tar.gz", hash = "sha256:7e8cee469a8ab2352911528110ce9088fdc6a37d9876926e73da7ce4aa4c7a46", size = 2652949, upload-time = "2025-09-13T08:41:05.699Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/72/2db2f49247d0a18b4f1bb9a5a39a0162869acf235f3a96418363947b3d46/starlette-0.48.0-py3-none-any.whl", hash = "sha256:0764ca97b097582558ecb498132ed0c7d942f233f365b86ba37770e026510659", size = 73736, upload-time = "2025-09-13T08:41:03.869Z" },
+]
+
+[[package]]
+name = "starprobe"
+version = "0.0.1"
+source = { git = "https://github.com/asterismhq/starprobe.git#cde8e378d217a3920e81b8f0781aec01a549fc33" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "ddgs" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "langchain-community" },
+    { name = "langgraph" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "python-json-logger" },
+    { name = "requests" },
+    { name = "stl-conn" },
+    { name = "tiktoken" },
+    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [[package]]

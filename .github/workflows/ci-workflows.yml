@@ -11,15 +11,14 @@ jobs:
   run-linters:
     uses: ./.github/workflows/run-linters.yml
     secrets:
-      OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
+      OBS_GLX_TOKEN: ${{ secrets.OBS_GLX_TOKEN }}
 
   run-local-tests:
     uses: ./.github/workflows/run-local-tests.yml
     secrets:
-      OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
+      OBS_GLX_TOKEN: ${{ secrets.OBS_GLX_TOKEN }}
 
   run-docker-tests:
     uses: ./.github/workflows/run-docker-tests.yml
     secrets:
-      OBS_GRAPHS_TOKEN: ${{ secrets.OBS_GRAPHS_TOKEN }}
-      OBSIDIAN_VAULT_REPOSITORY: ${{ secrets.OBSIDIAN_VAULT_REPOSITORY }}
+      OBS_GLX_TOKEN: ${{ secrets.OBS_GLX_TOKEN }}

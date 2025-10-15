@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.obs_graphs.graphs.article_proposal.state import (
+from src.obs_glx.graphs.article_proposal.state import (
     FileAction,
     FileChange,
     NodeResult,

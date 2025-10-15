@@ -13,14 +13,14 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 
-from src.obs_graphs.protocols import StlConnClientProtocol
+from src.obs_glx.protocols import StlConnClientProtocol
 
 
 @pytest.fixture(scope="session")
 def api_base_url() -> str:
     """Return the base URL for the API service under test."""
-    host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")
-    host_port = os.getenv("TEST_PORT", "8002")
+    host_bind_ip = os.getenv("OBS_GLX_HOST_BIND_IP", "127.0.0.1")
+    host_port = os.getenv("OBS_GLX_TEST_PORT", "8002")
     return f"http://{host_bind_ip}:{host_port}"
 
 
@@ -69,7 +69,7 @@ def e2e_setup() -> Generator[None, None, None]:
     use_sudo = os.getenv("SUDO") == "true"
     docker_command = ["sudo", "docker"] if use_sudo else ["docker"]
 
-    project_name = os.getenv("PROJECT_NAME", "obs-graph")
+    project_name = os.getenv("OBS_GLX_PROJECT_NAME", "obs-glx")
     test_project_name = f"{project_name}-test"
 
     compose_common_args = [
@@ -89,23 +89,23 @@ def e2e_setup() -> Generator[None, None, None]:
 
     # Prepare environment variables for subprocess
     env = os.environ.copy()
-    env["USE_SQLITE"] = "false"
-    env["USE_MOCK_STL_CONN"] = (
+    env["OBS_GLX_USE_SQLITE"] = "false"
+    env["OBS_GLX_USE_MOCK_STL_CONN"] = (
         "true"  # E2E uses mock stl-conn (requires separate LLM server)
     )
-    env["USE_MOCK_REDIS"] = "false"  # E2E uses real Redis
-    env["USE_MOCK_OLLAMA_DEEP_RESEARCHER"] = "true"
-    env["USE_MOCK_OBS_GTWY"] = "true"
+    env["OBS_GLX_USE_MOCK_REDIS"] = "false"  # E2E uses real Redis
+    env["OBS_GLX_USE_MOCK_STARPROBE"] = "true"
+    env["OBS_GLX_USE_MOCK_NEXUS"] = "true"
 
-    host_bind_ip = os.getenv("HOST_BIND_IP", "127.0.0.1")
-    host_port = os.getenv("TEST_PORT", "8002")
+    host_bind_ip = os.getenv("OBS_GLX_HOST_BIND_IP", "127.0.0.1")
+    host_port = os.getenv("OBS_GLX_TEST_PORT", "8002")
     api_health_url = f"http://{host_bind_ip}:{host_port}/health"
 
     try:
         print("\n🚀 Starting E2E test services with docker compose...")
         subprocess.run(compose_up_command, check=True, timeout=300, env=env)
 
-        print("⏳ Waiting for service 'obs-api' to become healthy...")
+        print("⏳ Waiting for service 'obs-glx-api' to become healthy...")
         _wait_for_health_check(api_health_url)
 
         print("✅ All services are ready")

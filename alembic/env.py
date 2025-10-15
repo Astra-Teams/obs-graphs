@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine, pool
 
 from alembic import context
-from src.obs_graphs.config import db_settings
-from src.obs_graphs.db.database import Base
+from src.obs_glx.config import db_settings
+from src.obs_glx.db.database import Base
 
 config = context.config
 

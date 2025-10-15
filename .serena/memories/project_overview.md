@@ -1,3 +1,3 @@
 - Purpose: FastAPI-based automation service that orchestrates LangGraph agents to analyse and improve Obsidian vaults, applying changes via GitHub PRs.
 - Tech stack: Python 3.12, FastAPI, Celery, LangGraph, Pydantic settings, PostgreSQL/Redis, uv for dependency management.
-- Structure: `src/obs_graphs` main app (API, celery, clients, config, graphs, services), `tests` for unit/intg/db/e2e, `dev` fixtures, `submodules` for obsidian vault + ollama deep researcher references.
+- Structure: `src/obs_glx` main app (API, celery, clients, config, graphs, services), `tests` for unit/intg/db/e2e, `dev` fixtures, `submodules` for obsidian vault + ollama deep researcher references.

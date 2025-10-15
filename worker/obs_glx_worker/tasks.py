@@ -1,0 +1,193 @@
+"""Celery tasks for executing Obsidian Galaxy workflows."""
+
+import asyncio
+import logging
+import shutil
+import tempfile
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+from sqlalchemy.orm import Session
+
+from src.obs_glx.config import obs_glx_settings, workflow_settings
+from src.obs_glx.db.database import get_db
+from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
+from worker.obs_glx_worker.app import celery_app
+
+logger = logging.getLogger(__name__)
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # /app for worker container
+WORKFLOW_TEMP_BASE_PATH = Path(tempfile.gettempdir()) / "obs_glx" / "workflows"
+
+
+def _resolve_submodule_path() -> Path:
+    """Resolve the configured vault submodule path to an absolute path."""
+    raw_path = Path(obs_glx_settings.vault_submodule_path)
+    source = raw_path if raw_path.is_absolute() else PROJECT_ROOT / raw_path
+    return source
+
+
+def _prepare_workflow_directory(workflow_id: int) -> Path:
+    """Copy the vault submodule into an isolated temporary directory."""
+    WORKFLOW_TEMP_BASE_PATH.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    temp_dir = WORKFLOW_TEMP_BASE_PATH / f"workflow_{workflow_id}_{timestamp}"
+
+    source = _resolve_submodule_path()
+    if not source.exists():
+        raise FileNotFoundError(
+            f"Configured vault submodule path does not exist: {source}"
+        )
+
+    shutil.copytree(source, temp_dir)
+    return temp_dir
+
+
+@celery_app.task(bind=True, name="run_workflow_task")
+def run_workflow_task(self, workflow_id: int) -> None:
+    """
+    Execute a complete workflow: clone repo, run agents, commit, create PR.
+
+    This task orchestrates the entire workflow lifecycle:
+    1. Retrieve workflow from database
+    2. Copy vault submodule to a temporary working directory
+    3. Analyze vault and execute agents via dependency container
+    4. Apply changes through the VaultService/GitHub API
+    5. Submit draft content through nexus and record branch metadata
+    6. Update workflow status and store results
+    8. Clean up temporary directory
+
+    Args:
+        workflow_id: Database ID of the workflow to execute
+
+    Raises:
+        Exception: Any error during workflow execution (caught and stored in DB)
+    """
+    # Get database session
+    db: Session = next(get_db())
+    workflow = None
+    temp_vault_dir: Path | None = None
+
+    try:
+        # 1. Retrieve workflow from database
+        workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+        if not workflow:
+            raise ValueError(f"Workflow {workflow_id} not found")
+
+        # 2. Update status to RUNNING
+        workflow.status = WorkflowStatus.RUNNING
+        workflow.started_at = datetime.now(timezone.utc)
+        workflow.celery_task_id = self.request.id
+        db.commit()
+
+        # 3. Prepare local workflow directory from vault submodule
+        temp_vault_dir = _prepare_workflow_directory(workflow_id)
+
+        # 4. Create dependencies with the temporary vault path
+        from src.obs_glx.api.schemas import WorkflowRunRequest
+        from src.obs_glx.graphs.article_proposal.state import WorkflowStrategy
+        from src.obs_glx.services import VaultService
+
+        # Create vault service with temporary path
+        vault_service = VaultService(vault_path=temp_vault_dir)
+
+        # Get appropriate graph builder based on workflow type with dependencies
+        # For Celery, we need to override the vault_service with the temporary path
+        from src.obs_glx.graphs.factory import get_graph_builder
+
+        graph_builder = get_graph_builder(
+            workflow_type=workflow.workflow_type,
+            vault_service=vault_service,
+        )
+
+        # Handle legacy strategies by coercing unknown values to RESEARCH_PROPOSAL
+        try:
+            strategy = (
+                WorkflowStrategy(workflow.strategy) if workflow.strategy else None
+            )
+        except ValueError:
+            strategy = WorkflowStrategy.RESEARCH_PROPOSAL
+
+        workflow_metadata = workflow.workflow_metadata or {}
+
+        # Handle prompt: convert to list if needed for backward compatibility
+        prompt_value = workflow.prompt
+        if prompt_value is None:
+            prompt_value = ["Default research prompt"]
+        elif isinstance(prompt_value, str):
+            # Legacy string prompt - convert to list
+            prompt_value = [prompt_value]
+
+        request = WorkflowRunRequest(
+            prompts=prompt_value,
+            strategy=strategy,
+        )
+
+        result = asyncio.run(graph_builder.run_workflow(request))
+
+        # Update workflow based on result
+        if result.success:
+            workflow.status = WorkflowStatus.COMPLETED
+            workflow.branch_name = result.branch_name
+            workflow_metadata.update(
+                {
+                    "node_results": result.node_results,
+                    "total_changes": len(result.changes),
+                    "branch_name": result.branch_name,
+                }
+            )
+            workflow.workflow_metadata = workflow_metadata
+        else:
+            workflow.status = WorkflowStatus.FAILED
+            workflow.error_message = result.summary
+            workflow.workflow_metadata = workflow_metadata
+
+        workflow.completed_at = datetime.now(timezone.utc)
+        db.commit()
+
+    except Exception as e:  # noqa: BLE001 - propagate to Celery for retry/backoff
+        # Update workflow to FAILED
+        if workflow:
+            workflow.status = WorkflowStatus.FAILED
+            workflow.completed_at = datetime.now(timezone.utc)
+            workflow.error_message = str(e)
+            db.commit()
+
+        # Re-raise exception for Celery to handle
+        raise
+
+    finally:
+        # Close database session
+        db.close()
+
+        # Remove temporary workflow directory
+        if temp_vault_dir and temp_vault_dir.exists():
+            shutil.rmtree(temp_vault_dir, ignore_errors=True)
+
+
+@celery_app.task(name="cleanup_old_workflows")
+def cleanup_old_workflows() -> None:
+    """
+    Periodic task to clean up old workflow temporary directories.
+
+    This task should be scheduled to run periodically (e.g., daily) to
+    ensure that any orphaned temporary directories are cleaned up.
+    """
+    clone_base_path = WORKFLOW_TEMP_BASE_PATH
+
+    if not clone_base_path.exists():
+        return
+
+    # Clean up any workflow_* directories older than configured seconds
+    current_time = time.time()
+    for temp_dir in clone_base_path.glob("workflow_*"):
+        if temp_dir.is_dir():
+            # Check if directory is older than configured time
+            dir_age = current_time - temp_dir.stat().st_mtime
+            if dir_age > workflow_settings.temp_dir_cleanup_seconds:
+                try:
+                    shutil.rmtree(temp_dir)
+                    logger.info("Cleaned up old workflow directory: %s", temp_dir)
+                except Exception as e:  # noqa: BLE001 - log cleanup failure
+                    logger.error("Failed to clean up %s: %s", temp_dir, e)

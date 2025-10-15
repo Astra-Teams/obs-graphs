@@ -1,6 +1,6 @@
-# Obsidian Graphs
+# Obsidian Galaxy
 
-Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through obs-gtwy managed draft branches.
+Obsidian Galaxy is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through nexus managed draft branches.
 
 ## What's in the box?
 
@@ -9,12 +9,12 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
 - **Pluggable LLM backends** via the stl-conn SDK, providing a unified interface to various LLM providers.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
-- **SDK integrations** for obs-gtwy and deep research through the shared `obs_gtwy_sdk` and `olm_d_rch_sdk` packages, plus a first-party `obs_graphs_sdk` for workflow execution.
+- **SDK integrations** for nexus and deep research through the shared `nexus_sdk` and `starprobe_sdk` packages, plus a first-party `obs_graphs_sdk` for workflow execution.
 
 ## Directory Structure
 
 ```
-├── src/obs_graphs/       # Main application package
+├── src/obs_glx/       # Main application package
 │   ├── api/             # FastAPI endpoints and schemas
 │   ├── celery/          # Celery tasks for async workflow execution
 │   ├── clients/         # External service clients (LLM adapters; gateway/research SDKs live in submodules)
@@ -31,9 +31,9 @@ Obsidian Graphs is an AI-powered workflow automation service for Obsidian vaults
 ├── tests/               # Unit, database, and end-to-end tests
 ├── dev/                 # Development fixtures and mocks
 ├── submodules/          # Git submodules for external dependencies
-│   ├── obsidian-vault/              # Local checkout of the vault used during workflows
-│   └── olm-d-rch/                   # Reference implementation of the external research API
-├── sdk/                 # First-party Python SDK mirroring the olm-d-rch layout
+│   ├── constellations/              # Local checkout of the vault used during workflows
+│   └── starprobe/                   # Reference implementation of the external research API
+├── sdk/                 # First-party Python SDK mirroring the starprobe layout
 └── justfile             # Helpful automation commands (setup, tests, linting)
 ```
 
@@ -66,10 +66,10 @@ just setup
 
 All configuration is centralised in `.env`. Update it to reflect your environment. Important options include:
 
-- `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true`, but you can point to a live service by setting it to `false`.
-- `USE_MOCK_OBS_GTWY` – when `true`, obs-graphs uses an in-process mock of the obs-gtwy gateway while the real API is not deployed.
-- `OBS_GTWY_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
-- `VAULT_SUBMODULE_PATH` – filesystem path to the local Obsidian vault submodule checkout.
+- `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_STARPROBE=true`, but you can point to a live service by setting it to `false`.
+- `OBS_GLX_USE_MOCK_NEXUS` – when `true`, obs-glx uses an in-process mock of the nexus gateway while the real API is not deployed.
+- `NEXUS_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
+
 - `STL_CONN_BASE_URL` – base URL for the stl-conn service providing LLM access.
 - `USE_MOCK_STL_CONN` – when `true`, uses mock LLM responses for development and testing.
 
@@ -125,7 +125,7 @@ curl http://127.0.0.1:8001/health
 curl http://127.0.0.1:8001/api/workflows/status
 ```
 
-By default the research API client uses the in-repo mock. To exercise the real service, run the `olm-d-rch` submodule (or another compatible deployment), set `USE_MOCK_OLLAMA_DEEP_RESEARCHER=false`, and ensure the research API settings point to that endpoint.
+By default the research API client uses the in-repo mock. To exercise the real service, run the `starprobe` submodule (or another compatible deployment), set `USE_MOCK_STARPROBE=false`, and ensure the research API settings point to that endpoint.
 
 ### Workflow run payload
 
@@ -155,26 +155,12 @@ Validation rules:
 
 ## SDK
 
-This repository includes a Python SDK that mirrors the `olm-d-rch` SDK layout and exposes the workflow run endpoint.
-
-### Installation
-
-Install the SDK with the optional dependency group:
-
-```bash
-poetry install --extras sdk
-```
-
-When consuming from an installed build, enable the extra via pip:
-
-```bash
-pip install "obs-graph[sdk]"
-```
+This repository includes a Python SDK that mirrors the `starprobe` SDK layout and exposes the workflow run endpoint.
 
 ### Usage
 
 ```python
-from obs_graphs_sdk import WorkflowApiClient, WorkflowRequest
+from obs_glx_sdk import WorkflowApiClient, WorkflowRequest
 
 client = WorkflowApiClient(base_url="http://localhost:8001")
 payload = WorkflowRequest(
@@ -194,11 +180,11 @@ else:
   print(response.message)
 ```
 
-For tests, `obs_graphs_sdk.MockWorkflowApiClient` records invocations and returns deterministic responses without performing network IO.
+For tests, `obs_glx_sdk.MockWorkflowApiClient` records invocations and returns deterministic responses without performing network IO.
 
 ## Workflow model
 
-Workflows create a temporary directory, copy the contents of `submodules/obsidian-vault` into it, and then execute agents against that isolated copy. Agents interact with the local workspace through `VaultService`, which exposes helpers for summarising the vault and committing changes back via the GitHub API.
+Workflows create a temporary directory, copy the contents of `submodules/constellations` into it, and then execute agents against that isolated copy. Agents interact with the local workspace through `VaultService`, which exposes helpers for summarising the vault and committing changes back via the GitHub API.
 
 This design keeps runtime execution deterministic and avoids invoking Git operations inside the workflow beyond the initial submodule checkout.
 
@@ -210,6 +196,6 @@ This design keeps runtime execution deterministic and avoids invoking Git operat
 
 ## Troubleshooting
 
-- **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `submodules/obsidian-vault` and `submodules/olm-d-rch`.
-- **Using a different vault?** Update the `submodules/obsidian-vault` remote to point to your desired repository and adjust `VAULT_SUBMODULE_PATH` if you relocate the checkout.
-- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Leave `USE_MOCK_OLLAMA_DEEP_RESEARCHER=true` for local mocks, or flip it to `false` and point the research client at a live `olm-d-rch` deployment.
+- **Submodule missing?** Re-run `git submodule update --init --recursive` to populate both `submodules/constellations` and `submodules/starprobe`.
+- **Using a different vault?** Update the `submodules/constellations` remote to point to your desired repository.
+- **Need to bypass external services?** Set the relevant `USE_MOCK_*` flags to `true`. Leave `USE_MOCK_STARPROBE=true` for local mocks, or flip it to `false` and point the research client at a live `starprobe` deployment.

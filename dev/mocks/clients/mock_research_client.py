@@ -1,6 +1,6 @@
 """Mock research client for testing."""
 
-from olm_d_rch_sdk import ResearchResponse
+from starprobe_sdk import ResearchResponse
 
 
 class MockResearchApiClient:

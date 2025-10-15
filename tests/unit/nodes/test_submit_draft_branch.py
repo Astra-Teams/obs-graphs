@@ -1,13 +1,13 @@
-"""Unit tests for SubmitDraftBranchNode with obs-gtwy integration."""
+"""Unit tests for SubmitDraftBranchNode with nexus integration."""
 
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.obs_graphs.graphs.article_proposal.nodes.node3_submit_draft_branch import (
+from src.obs_glx.graphs.article_proposal.nodes.node3_submit_draft_branch import (
     SubmitDraftBranchNode,
 )
-from src.obs_graphs.graphs.article_proposal.state import FileAction, FileChange
+from src.obs_glx.graphs.article_proposal.state import FileAction, FileChange
 
 
 @pytest.fixture

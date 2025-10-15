@@ -4,7 +4,7 @@
 
 set dotenv-load
 
-PROJECT_NAME := env("PROJECT_NAME", "fastapi-tmpl")
+PROJECT_NAME := env("PROJECT_NAME", "obs-glx")
 POSTGRES_IMAGE := env("POSTGRES_IMAGE", "postgres:16-alpine")
 
 DEV_PROJECT_NAME := PROJECT_NAME + "-dev"
@@ -125,7 +125,7 @@ intg-test:
 # Run database tests with SQLite
 sqlt-test:
     @echo "🚀 Running database tests with SQLite..."
-    @USE_SQLITE=true uv run pytest tests/db
+    @OBS_GLX_USE_SQLITE=true uv run pytest tests/db
 
 # Run all Docker-based tests
 docker-test:
@@ -138,19 +138,21 @@ build-test:
     @echo "Building Docker image for testing..."
     @API_TAG=$(date +%s)-api-build-test; \
     WORKER_TAG=$(date +%s)-worker-build-test; \
-    DOCKER_BUILDKIT=1 docker build --target production --tag temp-api-build-test:$API_TAG --secret id=github_token,env=OBS_GRAPHS_TOKEN -f Dockerfile . && \
-    DOCKER_BUILDKIT=1 docker build --target production --tag temp-worker-build-test:$WORKER_TAG --secret id=github_token,env=OBS_GRAPHS_TOKEN -f worker/obs_graphs_worker/Dockerfile . && \
+    DOCKER_BUILDKIT=1 docker build --target production --tag temp-api-build-test:$API_TAG --secret id=github_token,env=OBS_GLX_TOKEN -f Dockerfile . && \
+    DOCKER_BUILDKIT=1 docker build --target production --tag temp-worker-build-test:$WORKER_TAG --secret id=github_token,env=OBS_GLX_TOKEN -f worker/obs_glx_worker/Dockerfile . && \
     echo "Build successful. Cleaning up temporary images..." && \
     docker rmi temp-api-build-test:$API_TAG temp-worker-build-test:$WORKER_TAG || true
 
 # Run database tests with PostgreSQL
 psql-test:
     @echo "🚀 Starting TEST containers for PostgreSQL database test..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
-    @echo "Waiting for migrations to be applied..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-api sh -c "while ! alembic current | grep -q .; do echo 'Waiting for migrations...'; sleep 2; done"
+    @OBS_GLX_USE_SQLITE=false {{TEST_COMPOSE}} up -d --build
+    @echo "Waiting for database to be ready..."
+    @OBS_GLX_USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api sh -c "while ! pg_isready -h db -U ${POSTGRES_USER} -d ${POSTGRES_TEST_DB}; do echo 'Waiting for database...'; sleep 2; done"
+    @echo "Running migrations..."
+    @OBS_GLX_USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api alembic upgrade head
     @echo "Running database tests inside api container (against PostgreSQL)..."
-    @USE_SQLITE=false {{TEST_COMPOSE}} exec obs-api pytest tests/db; \
+    @OBS_GLX_USE_SQLITE=false {{TEST_COMPOSE}} exec obs-glx-api pytest tests/db; \
     EXIT_CODE=$?; \
     echo "🔴 Stopping TEST containers..."; \
     {{TEST_COMPOSE}} down --remove-orphans; \
@@ -159,7 +161,7 @@ psql-test:
 # Run e2e tests against containerized application stack
 e2e-test:
     @echo "🚀 Running e2e tests..."
-    @USE_SQLITE=false uv run pytest tests/e2e
+    @OBS_GLX_USE_SQLITE=false uv run pytest tests/e2e
 
 # ==============================================================================
 # CODE QUALITY

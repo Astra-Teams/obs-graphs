@@ -1,13 +1,13 @@
-[submodule "submodules/obsidian-vault"]
-	path = submodules/obsidian-vault
+[submodule "submodules/constellations"]
+	path = submodules/constellations
 	url = https://github.com/asterismhq/constellations.git
-	branch = main
-[submodule "submodules/olm-d-rch"] # v1.7.3
-	path = submodules/olm-d-rch
-	url = https://github.com/asterismhq/olm-d-rch
-[submodule "submodules/obs-gtwy"] # v2.1.1
-	path = submodules/obs-gtwy
-	url = https://github.com/asterismhq/obs-gtwy
+  branch = main
 [submodule "submodules/stl-conn"] # v1.3.0
 	path = submodules/stl-conn
 	url = https://github.com/asterismhq/stl-conn
+[submodule "submodules/starprobe"] # v2.0.0
+	path = submodules/starprobe
+	url = https://github.com/asterismhq/starprobe
+[submodule "submodules/nexus"] # v3.0.2
+	path = submodules/nexus
+	url = https://github.com/asterismhq/nexus
