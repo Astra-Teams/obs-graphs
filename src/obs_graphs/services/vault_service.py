@@ -54,27 +54,8 @@ class VaultService(VaultServiceProtocol):
         markdown_files = list(vault_path.rglob("*.md"))
         total_articles = len(markdown_files)
 
-        categories = {
-            path.relative_to(vault_path).parts[0]
-            for path in markdown_files
-            if path.relative_to(vault_path).parts
-        }
-
-        recent_files = sorted(
-            markdown_files,
-            key=lambda file_path: file_path.stat().st_mtime,
-            reverse=True,
-        )[:5]
-
-        recent_updates = [
-            str(file_path.relative_to(vault_path).as_posix())
-            for file_path in recent_files
-        ]
-
         return VaultSummary(
             total_articles=total_articles,
-            categories=sorted(categories),
-            recent_updates=recent_updates,
         )
 
     def validate_vault_structure(self, vault_path: Path) -> bool:

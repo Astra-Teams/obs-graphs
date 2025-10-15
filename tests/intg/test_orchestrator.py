@@ -24,8 +24,12 @@ class MockAgent(MagicMock):
 @pytest.fixture
 def mock_vault_service():
     """Return a mock VaultService."""
+    from src.obs_graphs.graphs.article_proposal.state import VaultSummary
+
     mock_vault = MagicMock()
-    mock_vault.get_vault_summary.return_value = MagicMock()
+    mock_vault.get_vault_summary.return_value = VaultSummary(
+        total_articles=10,
+    )
     return mock_vault
 
 
@@ -51,7 +55,7 @@ def article_proposal_graph(
 
 def test_determine_workflow_plan_requires_prompt(article_proposal_graph):
     """determine_workflow_plan should work with valid prompts."""
-    plan = article_proposal_graph.determine_workflow_plan(
+    plan = article_proposal_graph.get_default_plan(
         SimpleNamespace(prompts=["test prompt"], primary_prompt="test prompt"),
     )
 
@@ -65,7 +69,7 @@ def test_determine_workflow_plan_uses_research_proposal_strategy_with_prompt(
     """determine_workflow_plan should choose the research path when a prompt is given."""
     request = WorkflowRunRequest(prompts=["Research transformers"])
 
-    plan = article_proposal_graph.determine_workflow_plan(request)
+    plan = article_proposal_graph.get_default_plan(request)
 
     assert isinstance(plan, WorkflowPlan)
     assert plan.strategy == "research_proposal"
@@ -87,13 +91,13 @@ async def test_execute_workflow(article_proposal_graph):
     # Mock _get_node to return mock agents instead of real nodes
     article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
 
-    plan = WorkflowPlan(strategy="test_plan", nodes=["article_proposal"])
+    request = WorkflowRunRequest(prompts=["test prompt"])
 
-    result = await article_proposal_graph.execute_workflow(plan)
+    result = await article_proposal_graph.run_workflow(request)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
-    assert len(result.node_results) == 1
+    assert len(result.node_results) == 3  # All nodes should run
     assert "article_proposal" in result.node_results
 
 
@@ -102,14 +106,9 @@ async def test_execute_workflow_with_research_proposal_strategy(article_proposal
     # Mock _get_node to return mock agents instead of real nodes
     article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
 
-    plan = WorkflowPlan(
-        strategy="research_proposal",
-        nodes=["article_proposal", "deep_research", "submit_draft_branch"],
-    )
+    request = WorkflowRunRequest(prompts=["Research quantum computing"])
 
-    result = await article_proposal_graph.execute_workflow(
-        plan, prompts=["Research quantum computing"]
-    )
+    result = await article_proposal_graph.run_workflow(request)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
@@ -127,16 +126,9 @@ async def test_execute_workflow_with_multiple_nodes(article_proposal_graph):
     # Mock _get_node to return mock agents instead of real nodes
     article_proposal_graph._get_node = lambda name: MockAgent()  # type: ignore[assignment]
 
-    plan = WorkflowPlan(
-        strategy="research_proposal",
-        nodes=[
-            "article_proposal",
-            "deep_research",
-            "submit_draft_branch",
-        ],
-    )
+    request = WorkflowRunRequest(prompts=["test research"])
 
-    result = await article_proposal_graph.execute_workflow(plan)
+    result = await article_proposal_graph.run_workflow(request)
 
     assert isinstance(result, WorkflowResult)
     assert result.success
