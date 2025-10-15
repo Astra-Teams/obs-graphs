@@ -17,7 +17,7 @@ from src.obs_glx.config import (
     NexusSettings,
     ObsGraphsSettings,
     RedisSettings,
-    ResearchAPISettings,
+    StarprobeSettings,
     StlConnSettings,
     WorkflowSettings,
 )
@@ -64,9 +64,9 @@ def get_redis_settings() -> RedisSettings:
 
 
 @lru_cache()
-def get_research_api_settings() -> ResearchAPISettings:
+def get_starprobe_settings() -> StarprobeSettings:
     """Get the research API settings singleton."""
-    return ResearchAPISettings()
+    return StarprobeSettings()
 
 
 @lru_cache()
@@ -201,14 +201,14 @@ def get_gateway_client(
 
 def get_research_client(
     settings: ObsGraphsSettings = Depends(get_app_settings),
-    research_settings: ResearchAPISettings = Depends(get_research_api_settings),
+    starprobe_settings: StarprobeSettings = Depends(get_starprobe_settings),
 ) -> ResearchClientProtocol:
     """
     Get the research API client instance.
 
     Args:
         settings: Application settings for mock configuration
-        research_settings: Research API-specific configuration
+        starprobe_settings: Research API-specific configuration
 
     Returns:
         Research client (mock or real based on settings)
@@ -217,8 +217,8 @@ def get_research_client(
         return MockResearchApiClient()
 
     return ResearchApiClient(
-        base_url=str(research_settings.research_api_url).rstrip("/"),
-        timeout=research_settings.research_api_timeout_seconds,
+        base_url=str(starprobe_settings.starprobe_api_url).rstrip("/"),
+        timeout=starprobe_settings.starprobe_api_timeout_seconds,
     )
 
 

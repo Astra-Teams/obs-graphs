@@ -4,7 +4,7 @@ from .db_settings import DBSettings
 from .nexus_settings import NexusSettings
 from .obs_glx_settings import ObsGlxSettings
 from .redis_settings import RedisSettings
-from .research_api_settings import ResearchAPISettings
+from .starprobe_settings import StarprobeSettings
 from .stl_conn_settings import StlConnSettings
 from .workflow_settings import WorkflowSettings
 
@@ -14,7 +14,7 @@ stl_conn_settings = StlConnSettings()
 nexus_settings = NexusSettings()
 db_settings = DBSettings()
 redis_settings = RedisSettings()
-research_api_settings = ResearchAPISettings()
+starprobe_settings = StarprobeSettings()
 workflow_settings = WorkflowSettings()
 
 __all__ = [
@@ -23,7 +23,7 @@ __all__ = [
     "NexusSettings",
     "ObsGlxSettings",
     "RedisSettings",
-    "ResearchAPISettings",
+    "StarprobeSettings",
     "StlConnSettings",
     "WorkflowSettings",
     # Singleton instances
@@ -32,6 +32,6 @@ __all__ = [
     "nexus_settings",
     "db_settings",
     "redis_settings",
-    "research_api_settings",
+    "starprobe_settings",
     "workflow_settings",
 ]

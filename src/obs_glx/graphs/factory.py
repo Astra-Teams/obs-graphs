@@ -48,7 +48,7 @@ def get_graph_builder(
     )
     research_client = research_client or dependencies.get_research_client(
         settings=dependencies.get_app_settings(),
-        research_settings=dependencies.get_research_api_settings(),
+        starprobe_settings=dependencies.get_starprobe_settings(),
     )
 
     graph_builders = {

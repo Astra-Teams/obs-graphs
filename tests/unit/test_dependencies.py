@@ -138,11 +138,11 @@ class TestServiceProviders:
 
         # Clear cache
         dependencies.get_app_settings.cache_clear()
-        dependencies.get_research_api_settings.cache_clear()
+        dependencies.get_starprobe_settings.cache_clear()
 
         client = dependencies.get_research_client(
             settings=dependencies.get_app_settings(),
-            research_settings=dependencies.get_research_api_settings(),
+            starprobe_settings=dependencies.get_starprobe_settings(),
         )
         assert client is not None
 

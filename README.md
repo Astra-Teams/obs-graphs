@@ -68,7 +68,7 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 
 - `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_STARPROBE=true`, but you can point to a live service by setting it to `false`.
 - `USE_MOCK_OBS_GTWY` – when `true`, obs-graphs uses an in-process mock of the obs-gtwy gateway while the real API is not deployed.
-- `OBS_GTWY_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
+- `NEXUS_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
 
 - `STL_CONN_BASE_URL` – base URL for the stl-conn service providing LLM access.
 - `USE_MOCK_STL_CONN` – when `true`, uses mock LLM responses for development and testing.

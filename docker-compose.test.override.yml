@@ -2,7 +2,7 @@ x-test-env: &test-env
   POSTGRES_DB: ${POSTGRES_TEST_DB}
   USE_MOCK_STL_CONN: true
   USE_MOCK_NEXUS: true
-        USE_MOCK_STARPROBE: true
+  USE_MOCK_STARPROBE: true
 services:
   db:
     ports:
