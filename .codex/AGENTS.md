@@ -29,6 +29,7 @@
     -   Factory pattern (`factory.py`) for extensible workflow graph creation with dependency injection
     -   Protocol interface (`protocol.py`) defining `WorkflowGraphProtocol` for type-safe graph implementations
     -   LangGraph state machines for stateful workflow orchestration using modular agent nodes
+    -   Pydantic-based GraphState with runtime validation and WorkflowStatus enum for robust state management
     -   Currently supports: `article-proposal` workflow type
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
@@ -51,7 +52,7 @@
 
 -   **Separation of Concerns**: Clear boundaries between API, business logic, data, and infrastructure.
 -   **Dependency Injection**: FastAPI-native DI using `Depends()` for testability and flexibility. Provider functions in `dependencies.py` create services with appropriate configurations. LLM backend selection delegated to stl-conn service.
--   **Schema Separation**: Pydantic for API validation, distinct types for internal state.
+-   **Schema Separation**: Pydantic for API validation, distinct types for internal state. GraphState uses Pydantic BaseModel with runtime validation for robust state management.
 -   **Node-Based Agents**: Modular, single-responsibility agents with constructor injection of dependencies.
 -   **Comprehensive Testing**: Multi-layered testing strategy (Unit → Integration → E2E) with easy mocking via `app.dependency_overrides`.
 
@@ -61,9 +62,9 @@
 
 1.  **Setup**: Use `just setup` and `just up` to start the local stack.
 2.  **Testing**: Run tests with `just unit-test` and `just intg-test`.
-3.  **Graph Extension**:
+4.  **Graph Extension**:
     -   Implement the `NodeProtocol`.
-    -   Define Pydantic schemas.
+    -   Define Pydantic schemas for state validation.
     -   Build the LangGraph state machine.
     -   Integrate with the API and add tests.
 4.  **DB Changes**:

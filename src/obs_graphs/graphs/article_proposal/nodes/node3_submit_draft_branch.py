@@ -23,19 +23,18 @@ class SubmitDraftBranchNode(NodeProtocol):
     def __init__(self, gateway_client: GatewayClientProtocol):
         self._gateway_client = gateway_client
 
-    def validate_input(self, context: dict) -> bool:
+    def validate_input(self, state: dict) -> bool:
         required_keys = ["strategy", "accumulated_changes", "node_results"]
-        return all(key in context for key in required_keys)
+        return all(key in state for key in required_keys)
 
     # Async for protocol compatibility, no awaitable operations in this method
-    async def execute(self, context: dict) -> NodeResult:
-        if not self.validate_input(context):
+    async def execute(self, state: dict) -> NodeResult:
+        if not self.validate_input(state):
             raise ValueError(
                 "Invalid context: strategy, accumulated_changes, and node_results are required"
             )
 
-        accumulated_changes: list[FileChange] = context["accumulated_changes"]
-        node_results: dict = context["node_results"]
+        accumulated_changes: list[FileChange] = state["accumulated_changes"]
 
         if not accumulated_changes:
             return NodeResult(
@@ -50,19 +49,14 @@ class SubmitDraftBranchNode(NodeProtocol):
             file_name = Path(draft_change.path).name
             content = draft_change.content or ""
 
-            suggested_branch = self._derive_branch_name(file_name, node_results)
             drafts = [{"file_name": file_name, "content": content}]
-            response = self._gateway_client.create_drafts(
-                drafts=drafts, branch_name=suggested_branch
-            )
-            if not isinstance(response, dict):
+            response = await self._gateway_client.create_draft_branch(drafts=drafts)
+            if not isinstance(response, str):
                 raise ValueError("obs-gtwy SDK returned unexpected response payload")
 
-            created_branch = response.get("branch_name")
+            created_branch = response
             if not isinstance(created_branch, str) or not created_branch.strip():
-                raise ValueError(
-                    "obs-gtwy SDK response is missing a valid 'branch_name'"
-                )
+                raise ValueError("obs-gtwy SDK response is missing a valid branch name")
 
             message = f"Draft branch created successfully: {created_branch}"
 

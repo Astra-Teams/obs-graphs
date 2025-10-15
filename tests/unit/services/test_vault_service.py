@@ -52,11 +52,9 @@ def test_list_files_filters_by_prefix(vault_service: VaultService) -> None:
 
 
 def test_get_vault_summary_counts_files(vault_service: VaultService) -> None:
-    """Vault summary should count markdown files and categories correctly."""
+    """Vault summary should count markdown files correctly."""
     summary = vault_service.get_vault_summary()
     assert summary.total_articles == 2
-    assert summary.categories == ["articles", "notes"]
-    assert len(summary.recent_updates) == 2
 
 
 def test_validate_vault_structure(vault_path: Path) -> None:

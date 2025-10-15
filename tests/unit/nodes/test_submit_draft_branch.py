@@ -1,6 +1,6 @@
 """Unit tests for SubmitDraftBranchNode with obs-gtwy integration."""
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -13,7 +13,9 @@ from src.obs_graphs.graphs.article_proposal.state import FileAction, FileChange
 @pytest.fixture
 def gateway_client():
     client = MagicMock()
-    client.create_drafts.return_value = {"branch_name": "draft/sample-branch"}
+    client.create_draft_branch = AsyncMock(
+        return_value="drafts/20250101-120000-mock-branch-name"
+    )
     return client
 
 
@@ -48,7 +50,7 @@ async def test_execute_with_no_changes_skips_gateway(node, gateway_client):
 
     assert result.success is True
     assert result.metadata == {"branch_name": ""}
-    gateway_client.create_drafts.assert_not_called()
+    gateway_client.create_draft_branch.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -72,12 +74,11 @@ async def test_execute_submits_single_draft(node, gateway_client):
 
     result = await node.execute(context)
 
-    gateway_client.create_drafts.assert_called_once_with(
+    gateway_client.create_draft_branch.assert_called_once_with(
         drafts=[{"file_name": "sample.md", "content": "# Sample Draft"}],
-        branch_name="draft/sample",
     )
     assert result.success is True
-    assert result.metadata["branch_name"] == "draft/sample-branch"
+    assert result.metadata["branch_name"] == "drafts/20250101-120000-mock-branch-name"
     assert result.metadata["draft_file"] == "proposals/sample.md"
 
 
@@ -119,7 +120,7 @@ async def test_execute_handles_gateway_exception(node, gateway_client):
         "node_results": {},
     }
 
-    gateway_client.create_drafts.side_effect = RuntimeError("gateway down")
+    gateway_client.create_draft_branch.side_effect = RuntimeError("gateway down")
 
     result = await node.execute(context)
 

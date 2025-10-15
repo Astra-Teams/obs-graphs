@@ -91,7 +91,12 @@ def _create_llm_client(stl_conn_settings: StlConnSettings) -> StlConnClientProto
         An LLM client implementing StlConnClientProtocol
     """
     if stl_conn_settings.use_mock_stl_conn:
-        return MockStlConnClient(response_format="langchain")
+        from stl_conn_sdk.stl_conn_client import SimpleResponseStrategy
+
+        client = MockStlConnClient(response_format="langchain")
+        # Set a default response strategy for testing
+        client.set_strategy(SimpleResponseStrategy(content="Test Research Topic"))
+        return client
     return StlConnClient(
         base_url=stl_conn_settings.stl_conn_base_url,
         response_format="langchain",
