@@ -28,7 +28,13 @@ FROM base as dev-deps
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Install all dependencies, including development ones
+# Configure git credentials for private GitHub repositories before uv sync
 RUN --mount=type=cache,target=/root/.cache \
+  --mount=type=secret,id=github_token \
+  if [ -s /run/secrets/github_token ]; then \
+    git config --global credential.helper store && \
+    printf "https://oauth2:%s@github.com\n" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
+  fi && \
   uv sync
 
 
@@ -39,7 +45,13 @@ RUN --mount=type=cache,target=/root/.cache \
 FROM base as prod-deps
 
 # Install only production dependencies
+# Configure git credentials for private GitHub repositories before uv sync
 RUN --mount=type=cache,target=/root/.cache \
+  --mount=type=secret,id=github_token \
+  if [ -s /run/secrets/github_token ]; then \
+    git config --global credential.helper store && \
+    printf "https://oauth2:%s@github.com\n" "$(cat /run/secrets/github_token)" > ~/.git-credentials; \
+  fi && \
   uv sync --no-dev
 
 
