@@ -57,7 +57,7 @@ sdk = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/obs_graphs", "worker/obs_graphs_worker"]
+packages = ["src/obs_graphs", "worker/obs_graphs_worker", "sdk/obs_graphs_sdk"]
 
 [tool.pytest.ini_options]
 python_files = "test_*.py"

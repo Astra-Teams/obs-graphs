@@ -31,9 +31,7 @@ class WorkflowApiClient:
         """Execute a workflow by name and parse the structured response."""
 
         url = f"/api/workflows/{workflow_name}/run"
-        body = (
-            payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
-        )
+        body = payload.model_dump()
         response = self._client.post(url, json=body)
         response.raise_for_status()
         data = response.json()

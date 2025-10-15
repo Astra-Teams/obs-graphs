@@ -2,17 +2,10 @@
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
 from importlib import import_module
-from pathlib import Path
 
 import pytest
-
-SDK_ROOT = Path(__file__).resolve().parents[2] / "sdk"
-sdk_str = str(SDK_ROOT)
-if sdk_str not in sys.path:
-    sys.path.insert(0, sdk_str)
 
 _sdk = import_module("obs_graphs_sdk")
 WorkflowApiClient = _sdk.WorkflowApiClient
@@ -21,7 +14,7 @@ MockWorkflowApiClient = _sdk.MockWorkflowApiClient
 
 
 def _serialize(model):
-    return model.model_dump() if hasattr(model, "model_dump") else model.dict()
+    return model.model_dump()
 
 
 @dataclass

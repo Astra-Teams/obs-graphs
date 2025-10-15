@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import sys
 import uuid
 from pathlib import Path
 from typing import AsyncGenerator, Generator
@@ -15,12 +14,6 @@ from sqlalchemy.orm import Session, sessionmaker
 from src.obs_graphs.config import ObsGraphsSettings
 from src.obs_graphs.db.database import Base, create_db_session, get_engine
 from src.obs_graphs.main import app
-
-SDK_ROOT = Path(__file__).resolve().parents[1] / "sdk"
-if SDK_ROOT.exists():
-    sdk_path = str(SDK_ROOT)
-    if sdk_path not in sys.path:
-        sys.path.insert(0, sdk_path)
 
 
 @pytest.fixture(scope="session")
