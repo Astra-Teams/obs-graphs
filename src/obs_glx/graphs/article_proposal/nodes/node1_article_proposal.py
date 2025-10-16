@@ -90,7 +90,7 @@ class ArticleProposalNode(NodeProtocol):
 
         try:
             # Get LLM response with topic title
-            # StlConnClient.invoke() is async and returns LangChainResponse
+            # NexusClient.invoke() is async and returns LangChainResponse
             response = await llm_client.invoke(
                 [{"role": "user", "content": topic_prompt}]
             )

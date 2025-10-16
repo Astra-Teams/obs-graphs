@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 
-from src.obs_glx.protocols import StlConnClientProtocol
+from src.obs_glx.protocols import NexusClientProtocol
 
 
 @pytest.fixture(scope="session")
@@ -27,7 +27,7 @@ def api_base_url() -> str:
 @pytest.fixture(scope="session")
 def mock_llm_client() -> AsyncMock:
     """Create a mock LLM client for E2E tests."""
-    client = AsyncMock(spec=StlConnClientProtocol)
+    client = AsyncMock(spec=NexusClientProtocol)
 
     # Mock response for research_topic_proposal
     mock_response = AsyncMock()
@@ -90,8 +90,8 @@ def e2e_setup() -> Generator[None, None, None]:
     # Prepare environment variables for subprocess
     env = os.environ.copy()
     env["OBS_GLX_USE_SQLITE"] = "false"
-    env["OBS_GLX_USE_MOCK_STL_CONN"] = (
-        "true"  # E2E uses mock stl-conn (requires separate LLM server)
+    env["OBS_GLX_USE_MOCK_NEXUS"] = (
+        "true"  # E2E uses mock nexus (requires separate LLM server)
     )
     env["OBS_GLX_USE_MOCK_REDIS"] = "false"  # E2E uses real Redis
     env["OBS_GLX_USE_MOCK_STARPROBE"] = "true"

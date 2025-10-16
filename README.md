@@ -72,7 +72,7 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 - `OBS_GLX_GITHUB_TOKEN` – Personal Access Token with rights to create branches and upload files.
 
 - `NEXUS_BASE_URL` – base URL for the nexus service providing LLM access.
-- `USE_MOCK_STL_CONN` – when `true`, uses mock LLM responses for development and testing.
+- `USE_MOCK_NEXUS` – when `true`, uses mock LLM responses for development and testing.
 
 ### 3. Run the application stack
 

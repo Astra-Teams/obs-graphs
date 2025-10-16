@@ -11,7 +11,7 @@ from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
 def set_db_test_env(monkeypatch):
     """Setup environment variables for database tests."""
     # monkeypatch.setenv("USE_SQLITE", "false")  # Commented out to allow db switching tests
-    monkeypatch.setenv("USE_MOCK_STL_CONN", "true")
+    monkeypatch.setenv("USE_MOCK_NEXUS", "true")
     monkeypatch.setenv("USE_MOCK_REDIS", "true")
     monkeypatch.setenv("USE_MOCK_STARPROBE", "true")
     monkeypatch.setenv("USE_MOCK_OBS_GTWY", "true")
