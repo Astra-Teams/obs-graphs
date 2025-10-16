@@ -2,7 +2,7 @@
 
 **Obsidian Galaxy** is an AI-driven workflow automation service for Obsidian. It uses modular **LangGraph agents** to analyze and enhance knowledge bases, publishing draft branches directly to GitHub via the built-in draft service.
 
-**Core Tech**: FastAPI, LangGraph, stl-conn (Stella Connector), PostgreSQL/SQLite, Celery, Redis, Docker.
+**Core Tech**: FastAPI, LangGraph, nexus (Nexus), PostgreSQL/SQLite, Celery, Redis, Docker.
 
 ---
 
@@ -32,12 +32,12 @@
     -   Currently supports: `article-proposal` workflow type
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
--   **Clients (`clients/`)**: LLM integration via `stl-conn` SDK (`StlConnClient`, `MockStlConnClient`) implementing `StlConnClientProtocol`; GitHub draft publishing handled in `services/github_draft_service.py`, research integration uses the shared `starprobe_sdk`.
+-   **Clients (`clients/`)**: LLM integration via `nexus` SDK (`NexusClient`, `MockNexusClient`) implementing `NexusClientProtocol`; GitHub draft publishing handled in `services/github_draft_service.py`, research integration uses the shared `starprobe_sdk`.
 -   **SDK (`sdk/obs_graphs_sdk/`)**: First-party workflow client packaged as an optional dependency and aligned with the `starprobe` SDK conventions.
 -   **Async Tasks (`worker/obs_graphs_worker/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
--   **Configuration (`config/`)**: Environment-based settings for stl-conn, GitHub draft publishing, database, Redis, and the research API.
--   **DI (`dependencies.py`)**: FastAPI-native dependency injection hub with provider functions for services, clients, and configuration. LLM client creation delegated to stl-conn SDK.
--   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions. Uses `StlConnClientProtocol` from stl-conn SDK for LLM operations.
+-   **Configuration (`config/`)**: Environment-based settings for nexus, GitHub draft publishing, database, Redis, and the research API.
+-   **DI (`dependencies.py`)**: FastAPI-native dependency injection hub with provider functions for services, clients, and configuration. LLM client creation delegated to nexus SDK.
+-   **Protocols (`protocols/`)**: Interface contracts for type-safe interactions. Uses `NexusClientProtocol` from nexus SDK for LLM operations.
 
 ### 2. Testing (`tests/`)
 -   **Unit**: Isolated component tests (fast) - all services mocked.
@@ -52,7 +52,7 @@
 ## ⚖️ Architectural Principles
 
 -   **Separation of Concerns**: Clear boundaries between API, business logic, data, and infrastructure.
--   **Dependency Injection**: FastAPI-native DI using `Depends()` for testability and flexibility. Provider functions in `dependencies.py` create services with appropriate configurations. LLM backend selection delegated to stl-conn service.
+-   **Dependency Injection**: FastAPI-native DI using `Depends()` for testability and flexibility. Provider functions in `dependencies.py` create services with appropriate configurations. LLM backend selection delegated to nexus service.
 -   **Schema Separation**: Pydantic for API validation, distinct types for internal state. GraphState uses Pydantic BaseModel with runtime validation for robust state management.
 -   **Node-Based Agents**: Modular, single-responsibility agents with constructor injection of dependencies.
 -   **Comprehensive Testing**: Multi-layered testing strategy (Unit → Integration → E2E) with easy mocking via `app.dependency_overrides`.
@@ -92,5 +92,5 @@ Provides the Obsidian Vault structure and utilities for managing knowledge bases
 ### starprobe (submodules/starprobe)
 Implements AI-driven research workflows, document analysis, and content generation using LangGraph agents as a research and document generation service.
 
-### stl-conn (submodules/stl-conn)
-Provides a unified interface for connecting to various Large Language Models, handling authentication, and managing API interactions as the Stella Connector for LLM integration.
+### nexus (submodules/nexus)
+Provides a configurable FastAPI service that mediates LLM inference across pluggable backends, offering a clean scaffold with dependency injection for LLM integration.

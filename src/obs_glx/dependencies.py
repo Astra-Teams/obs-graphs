@@ -6,23 +6,23 @@ from typing import Callable, Generator, Union
 
 import redis
 from fastapi import Depends
+from nexus_sdk.nexus_client import MockNexusClient, NexusClient
 from sqlalchemy.orm import Session
 from starprobe_sdk import ResearchApiClient, ResearchClientProtocol
-from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 from dev.mocks.clients import MockRedisClient, MockResearchApiClient
 from src.obs_glx.config import (
     DBSettings,
     GitHubSettings,
+    NexusSettings,
     ObsGlxSettings,
     RedisSettings,
     StarprobeSettings,
-    StlConnSettings,
     WorkflowSettings,
 )
 from src.obs_glx.db.database import create_db_session
 from src.obs_glx.protocols import (
-    StlConnClientProtocol,
+    NexusClientProtocol,
     VaultServiceProtocol,
 )
 from src.obs_glx.services import VaultService
@@ -44,9 +44,9 @@ def get_app_settings() -> ObsGlxSettings:
 
 
 @lru_cache()
-def get_stl_conn_settings() -> StlConnSettings:
-    """Get the Stella Connector settings singleton."""
-    return StlConnSettings()
+def get_nexus_settings() -> NexusSettings:
+    """Get the Nexus settings singleton."""
+    return NexusSettings()
 
 
 @lru_cache()
@@ -80,65 +80,65 @@ def get_workflow_settings() -> WorkflowSettings:
 
 
 # ============================================================================
-# LLM Client via Stella Connector (stl-conn)
+# LLM Client via Nexus
 # ============================================================================
 
 
-def _create_llm_client(stl_conn_settings: StlConnSettings) -> StlConnClientProtocol:
+def _create_llm_client(nexus_settings: NexusSettings) -> NexusClientProtocol:
     """
-    Create an LLM client using the Stella Connector SDK.
+    Create an LLM client using the Nexus SDK.
 
     Args:
-        stl_conn_settings: Stella Connector configuration
+        nexus_settings: Nexus configuration
 
     Returns:
-        An LLM client implementing StlConnClientProtocol
+        An LLM client implementing NexusClientProtocol
     """
-    if stl_conn_settings.use_mock_stl_conn:
-        from stl_conn_sdk.stl_conn_client import SimpleResponseStrategy
+    if nexus_settings.use_mock_nexus:
+        from nexus_sdk.nexus_client import SimpleResponseStrategy
 
-        client = MockStlConnClient(response_format="langchain")
+        client = MockNexusClient(response_format="langchain")
         # Set a default response strategy for testing
         client.set_strategy(SimpleResponseStrategy(content="Test Research Topic"))
         return client
-    return StlConnClient(
-        base_url=stl_conn_settings.stl_conn_base_url,
+    return NexusClient(
+        base_url=nexus_settings.nexus_base_url,
         response_format="langchain",
-        timeout=stl_conn_settings.stl_conn_timeout,
+        timeout=nexus_settings.nexus_timeout,
     )
 
 
 def get_llm_client(
-    stl_conn_settings: StlConnSettings = Depends(get_stl_conn_settings),
-) -> StlConnClientProtocol:
+    nexus_settings: NexusSettings = Depends(get_nexus_settings),
+) -> NexusClientProtocol:
     """
-    Get an LLM client via Stella Connector.
+    Get an LLM client via Nexus.
 
     Args:
-        stl_conn_settings: Stella Connector configuration
+        nexus_settings: Nexus configuration
 
     Returns:
-        An LLM client implementing StlConnClientProtocol
+        An LLM client implementing NexusClientProtocol
     """
-    return _create_llm_client(stl_conn_settings)
+    return _create_llm_client(nexus_settings)
 
 
 def get_llm_client_provider(
-    stl_conn_settings: StlConnSettings = Depends(get_stl_conn_settings),
-) -> Callable[[str | None], StlConnClientProtocol]:
+    nexus_settings: NexusSettings = Depends(get_nexus_settings),
+) -> Callable[[str | None], NexusClientProtocol]:
     """
     Get a provider function for LLM clients.
 
     The backend parameter is kept for API compatibility but is ignored
-    since stl-conn handles backend selection internally.
+    since nexus handles backend selection internally.
 
     Returns:
-        A callable that returns an LLM client via Stella Connector
+        A callable that returns an LLM client via Nexus
     """
 
-    def provider(backend: str | None = None) -> StlConnClientProtocol:
-        # Backend parameter is ignored - stl-conn handles backend selection
-        return _create_llm_client(stl_conn_settings)
+    def provider(backend: str | None = None) -> NexusClientProtocol:
+        # Backend parameter is ignored - nexus handles backend selection
+        return _create_llm_client(nexus_settings)
 
     return provider
 
@@ -251,7 +251,7 @@ def get_redis_client(
 
 
 def get_article_proposal_node(
-    llm_client_provider: Callable[[str | None], StlConnClientProtocol] = Depends(
+    llm_client_provider: Callable[[str | None], NexusClientProtocol] = Depends(
         get_llm_client_provider
     ),
 ):

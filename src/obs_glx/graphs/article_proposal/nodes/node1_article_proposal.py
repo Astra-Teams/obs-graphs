@@ -5,7 +5,7 @@ from typing import Callable
 
 from src.obs_glx.graphs.article_proposal.prompts import render_prompt
 from src.obs_glx.graphs.article_proposal.state import NodeResult
-from src.obs_glx.protocols import NodeProtocol, StlConnClientProtocol
+from src.obs_glx.protocols import NexusClientProtocol, NodeProtocol
 
 
 class ArticleProposalNode(NodeProtocol):
@@ -19,7 +19,7 @@ class ArticleProposalNode(NodeProtocol):
 
     name = "article_proposal"
 
-    def __init__(self, llm_provider: Callable[[str | None], StlConnClientProtocol]):
+    def __init__(self, llm_provider: Callable[[str | None], NexusClientProtocol]):
         """Initialize the article proposal node."""
         self._llm_provider = llm_provider
 
@@ -58,7 +58,7 @@ class ArticleProposalNode(NodeProtocol):
             raise ValueError("required fields missing")
 
         strategy = state.get("strategy", "new_article")
-        # Backend parameter is ignored by stl-conn
+        # Backend parameter is ignored by nexus
         llm_client = self._llm_provider(None)
 
         if strategy == "research_proposal":
@@ -67,7 +67,7 @@ class ArticleProposalNode(NodeProtocol):
             return await self._execute_new_article_proposal(state, llm_client)
 
     async def _execute_research_topic_proposal(
-        self, state: dict, llm_client: StlConnClientProtocol
+        self, state: dict, llm_client: NexusClientProtocol
     ) -> NodeResult:
         """
         Execute research topic proposal based on user prompt.
@@ -122,7 +122,7 @@ class ArticleProposalNode(NodeProtocol):
             )
 
     async def _execute_new_article_proposal(
-        self, state: dict, llm_client: StlConnClientProtocol
+        self, state: dict, llm_client: NexusClientProtocol
     ) -> NodeResult:
         """
         Execute new article proposal based on vault analysis.
@@ -143,7 +143,7 @@ class ArticleProposalNode(NodeProtocol):
 
         try:
             # Get LLM response with JSON article proposals
-            # StlConnClient.invoke() is async and returns LangChainResponse
+            # NexusClient.invoke() is async and returns LangChainResponse
             response = await llm_client.invoke(
                 [{"role": "user", "content": proposal_prompt}]
             )
