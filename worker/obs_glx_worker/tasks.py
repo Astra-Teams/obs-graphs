@@ -54,7 +54,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
     2. Copy vault submodule to a temporary working directory
     3. Analyze vault and execute agents via dependency container
     4. Apply changes through the VaultService/GitHub API
-    5. Submit draft content through nexus and record branch metadata
+    5. Submit draft content to GitHub and record branch metadata
     6. Update workflow status and store results
     8. Clean up temporary directory
 

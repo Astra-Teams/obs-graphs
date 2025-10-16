@@ -21,7 +21,7 @@ def set_unit_test_env(monkeypatch):
     monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
     monkeypatch.setenv("OBS_GLX_USE_MOCK_REDIS", "true")
     monkeypatch.setenv("OBS_GLX_USE_MOCK_STARPROBE", "true")
-    monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
+    monkeypatch.setenv("OBS_GLX_USE_MOCK_GITHUB", "true")
 
     try:
         monkeypatch.setattr(

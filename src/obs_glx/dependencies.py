@@ -6,7 +6,6 @@ from typing import Callable, Generator, Union
 
 import redis
 from fastapi import Depends
-from nexus_sdk import MockNexusClient, NexusClient, NexusClientProtocol
 from sqlalchemy.orm import Session
 from starprobe_sdk import ResearchApiClient, ResearchClientProtocol
 from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
@@ -14,7 +13,7 @@ from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 from dev.mocks.clients import MockRedisClient, MockResearchApiClient
 from src.obs_glx.config import (
     DBSettings,
-    NexusSettings,
+    GitHubSettings,
     ObsGlxSettings,
     RedisSettings,
     StarprobeSettings,
@@ -27,6 +26,11 @@ from src.obs_glx.protocols import (
     VaultServiceProtocol,
 )
 from src.obs_glx.services import VaultService
+from src.obs_glx.services.github_draft_service import (
+    GitHubDraftService,
+    GitHubDraftServiceProtocol,
+    MockGitHubDraftService,
+)
 
 # ============================================================================
 # Configuration Providers
@@ -46,9 +50,9 @@ def get_stl_conn_settings() -> StlConnSettings:
 
 
 @lru_cache()
-def get_nexus_settings() -> NexusSettings:
-    """Get the nexus settings singleton."""
-    return NexusSettings()
+def get_github_settings() -> GitHubSettings:
+    """Get the GitHub settings singleton."""
+    return GitHubSettings()
 
 
 @lru_cache()
@@ -178,25 +182,24 @@ def get_vault_service(
     return VaultService(vault_path=Path(settings.vault_submodule_path))
 
 
-def get_gateway_client(
+def get_github_draft_service(
     settings: ObsGlxSettings = Depends(get_app_settings),
-    nexus_settings: NexusSettings = Depends(get_nexus_settings),
-) -> NexusClientProtocol:
+    github_settings: GitHubSettings = Depends(get_github_settings),
+) -> GitHubDraftServiceProtocol:
     """
-    Get the nexus gateway client instance.
+    Get the GitHub draft service instance.
 
     Args:
-        settings: Application settings for mock configuration
-        nexus_settings: Gateway-specific configuration
+        settings: Application settings for mock configuration.
+        github_settings: GitHub integration configuration.
 
     Returns:
-        Gateway client (mock or real based on settings)
+        GitHubDraftServiceProtocol implementation (mock or real based on settings).
     """
-    if settings.use_mock_nexus:
-        return MockNexusClient()
+    if settings.use_mock_github:
+        return MockGitHubDraftService()
 
-    gateway_base = str(nexus_settings.base_url).rstrip("/")
-    return NexusClient(base_url=gateway_base)
+    return GitHubDraftService.from_settings(github_settings)
 
 
 def get_research_client(
@@ -288,19 +291,19 @@ def get_deep_research_node(
 
 
 def get_submit_draft_branch_node(
-    gateway_client: NexusClientProtocol = Depends(get_gateway_client),
+    draft_service: GitHubDraftServiceProtocol = Depends(get_github_draft_service),
 ):
     """
     Get the submit draft branch node.
 
     Args:
-        gateway_client: Gateway client for Obsidian operations
+        draft_service: GitHub draft service responsible for branch creation
 
     Returns:
-        SubmitDraftBranchNode configured with gateway client
+        SubmitDraftBranchNode configured with GitHub draft service
     """
     from src.obs_glx.graphs.article_proposal.nodes.node3_submit_draft_branch import (
         SubmitDraftBranchNode,
     )
 
-    return SubmitDraftBranchNode(gateway_client)
+    return SubmitDraftBranchNode(draft_service)

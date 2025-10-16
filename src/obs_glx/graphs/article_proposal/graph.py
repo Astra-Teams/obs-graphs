@@ -41,7 +41,7 @@ class WorkflowResult:
         changes: Aggregated list of all file changes from nodes
         summary: Human-readable summary of what was done
         node_results: Dictionary mapping node names to their results
-        branch_name: Name of the branch registered by nexus
+        branch_name: Name of the branch registered in GitHub
     """
 
     success: bool
@@ -102,7 +102,7 @@ class ArticleProposalGraph:
 
     async def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
         """
-        Run the complete workflow: execute nodes and submit the draft via nexus.
+        Run the complete workflow: execute nodes and submit the draft via GitHub.
 
         Args:
             request: Workflow run request with optional strategy override

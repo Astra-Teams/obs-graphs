@@ -10,7 +10,7 @@ article_proposal/
 ├── nodes/             # Individual workflow nodes/agents
 │   ├── node1_article_proposal.py    # Analyzes vault and proposes new articles
 │   ├── node2_deep_research.py       # Conducts deep research using external API
-│   └── node3_submit_draft_branch.py # Submits markdown drafts to nexus
+│   └── node3_submit_draft_branch.py # Submits markdown drafts to GitHub
 ├── prompts/           # LLM prompt templates
 │   ├── new_article_creation.md      # Template for proposing new articles
 │   └── research_topic_proposal.md   # Template for research topic proposals
@@ -47,7 +47,7 @@ The article proposal graph supports two main strategies:
 
 ### SubmitDraftBranchNode (`submit_draft_branch`)
 - Generates commit messages and branch content from accumulated results
-- Creates workflow branches via nexus and records metadata for operators
+- Creates workflow branches via GitHub and records metadata for operators
 - Stores branch metadata (name, files) for downstream consumers
 
 ## State Management

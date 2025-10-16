@@ -64,7 +64,9 @@ def client(test_db):
     )
 
     # Mock other clients
-    app.dependency_overrides[dependencies.get_gateway_client] = lambda: MagicMock()
+    app.dependency_overrides[dependencies.get_github_draft_service] = (
+        lambda: MagicMock()
+    )
     app.dependency_overrides[dependencies.get_research_client] = lambda: MagicMock()
     app.dependency_overrides[dependencies.get_vault_service] = lambda: MagicMock()
 

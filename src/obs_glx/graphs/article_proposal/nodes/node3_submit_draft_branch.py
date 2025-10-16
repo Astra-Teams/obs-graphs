@@ -1,11 +1,9 @@
-"""Node responsible for delegating draft creation to the nexus gateway."""
+"""Node responsible for delegating draft creation directly to GitHub."""
 
 from __future__ import annotations
 
 import re
 from pathlib import Path
-
-from nexus_sdk import NexusClientProtocol
 
 from src.obs_glx.graphs.article_proposal.state import (
     FileAction,
@@ -13,15 +11,16 @@ from src.obs_glx.graphs.article_proposal.state import (
     NodeResult,
 )
 from src.obs_glx.protocols import NodeProtocol
+from src.obs_glx.services.github_draft_service import GitHubDraftServiceProtocol
 
 
 class SubmitDraftBranchNode(NodeProtocol):
-    """Transforms accumulated changes into a draft branch via nexus."""
+    """Transforms accumulated changes into a draft branch via GitHub."""
 
     name = "submit_draft_branch"
 
-    def __init__(self, gateway_client: NexusClientProtocol):
-        self._gateway_client = gateway_client
+    def __init__(self, draft_service: GitHubDraftServiceProtocol):
+        self._draft_service = draft_service
 
     def validate_input(self, state: dict) -> bool:
         required_keys = ["strategy", "accumulated_changes", "node_results"]
@@ -40,7 +39,7 @@ class SubmitDraftBranchNode(NodeProtocol):
             return NodeResult(
                 success=True,
                 changes=[],
-                message="No changes detected; skipping gateway submission",
+                message="No changes detected; skipping GitHub submission",
                 metadata={"branch_name": ""},
             )
 
@@ -50,13 +49,17 @@ class SubmitDraftBranchNode(NodeProtocol):
             content = draft_change.content or ""
 
             drafts = [{"file_name": file_name, "content": content}]
-            response = await self._gateway_client.create_draft_branch(drafts=drafts)
+            response = await self._draft_service.create_draft_branch(drafts=drafts)
             if not isinstance(response, str):
-                raise ValueError("nexus SDK returned unexpected response payload")
+                raise ValueError(
+                    "GitHub draft service returned unexpected response payload"
+                )
 
             created_branch = response
             if not isinstance(created_branch, str) or not created_branch.strip():
-                raise ValueError("nexus SDK response is missing a valid branch name")
+                raise ValueError(
+                    "GitHub draft service response is missing a valid branch name"
+                )
 
             message = f"Draft branch created successfully: {created_branch}"
 
@@ -87,7 +90,7 @@ class SubmitDraftBranchNode(NodeProtocol):
 
         draft_change = create_changes[0]
         if not draft_change.content:
-            raise ValueError("Draft content is missing for gateway submission.")
+            raise ValueError("Draft content is missing for GitHub submission.")
 
         return draft_change
 

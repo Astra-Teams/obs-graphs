@@ -1,6 +1,6 @@
 # Obsidian Galaxy
 
-Obsidian Galaxy is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through nexus managed draft branches.
+Obsidian Galaxy is an AI-powered workflow automation service for Obsidian vaults. It orchestrates modular LangGraph agents that can analyse, organise, and enhance a knowledge base by proposing and applying changes through GitHub-managed draft branches.
 
 ## What's in the box?
 
@@ -9,7 +9,7 @@ Obsidian Galaxy is an AI-powered workflow automation service for Obsidian vaults
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
 - **Pluggable LLM backends** via the stl-conn SDK, providing a unified interface to various LLM providers.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
-- **SDK integrations** for nexus and deep research through the shared `nexus_sdk` and `starprobe_sdk` packages, plus a first-party `obs_graphs_sdk` for workflow execution.
+- **First-party integrations** for publishing drafts directly to GitHub (`obs_glx.services.github_draft_service`) and deep research through the shared `starprobe_sdk`, plus a first-party `obs_graphs_sdk` for workflow execution.
 
 ## Directory Structure
 
@@ -17,7 +17,7 @@ Obsidian Galaxy is an AI-powered workflow automation service for Obsidian vaults
 ├── src/obs_glx/       # Main application package
 │   ├── api/             # FastAPI endpoints and schemas
 │   ├── celery/          # Celery tasks for async workflow execution
-│   ├── clients/         # External service clients (LLM adapters; gateway/research SDKs live in submodules)
+│   ├── clients/         # External service clients (LLM adapters)
 │   ├── config/          # Configuration modules
 │   ├── dependencies.py  # FastAPI-native dependency injection hub
 │   ├── db/              # Database models and session management
@@ -67,8 +67,9 @@ just setup
 All configuration is centralised in `.env`. Update it to reflect your environment. Important options include:
 
 - `USE_*` toggles – enable or disable external integrations (LLM, Redis, research API mocks). By default `USE_MOCK_STARPROBE=true`, but you can point to a live service by setting it to `false`.
-- `OBS_GLX_USE_MOCK_NEXUS` – when `true`, obs-glx uses an in-process mock of the nexus gateway while the real API is not deployed.
-- `NEXUS_API_URL` – base URL for the gateway responsible for materialising draft branches (the SDK manages HTTP timeouts internally).
+- `OBS_GLX_USE_MOCK_GITHUB` – when `true`, obs-glx uses an in-process mock of the GitHub draft service while credentials are not configured.
+- `OBS_GLX_GITHUB_REPO` – repository (`owner/repo`) where draft branches should be published.
+- `OBS_GLX_GITHUB_TOKEN` – Personal Access Token with rights to create branches and upload files.
 
 - `STL_CONN_BASE_URL` – base URL for the stl-conn service providing LLM access.
 - `USE_MOCK_STL_CONN` – when `true`, uses mock LLM responses for development and testing.

@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from typing import Callable, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from nexus_sdk import NexusClientProtocol
 from sqlalchemy.orm import Session
 from starprobe_sdk import ResearchClientProtocol
 
@@ -18,6 +17,7 @@ from src.obs_glx.api.schemas import (
 from src.obs_glx.config import obs_glx_settings
 from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
 from src.obs_glx.protocols import StlConnClientProtocol, VaultServiceProtocol
+from src.obs_glx.services.github_draft_service import GitHubDraftServiceProtocol
 
 router = APIRouter()
 
@@ -36,7 +36,9 @@ async def run_workflow(
     llm_client_provider: Callable[[], StlConnClientProtocol] = Depends(
         dependencies.get_llm_client_provider
     ),
-    gateway_client: NexusClientProtocol = Depends(dependencies.get_gateway_client),
+    draft_service: GitHubDraftServiceProtocol = Depends(
+        dependencies.get_github_draft_service
+    ),
     research_client: ResearchClientProtocol = Depends(dependencies.get_research_client),
 ) -> WorkflowRunResponse:
     """
@@ -69,7 +71,7 @@ async def run_workflow(
                 workflow_type=workflow_type,
                 vault_service=vault_service,
                 llm_client_provider=llm_client_provider,
-                gateway_client=gateway_client,
+                draft_service=draft_service,
                 research_client=research_client,
             )
         except ValueError as e:

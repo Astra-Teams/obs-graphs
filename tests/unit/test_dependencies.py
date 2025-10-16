@@ -1,15 +1,15 @@
 """Unit tests for the dependency injection system."""
 
-from nexus_sdk import MockNexusClient
 from pytest import MonkeyPatch
 from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 from src.obs_glx import dependencies
 from src.obs_glx.config import (
-    NexusSettings,
+    GitHubSettings,
     ObsGlxSettings,
     StlConnSettings,
 )
+from src.obs_glx.services.github_draft_service import MockGitHubDraftService
 
 
 class TestConfigurationProviders:
@@ -25,20 +25,19 @@ class TestConfigurationProviders:
         settings = dependencies.get_stl_conn_settings()
         assert isinstance(settings, StlConnSettings)
 
-
-def test_get_nexus_settings(monkeypatch: MonkeyPatch):
-    """Test that get_nexus_settings returns NexusSettings."""
-    # Mock environment variables if necessary
-    settings = dependencies.get_nexus_settings()
-    assert isinstance(settings, NexusSettings)
-    # Clear the cache for other tests
-    dependencies.get_nexus_settings.cache_clear()
-
     def test_settings_are_cached(self):
-        """Test that settings providers use lru_cache and return same instance."""
+        """Settings providers should use lru_cache and return the same instance."""
+        dependencies.get_app_settings.cache_clear()
         settings1 = dependencies.get_app_settings()
         settings2 = dependencies.get_app_settings()
         assert settings1 is settings2
+
+
+def test_get_github_settings(monkeypatch: MonkeyPatch):
+    """Test that get_github_settings returns GitHubSettings."""
+    settings = dependencies.get_github_settings()
+    assert isinstance(settings, GitHubSettings)
+    dependencies.get_github_settings.cache_clear()
 
 
 class TestLLMClientFactory:
@@ -119,20 +118,20 @@ class TestServiceProviders:
         vault_service = dependencies.get_vault_service(settings=settings)
         assert vault_service is not None
 
-    def test_get_gateway_client(self, monkeypatch):
-        """Test that get_gateway_client returns appropriate client."""
-        monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
+    def test_get_github_draft_service(self, monkeypatch):
+        """Test that get_github_draft_service returns appropriate client."""
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_GITHUB", "true")
 
         # Clear cache
         dependencies.get_app_settings.cache_clear()
-        dependencies.get_nexus_settings.cache_clear()
+        dependencies.get_github_settings.cache_clear()
 
-        client = dependencies.get_gateway_client(
+        client = dependencies.get_github_draft_service(
             settings=dependencies.get_app_settings(),
-            nexus_settings=dependencies.get_nexus_settings(),
+            github_settings=dependencies.get_github_settings(),
         )
         assert client is not None
-        assert isinstance(client, MockNexusClient)
+        assert isinstance(client, MockGitHubDraftService)
 
     def test_get_research_client(self, monkeypatch):
         """Test that get_research_client returns appropriate client."""
