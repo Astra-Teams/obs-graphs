@@ -18,7 +18,6 @@ from src.obs_glx.config.github_settings import GitHubSettings
 
 Clock = Callable[[], datetime]
 
-DEFAULT_PULL_REQUEST_BODY = "Posting a new draft article."
 COMMIT_MESSAGE_TEMPLATE = "feat: Add draft '{file_name}'"
 
 
@@ -60,7 +59,6 @@ class GitHubDraftService(GitHubDraftServiceProtocol):
     drafts_directory: str = "drafts"
     api_url: str = "https://api.github.com"
     api_version: str = "2022-11-28"
-    pull_request_body: str = DEFAULT_PULL_REQUEST_BODY
     clock: Clock = field(default=_default_clock)
 
     def __post_init__(self) -> None:
@@ -230,13 +228,6 @@ class GitHubDraftService(GitHubDraftServiceProtocol):
 
     def _build_repository_path(self, file_name: str) -> str:
         return f"{self.drafts_directory}/{file_name}"
-
-    def _build_pull_request_title(self, file_name: str) -> str:
-        stem = file_name.rsplit(".", 1)[0]
-        title = re.sub(r"[-_]+", " ", stem).strip()
-        if not title:
-            title = "New Draft"
-        return title.title()
 
     def _slugify(self, file_name: str) -> str:
         stem = file_name.rsplit(".", 1)[0]
