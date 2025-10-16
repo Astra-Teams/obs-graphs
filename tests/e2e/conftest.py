@@ -95,7 +95,7 @@ def e2e_setup() -> Generator[None, None, None]:
     )
     env["OBS_GLX_USE_MOCK_REDIS"] = "false"  # E2E uses real Redis
     env["OBS_GLX_USE_MOCK_STARPROBE"] = "true"
-    env["OBS_GLX_USE_MOCK_NEXUS"] = "true"
+    env["OBS_GLX_USE_MOCK_GITHUB"] = "true"
 
     host_bind_ip = os.getenv("OBS_GLX_HOST_BIND_IP", "127.0.0.1")
     host_port = os.getenv("OBS_GLX_TEST_PORT", "8002")

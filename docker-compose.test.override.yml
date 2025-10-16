@@ -1,7 +1,7 @@
 x-test-env: &test-env
   POSTGRES_DB: ${POSTGRES_TEST_DB}
   OBS_GLX_USE_MOCK_STL_CONN: true
-  OBS_GLX_USE_MOCK_NEXUS: true
+  OBS_GLX_USE_MOCK_GITHUB: true
   OBS_GLX_USE_MOCK_STARPROBE: true
 services:
   db:

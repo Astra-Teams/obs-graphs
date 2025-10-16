@@ -2,19 +2,19 @@
 
 from typing import Callable
 
-from nexus_sdk import NexusClientProtocol
 from starprobe_sdk import ResearchClientProtocol
 
 from src.obs_glx.graphs.article_proposal.graph import ArticleProposalGraph
 from src.obs_glx.graphs.protocol import WorkflowGraphProtocol
 from src.obs_glx.protocols import StlConnClientProtocol, VaultServiceProtocol
+from src.obs_glx.services.github_draft_service import GitHubDraftServiceProtocol
 
 
 def get_graph_builder(
     workflow_type: str,
     vault_service: VaultServiceProtocol | None = None,
     llm_client_provider: Callable[[], StlConnClientProtocol] | None = None,
-    gateway_client: NexusClientProtocol | None = None,
+    draft_service: GitHubDraftServiceProtocol | None = None,
     research_client: ResearchClientProtocol | None = None,
 ) -> WorkflowGraphProtocol:
     """
@@ -24,7 +24,7 @@ def get_graph_builder(
         workflow_type: Type of workflow to build (e.g., 'article-proposal')
         vault_service: Optional service for vault file operations (uses default if None)
         llm_client_provider: Optional provider function for creating LLM clients (uses default if None)
-        gateway_client: Optional client for Obsidian gateway operations (uses default if None)
+        draft_service: Optional client for GitHub draft operations (uses default if None)
         research_client: Optional client for deep research operations (uses default if None)
 
     Returns:
@@ -43,9 +43,9 @@ def get_graph_builder(
     llm_client_provider = llm_client_provider or dependencies.get_llm_client_provider(
         stl_conn_settings=dependencies.get_stl_conn_settings(),
     )
-    gateway_client = gateway_client or dependencies.get_gateway_client(
+    draft_service = draft_service or dependencies.get_github_draft_service(
         settings=dependencies.get_app_settings(),
-        nexus_settings=dependencies.get_nexus_settings(),
+        github_settings=dependencies.get_github_settings(),
     )
     research_client = research_client or dependencies.get_research_client(
         settings=dependencies.get_app_settings(),
@@ -62,7 +62,7 @@ def get_graph_builder(
                 research_client=research_client
             ),
             submit_draft_branch_node=dependencies.get_submit_draft_branch_node(
-                gateway_client=gateway_client
+                draft_service=draft_service
             ),
         ),
         # Future additions can be added here, e.g.:

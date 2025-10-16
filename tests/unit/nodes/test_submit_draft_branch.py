@@ -1,4 +1,4 @@
-"""Unit tests for SubmitDraftBranchNode with nexus integration."""
+"""Unit tests for SubmitDraftBranchNode with GitHub integration."""
 
 from unittest.mock import AsyncMock, MagicMock
 
@@ -11,17 +11,17 @@ from src.obs_glx.graphs.article_proposal.state import FileAction, FileChange
 
 
 @pytest.fixture
-def gateway_client():
-    client = MagicMock()
-    client.create_draft_branch = AsyncMock(
+def draft_service():
+    service = MagicMock()
+    service.create_draft_branch = AsyncMock(
         return_value="drafts/20250101-120000-mock-branch-name"
     )
-    return client
+    return service
 
 
 @pytest.fixture
-def node(gateway_client):
-    return SubmitDraftBranchNode(gateway_client)
+def node(draft_service):
+    return SubmitDraftBranchNode(draft_service)
 
 
 def test_validate_input_valid(node):
@@ -39,7 +39,7 @@ def test_validate_input_missing_keys(node):
 
 
 @pytest.mark.asyncio
-async def test_execute_with_no_changes_skips_gateway(node, gateway_client):
+async def test_execute_with_no_changes_skips_service(node, draft_service):
     context = {
         "strategy": "research_proposal",
         "accumulated_changes": [],
@@ -50,11 +50,11 @@ async def test_execute_with_no_changes_skips_gateway(node, gateway_client):
 
     assert result.success is True
     assert result.metadata == {"branch_name": ""}
-    gateway_client.create_draft_branch.assert_not_called()
+    draft_service.create_draft_branch.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_execute_submits_single_draft(node, gateway_client):
+async def test_execute_submits_single_draft(node, draft_service):
     change = FileChange(
         path="proposals/sample.md",
         action=FileAction.CREATE,
@@ -74,7 +74,7 @@ async def test_execute_submits_single_draft(node, gateway_client):
 
     result = await node.execute(context)
 
-    gateway_client.create_draft_branch.assert_called_once_with(
+    draft_service.create_draft_branch.assert_called_once_with(
         drafts=[{"file_name": "sample.md", "content": "# Sample Draft"}],
     )
     assert result.success is True
@@ -108,7 +108,7 @@ async def test_execute_raises_when_multiple_drafts(node):
 
 
 @pytest.mark.asyncio
-async def test_execute_handles_gateway_exception(node, gateway_client):
+async def test_execute_handles_service_exception(node, draft_service):
     change = FileChange(
         path="proposals/sample.md",
         action=FileAction.CREATE,
@@ -120,12 +120,12 @@ async def test_execute_handles_gateway_exception(node, gateway_client):
         "node_results": {},
     }
 
-    gateway_client.create_draft_branch.side_effect = RuntimeError("gateway down")
+    draft_service.create_draft_branch.side_effect = RuntimeError("github down")
 
     result = await node.execute(context)
 
     assert result.success is False
-    assert "gateway down" in result.message
+    assert "github down" in result.message
 
 
 def test_branch_name_derives_from_filename(node):

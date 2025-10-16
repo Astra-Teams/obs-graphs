@@ -1612,18 +1612,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nexus-api"
-version = "0.1.0"
-source = { git = "https://github.com/asterismhq/nexus.git#5f34aa8c5836665ff436076d3678573debf87cdf" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "pydantic-settings" },
-    { name = "python-dotenv" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[[package]]
 name = "numpy"
 version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1695,13 +1683,13 @@ dependencies = [
     { name = "celery", extra = ["redis"] },
     { name = "fastapi" },
     { name = "gitpython" },
+    { name = "httpx" },
     { name = "jinja2" },
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
     { name = "langgraph" },
-    { name = "nexus-api" },
     { name = "ollama" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic-settings" },
@@ -1724,7 +1712,6 @@ dev = [
     { name = "black" },
     { name = "fakeredis" },
     { name = "filelock" },
-    { name = "httpx" },
     { name = "ipython" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -1741,6 +1728,7 @@ requires-dist = [
     { name = "celery", extras = ["redis"], specifier = ">=5.3.0,<6.0.0" },
     { name = "fastapi", specifier = ">=0.116.1,<0.117.0" },
     { name = "gitpython", specifier = ">=3.1.0,<4.0.0" },
+    { name = "httpx", specifier = ">=0.27.0,<1.0.0" },
     { name = "httpx", marker = "extra == 'sdk'", specifier = ">=0.27.0,<1.0.0" },
     { name = "jinja2", specifier = ">=3.1.4,<4.0.0" },
     { name = "langchain", specifier = ">=0.1.0,<0.4.0" },
@@ -1748,7 +1736,6 @@ requires-dist = [
     { name = "langchain-ollama", specifier = ">=0.3.6,<0.4.0" },
     { name = "langchain-openai", specifier = ">=0.0.5,<0.3.0" },
     { name = "langgraph", specifier = ">=0.0.20,<0.3.0" },
-    { name = "nexus-api", git = "https://github.com/asterismhq/nexus.git" },
     { name = "ollama", specifier = ">=0.5.3,<0.6.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1,<4.0" },
     { name = "pydantic", marker = "extra == 'sdk'", specifier = ">=2.9.0,<3.0.0" },
@@ -1767,7 +1754,6 @@ dev = [
     { name = "black", specifier = ">=25.1.0" },
     { name = "fakeredis", specifier = ">=2.20.0" },
     { name = "filelock", specifier = ">=3.12.2,<4.0.0" },
-    { name = "httpx", specifier = ">=0.27.0,<1.0.0" },
     { name = "ipython", specifier = ">=9.4.0" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-asyncio", specifier = ">=0.23.7" },
