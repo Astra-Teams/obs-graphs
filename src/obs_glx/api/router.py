@@ -16,7 +16,7 @@ from src.obs_glx.api.schemas import (
 )
 from src.obs_glx.config import obs_glx_settings
 from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
-from src.obs_glx.protocols import StlConnClientProtocol, VaultServiceProtocol
+from src.obs_glx.protocols import NexusClientProtocol, VaultServiceProtocol
 from src.obs_glx.services.github_draft_service import GitHubDraftServiceProtocol
 
 router = APIRouter()
@@ -33,7 +33,7 @@ async def run_workflow(
     request: WorkflowRunRequest,
     db: Session = Depends(dependencies.get_db_session),
     vault_service: VaultServiceProtocol = Depends(dependencies.get_vault_service),
-    llm_client_provider: Callable[[], StlConnClientProtocol] = Depends(
+    llm_client_provider: Callable[[], NexusClientProtocol] = Depends(
         dependencies.get_llm_client_provider
     ),
     draft_service: GitHubDraftServiceProtocol = Depends(

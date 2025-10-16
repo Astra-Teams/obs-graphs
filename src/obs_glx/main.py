@@ -3,9 +3,9 @@ from fastapi import FastAPI
 from src.obs_glx.api.router import router as workflows_router
 
 app = FastAPI(
-    title="FastAPI Template",
+    title="Obsidian Galaxy API",
     version="0.1.0",
-    description="A FastAPI template project",
+    description="Orchestration Graphs for Obsidian Vault.",
 )
 
 

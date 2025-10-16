@@ -7,7 +7,7 @@ Obsidian Galaxy is an AI-powered workflow automation service for Obsidian vaults
 - **FastAPI** application that exposes workflow orchestration endpoints.
 - **LangGraph** powered agents for article improvements, classification, cross-referencing, and vault quality audits.
 - **Pydantic `BaseSettings` configuration** with dedicated modules for database, Redis, and research API settings.
-- **Pluggable LLM backends** via the stl-conn SDK, providing a unified interface to various LLM providers.
+- **Pluggable LLM backends** via the nexus SDK, providing a unified interface to various LLM providers.
 - **Git submodules** for external integrations, including the shared Obsidian vault checkout and the reference deep-research API.
 - **First-party integrations** for publishing drafts directly to GitHub (`obs_glx.services.github_draft_service`) and deep research through the shared `starprobe_sdk`, plus a first-party `obs_graphs_sdk` for workflow execution.
 
@@ -71,8 +71,8 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 - `OBS_GLX_GITHUB_REPO` – repository (`owner/repo`) where draft branches should be published.
 - `OBS_GLX_GITHUB_TOKEN` – Personal Access Token with rights to create branches and upload files.
 
-- `STL_CONN_BASE_URL` – base URL for the stl-conn service providing LLM access.
-- `USE_MOCK_STL_CONN` – when `true`, uses mock LLM responses for development and testing.
+- `NEXUS_BASE_URL` – base URL for the nexus service providing LLM access.
+- `USE_MOCK_NEXUS` – when `true`, uses mock LLM responses for development and testing.
 
 ### 3. Run the application stack
 
@@ -107,12 +107,12 @@ E2E tests rely on PostgreSQL and will wait for `obs-api` to report healthy befor
 
 ### LLM Integration
 
-Workflows obtain their language model through the stl-conn SDK, which provides a unified interface to various LLM providers. Configuration is managed via environment variables:
+Workflows obtain their language model through the nexus SDK, which provides a unified interface to various LLM providers. Configuration is managed via environment variables:
 
-- Set `STL_CONN_BASE_URL` to the URL of your stl-conn service instance.
-- For development, enable `USE_MOCK_STL_CONN=true` to use mock LLM responses instead of calling the real service.
+- Set `NEXUS_BASE_URL` to the URL of your nexus service instance.
+- For development, enable `USE_MOCK_NEXUS=true` to use mock LLM responses instead of calling the real service.
 
-The stl-conn service abstracts away the complexities of different LLM backends, allowing workflows to focus on their logic without backend-specific code.
+The nexus service abstracts away the complexities of different LLM backends, allowing workflows to focus on their logic without backend-specific code.
 
 ### 5. Quick API test
 

@@ -6,14 +6,14 @@ from starprobe_sdk import ResearchClientProtocol
 
 from src.obs_glx.graphs.article_proposal.graph import ArticleProposalGraph
 from src.obs_glx.graphs.protocol import WorkflowGraphProtocol
-from src.obs_glx.protocols import StlConnClientProtocol, VaultServiceProtocol
+from src.obs_glx.protocols import NexusClientProtocol, VaultServiceProtocol
 from src.obs_glx.services.github_draft_service import GitHubDraftServiceProtocol
 
 
 def get_graph_builder(
     workflow_type: str,
     vault_service: VaultServiceProtocol | None = None,
-    llm_client_provider: Callable[[], StlConnClientProtocol] | None = None,
+    llm_client_provider: Callable[[], NexusClientProtocol] | None = None,
     draft_service: GitHubDraftServiceProtocol | None = None,
     research_client: ResearchClientProtocol | None = None,
 ) -> WorkflowGraphProtocol:
@@ -41,7 +41,7 @@ def get_graph_builder(
     # Use provided dependencies or get defaults
     vault_service = vault_service or dependencies.get_vault_service()
     llm_client_provider = llm_client_provider or dependencies.get_llm_client_provider(
-        stl_conn_settings=dependencies.get_stl_conn_settings(),
+        nexus_settings=dependencies.get_nexus_settings(),
     )
     draft_service = draft_service or dependencies.get_github_draft_service(
         settings=dependencies.get_app_settings(),

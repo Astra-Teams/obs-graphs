@@ -1,13 +1,13 @@
 """Unit tests for the dependency injection system."""
 
+from nexus_sdk.nexus_client import MockNexusClient, NexusClient
 from pytest import MonkeyPatch
-from stl_conn_sdk.stl_conn_client import MockStlConnClient, StlConnClient
 
 from src.obs_glx import dependencies
 from src.obs_glx.config import (
     GitHubSettings,
+    NexusSettings,
     ObsGlxSettings,
-    StlConnSettings,
 )
 from src.obs_glx.services.github_draft_service import MockGitHubDraftService
 
@@ -20,10 +20,10 @@ class TestConfigurationProviders:
         settings = dependencies.get_app_settings()
         assert isinstance(settings, ObsGlxSettings)
 
-    def test_get_stl_conn_settings(self):
-        """Test that get_stl_conn_settings returns StlConnSettings."""
-        settings = dependencies.get_stl_conn_settings()
-        assert isinstance(settings, StlConnSettings)
+    def test_get_nexus_settings(self):
+        """Test that get_nexus_settings returns NexusSettings."""
+        settings = dependencies.get_nexus_settings()
+        assert isinstance(settings, NexusSettings)
 
     def test_settings_are_cached(self):
         """Settings providers should use lru_cache and return the same instance."""
@@ -44,58 +44,58 @@ class TestLLMClientFactory:
     """Test LLM client factory and provider functions."""
 
     def test_get_llm_client_mock(self, monkeypatch):
-        """Test that get_llm_client returns MockStlConnClient when mock is enabled."""
-        monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
+        """Test that get_llm_client returns MockNexusClient when mock is enabled."""
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
 
         # Clear cache to pick up new env vars
-        dependencies.get_stl_conn_settings.cache_clear()
+        dependencies.get_nexus_settings.cache_clear()
 
         client = dependencies.get_llm_client(
-            stl_conn_settings=dependencies.get_stl_conn_settings(),
+            nexus_settings=dependencies.get_nexus_settings(),
         )
-        assert isinstance(client, MockStlConnClient)
+        assert isinstance(client, MockNexusClient)
 
     def test_get_llm_client_real(self, monkeypatch):
-        """Test that get_llm_client returns StlConnClient when mock is disabled."""
-        monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "false")
+        """Test that get_llm_client returns NexusClient when mock is disabled."""
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "false")
 
         # Clear cache to pick up new env vars
-        dependencies.get_stl_conn_settings.cache_clear()
+        dependencies.get_nexus_settings.cache_clear()
 
         client = dependencies.get_llm_client(
-            stl_conn_settings=dependencies.get_stl_conn_settings(),
+            nexus_settings=dependencies.get_nexus_settings(),
         )
-        assert isinstance(client, StlConnClient)
+        assert isinstance(client, NexusClient)
 
     def test_get_llm_client_provider(self):
         """Test that get_llm_client_provider returns a callable."""
         provider = dependencies.get_llm_client_provider(
-            stl_conn_settings=dependencies.get_stl_conn_settings(),
+            nexus_settings=dependencies.get_nexus_settings(),
         )
         assert callable(provider)
 
     def test_llm_client_provider_returns_client(self, monkeypatch):
         """Test that the provider function returns an LLM client."""
-        monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
 
         # Clear cache
-        dependencies.get_stl_conn_settings.cache_clear()
+        dependencies.get_nexus_settings.cache_clear()
 
         provider = dependencies.get_llm_client_provider(
-            stl_conn_settings=dependencies.get_stl_conn_settings(),
+            nexus_settings=dependencies.get_nexus_settings(),
         )
         client = provider()
-        assert isinstance(client, MockStlConnClient)
+        assert isinstance(client, MockNexusClient)
 
     def test_llm_client_provider_ignores_backend_parameter(self, monkeypatch):
         """Test that provider ignores backend parameter (for API compatibility)."""
-        monkeypatch.setenv("OBS_GLX_USE_MOCK_STL_CONN", "true")
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
 
         # Clear cache
-        dependencies.get_stl_conn_settings.cache_clear()
+        dependencies.get_nexus_settings.cache_clear()
 
         provider = dependencies.get_llm_client_provider(
-            stl_conn_settings=dependencies.get_stl_conn_settings(),
+            nexus_settings=dependencies.get_nexus_settings(),
         )
 
         # Request different backends - should all return same client type
@@ -103,9 +103,9 @@ class TestLLMClientFactory:
         client2 = provider("mlx")
         client3 = provider(None)
 
-        assert isinstance(client1, MockStlConnClient)
-        assert isinstance(client2, MockStlConnClient)
-        assert isinstance(client3, MockStlConnClient)
+        assert isinstance(client1, MockNexusClient)
+        assert isinstance(client2, MockNexusClient)
+        assert isinstance(client3, MockNexusClient)
 
 
 class TestServiceProviders:
