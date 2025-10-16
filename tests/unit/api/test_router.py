@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from src.obs_glx.api.router import router
 from src.obs_glx.db.database import Base
-from src.obs_glx.db.models.workflow import Workflow
+from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
 from src.obs_glx.graphs.article_proposal.state import NodeResult, WorkflowStrategy
 
 # Create in-memory SQLite database for testing
@@ -258,3 +258,48 @@ def test_workflow_run_async_propagates_prompts(client, mock_celery_task):
     db = next(override_get_db())
     workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
     assert workflow.prompt == [prompt.strip() for prompt in payload["prompts"]]
+    assert workflow.progress_message == "Workflow queued for asynchronous execution"
+    assert workflow.progress_percent == 0
+
+
+def test_sync_workflow_updates_progress(client):
+    """Synchronous workflows should update progress fields as nodes complete."""
+
+    response = client.post(
+        "/api/workflows/article-proposal/run",
+        json={
+            "prompts": ["Sync research prompt"],
+            "async_execution": False,
+        },
+    )
+
+    assert response.status_code == 201
+    workflow_id = response.json()["id"]
+
+    db = next(override_get_db())
+    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    assert workflow.progress_percent == 100
+    assert workflow.progress_message == "Workflow completed successfully"
+
+
+def test_get_workflow_includes_progress(client, mock_celery_task):
+    """GET /workflows/{id} should return progress metadata."""
+
+    db = next(override_get_db())
+    workflow = Workflow(
+        workflow_type="article-proposal",
+        prompt=["Prompt"],
+        status=WorkflowStatus.RUNNING,
+        progress_message="Running analysis",
+        progress_percent=42,
+    )
+    db.add(workflow)
+    db.commit()
+    db.refresh(workflow)
+
+    response = client.get(f"/api/workflows/{workflow.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["progress_message"] == "Running analysis"
+    assert data["progress_percent"] == 42

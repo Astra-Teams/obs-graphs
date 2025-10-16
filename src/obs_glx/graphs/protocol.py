@@ -1,6 +1,6 @@
 """Protocol definitions for workflow graphs."""
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Callable, Protocol
 
 if TYPE_CHECKING:
     from src.obs_glx.api.schemas import WorkflowRunRequest
@@ -10,7 +10,11 @@ if TYPE_CHECKING:
 class WorkflowGraphProtocol(Protocol):
     """Protocol for workflow graph implementations."""
 
-    async def run_workflow(self, request: "WorkflowRunRequest") -> "WorkflowResult":
+    async def run_workflow(
+        self,
+        request: "WorkflowRunRequest",
+        progress_callback: Callable[[str, int], None] | None = None,
+    ) -> "WorkflowResult":
         """
         Execute a workflow from start to finish.
 

@@ -64,7 +64,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
 
-        async def mock_run_workflow(request):
+        async def mock_run_workflow(request, progress_callback=None):
             return mock_result
 
         mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
@@ -103,7 +103,7 @@ class TestRunWorkflowTask:
         # Mock ObsidianArticleProposalToPRGraph to raise error
         mock_builder_instance = MagicMock()
 
-        async def mock_run_workflow_with_error(request):
+        async def mock_run_workflow_with_error(request, progress_callback=None):
             raise Exception("Stop here")
 
         mock_builder_instance.run_workflow = MagicMock(
@@ -142,7 +142,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
 
-        async def mock_run_workflow(request):
+        async def mock_run_workflow(request, progress_callback=None):
             return mock_result
 
         mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
@@ -184,7 +184,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
 
-        async def mock_run_workflow(request):
+        async def mock_run_workflow(request, progress_callback=None):
             return mock_result
 
         mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
@@ -223,7 +223,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
 
-        async def mock_run_workflow(request):
+        async def mock_run_workflow(request, progress_callback=None):
             return mock_result
 
         mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
@@ -257,7 +257,7 @@ class TestRunWorkflowTask:
 
         mock_builder_instance = MagicMock()
 
-        async def mock_run_workflow_with_error(request):
+        async def mock_run_workflow_with_error(request, progress_callback=None):
             raise Exception("Workflow error")
 
         mock_builder_instance.run_workflow = MagicMock(
@@ -326,7 +326,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
 
-        async def mock_run_workflow(request):
+        async def mock_run_workflow(request, progress_callback=None):
             return mock_result
 
         mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
@@ -378,7 +378,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
 
-        async def mock_run_workflow(request):
+        async def mock_run_workflow(request, progress_callback=None):
             return mock_result
 
         mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
@@ -432,7 +432,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
 
-        async def mock_run_workflow(request):
+        async def mock_run_workflow(request, progress_callback=None):
             return mock_result
 
         mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)
@@ -485,7 +485,7 @@ class TestRunWorkflowTask:
         mock_result.branch_name = "test-branch"
         mock_result.node_results = {}
 
-        async def mock_run_workflow(request):
+        async def mock_run_workflow(request, progress_callback=None):
             return mock_result
 
         mock_builder_instance.run_workflow = MagicMock(side_effect=mock_run_workflow)

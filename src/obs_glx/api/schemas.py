@@ -67,6 +67,8 @@ class WorkflowResponse(BaseModel):
     branch_name: Optional[str]
     error_message: Optional[str]
     celery_task_id: Optional[str]
+    progress_message: Optional[str]
+    progress_percent: Optional[int]
     created_at: str
 
 

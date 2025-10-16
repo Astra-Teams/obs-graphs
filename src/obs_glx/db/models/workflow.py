@@ -52,6 +52,8 @@ class Workflow(Base):
     error_message = Column(Text, nullable=True)
     celery_task_id = Column(String(255), nullable=True)
     workflow_metadata = Column(JSON, nullable=True)
+    progress_message = Column(String(500), nullable=True)
+    progress_percent = Column(Integer, nullable=True)
     created_at = Column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
     )

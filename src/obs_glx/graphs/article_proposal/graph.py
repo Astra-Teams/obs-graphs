@@ -1,6 +1,7 @@
 """LangGraph-based workflow orchestration for Obsidian Vault nodes."""
 
 from dataclasses import dataclass, field
+from typing import Callable
 
 from langgraph.graph import END, StateGraph
 
@@ -100,7 +101,11 @@ class ArticleProposalGraph:
 
         return self._nodes[node_name]
 
-    async def run_workflow(self, request: WorkflowRunRequest) -> WorkflowResult:
+    async def run_workflow(
+        self,
+        request: WorkflowRunRequest,
+        progress_callback: Callable[[str, int], None] | None = None,
+    ) -> WorkflowResult:
         """
         Run the complete workflow: execute nodes and submit the draft via GitHub.
 
@@ -123,6 +128,7 @@ class ArticleProposalGraph:
             workflow_result = await self._run_graph(
                 workflow_plan,
                 prompts=request.prompts,
+                progress_callback=progress_callback,
             )
 
             if not workflow_result.success:
@@ -135,6 +141,8 @@ class ArticleProposalGraph:
             return workflow_result
 
         except Exception as e:
+            if progress_callback:
+                progress_callback(f"Workflow failed: {str(e)}", 100)
             return WorkflowResult(
                 success=False,
                 changes=[],
@@ -165,6 +173,8 @@ class ArticleProposalGraph:
         self,
         workflow_plan: WorkflowPlan,
         prompts: list[str] | None = None,
+        *,
+        progress_callback: Callable[[str, int], None] | None = None,
     ) -> WorkflowResult:
         """
         Run the compiled LangGraph using the provided workflow plan.
@@ -187,7 +197,13 @@ class ArticleProposalGraph:
         }
 
         # Build state graph based on workflow plan
-        graph = self._build_graph(workflow_plan)
+        if progress_callback:
+            progress_callback("Preparing workflow execution", 0)
+
+        graph = self._build_graph(
+            workflow_plan,
+            progress_callback=progress_callback,
+        )
 
         # Execute the workflow; let exceptions bubble up to caller
         final_state = await graph.ainvoke(initial_state)
@@ -199,6 +215,9 @@ class ArticleProposalGraph:
         # Generate summary
         summary = self._generate_summary(node_results, workflow_plan.strategy)
 
+        if progress_callback:
+            progress_callback("Workflow completed successfully", 100)
+
         return WorkflowResult(
             success=True,
             changes=all_changes,
@@ -206,7 +225,12 @@ class ArticleProposalGraph:
             node_results=node_results,
         )
 
-    def _build_graph(self, workflow_plan: WorkflowPlan) -> StateGraph:
+    def _build_graph(
+        self,
+        workflow_plan: WorkflowPlan,
+        *,
+        progress_callback: Callable[[str, int], None] | None = None,
+    ) -> StateGraph:
         """
         Build LangGraph state graph based on workflow plan.
 
@@ -219,9 +243,19 @@ class ArticleProposalGraph:
         # Create state graph
         workflow = StateGraph(GraphState)
 
+        total_nodes = len(workflow_plan.nodes)
+
         # Add node nodes
-        for node_name in workflow_plan.nodes:
-            workflow.add_node(node_name, self._create_node_node(node_name))
+        for index, node_name in enumerate(workflow_plan.nodes):
+            workflow.add_node(
+                node_name,
+                self._create_node_node(
+                    node_name,
+                    node_index=index,
+                    total_nodes=total_nodes,
+                    progress_callback=progress_callback,
+                ),
+            )
 
         # Add edges to create sequential execution
         workflow.set_entry_point(workflow_plan.nodes[0])
@@ -236,7 +270,14 @@ class ArticleProposalGraph:
 
         return workflow.compile()
 
-    def _create_node_node(self, node_name: str):
+    def _create_node_node(
+        self,
+        node_name: str,
+        *,
+        node_index: int,
+        total_nodes: int,
+        progress_callback: Callable[[str, int], None] | None = None,
+    ):
         """
         Create a node function for the specified node.
 
@@ -247,9 +288,23 @@ class ArticleProposalGraph:
             Callable node function for use in state graph
         """
 
+        friendly_name = node_name.replace("_", " ").title()
+        display_total = max(total_nodes, 1)
+
         async def node_node(state: GraphState) -> GraphState:
             """Execute the node and update state."""
             node = self._get_node(node_name)
+
+            if progress_callback:
+                before_percent = 0 if total_nodes == 0 else int(
+                    (node_index / display_total) * 100
+                )
+                if node_index < total_nodes - 1:
+                    before_percent = min(before_percent, 99)
+                progress_callback(
+                    f"Running {friendly_name} ({node_index + 1}/{display_total})",
+                    before_percent,
+                )
 
             # Execute node with the graph state directly (avoid redundant copy)
             result: NodeResult = await node.execute(state)
@@ -275,6 +330,17 @@ class ArticleProposalGraph:
                 # Update state in place
                 for key, value in result.metadata.items():
                     state[key] = value
+
+            if progress_callback:
+                after_percent = 100 if total_nodes == 0 else int(
+                    ((node_index + 1) / display_total) * 100
+                )
+                if node_index < total_nodes - 1:
+                    after_percent = min(after_percent, 99)
+                progress_callback(
+                    f"Completed {friendly_name} ({node_index + 1}/{display_total})",
+                    after_percent,
+                )
 
             return state
 

@@ -100,6 +100,8 @@ async def run_workflow(
 
             # Update celery_task_id and commit again
             workflow.celery_task_id = task.id
+            workflow.progress_message = "Workflow queued for asynchronous execution"
+            workflow.progress_percent = 0
             db.commit()
 
             return WorkflowRunResponse(
@@ -113,10 +115,22 @@ async def run_workflow(
             # Update to RUNNING
             workflow.status = WorkflowStatus.RUNNING
             workflow.started_at = datetime.now(timezone.utc)
+            workflow.progress_message = "Workflow started"
+            workflow.progress_percent = 0
             db.commit()
 
+            def update_progress(message: str, percent: int) -> None:
+                """Persist progress updates generated during workflow execution."""
+
+                clamped_percent = max(0, min(100, percent))
+                workflow.progress_message = message
+                workflow.progress_percent = clamped_percent
+                db.commit()
+
             # Run workflow with injected dependencies (vault_service already configured)
-            result = await graph_builder.run_workflow(request)
+            result = await graph_builder.run_workflow(
+                request, progress_callback=update_progress
+            )
 
             # Update workflow based on result
             if result.success:
@@ -134,8 +148,13 @@ async def run_workflow(
             else:
                 workflow.status = WorkflowStatus.FAILED
                 workflow.error_message = result.summary
+                workflow.progress_message = result.summary
+                workflow.progress_percent = 100
 
             workflow.completed_at = datetime.now(timezone.utc)
+            if result.success and workflow.progress_percent != 100:
+                workflow.progress_message = "Workflow completed successfully"
+                workflow.progress_percent = 100
             db.commit()
 
             return WorkflowRunResponse(
@@ -197,6 +216,8 @@ async def get_workflow(
         branch_name=workflow.branch_name,
         error_message=workflow.error_message,
         celery_task_id=workflow.celery_task_id,
+        progress_message=workflow.progress_message,
+        progress_percent=workflow.progress_percent,
         created_at=workflow.created_at.isoformat(),
     )
 
