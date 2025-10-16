@@ -141,8 +141,6 @@ class ArticleProposalGraph:
             return workflow_result
 
         except Exception as e:
-            if progress_callback:
-                progress_callback(f"Workflow failed: {str(e)}", 100)
             return WorkflowResult(
                 success=False,
                 changes=[],
@@ -296,8 +294,8 @@ class ArticleProposalGraph:
             node = self._get_node(node_name)
 
             if progress_callback:
-                before_percent = 0 if total_nodes == 0 else int(
-                    (node_index / display_total) * 100
+                before_percent = (
+                    0 if total_nodes == 0 else int((node_index / display_total) * 100)
                 )
                 if node_index < total_nodes - 1:
                     before_percent = min(before_percent, 99)
@@ -332,8 +330,10 @@ class ArticleProposalGraph:
                     state[key] = value
 
             if progress_callback:
-                after_percent = 100 if total_nodes == 0 else int(
-                    ((node_index + 1) / display_total) * 100
+                after_percent = (
+                    100
+                    if total_nodes == 0
+                    else int(((node_index + 1) / display_total) * 100)
                 )
                 if node_index < total_nodes - 1:
                     after_percent = min(after_percent, 99)

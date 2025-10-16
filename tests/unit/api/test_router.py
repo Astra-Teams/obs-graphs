@@ -11,7 +11,8 @@ from sqlalchemy.pool import StaticPool
 from src.obs_glx.api.router import router
 from src.obs_glx.db.database import Base
 from src.obs_glx.db.models.workflow import Workflow, WorkflowStatus
-from src.obs_glx.graphs.article_proposal.state import NodeResult, WorkflowStrategy
+from src.obs_glx.graphs.article_proposal.graph import WorkflowResult
+from src.obs_glx.graphs.article_proposal.state import WorkflowStrategy
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -56,8 +57,9 @@ def client(test_db):
 
     # Mock LLM client to avoid async issues in tests
     mock_llm_client = MagicMock()
+    mock_llm_client.invoke = AsyncMock()
     mock_llm_client.invoke.return_value = MagicMock()
-    mock_llm_client.invoke.return_value.content = '{"test": "mock response"}'
+    mock_llm_client.invoke.return_value.content = "Test Research Topic"
     mock_llm_provider = MagicMock(return_value=mock_llm_client)
     app.dependency_overrides[dependencies.get_llm_client_provider] = (
         lambda: mock_llm_provider
@@ -70,19 +72,21 @@ def client(test_db):
     app.dependency_overrides[dependencies.get_research_client] = lambda: MagicMock()
     app.dependency_overrides[dependencies.get_vault_service] = lambda: MagicMock()
 
-    mock_node = MagicMock()
-    mock_node.execute = AsyncMock(
-        return_value=NodeResult(
-            success=True, changes=[], message="Mocked node execution"
+    # Mock the graph builder to return a mock graph
+    mock_graph = MagicMock()
+    mock_graph.run_workflow = AsyncMock(
+        return_value=WorkflowResult(
+            success=True,
+            summary="Workflow completed successfully",
+            branch_name="test-branch",
+            node_results=[],
+            changes=[],
         )
     )
-    app.dependency_overrides[dependencies.get_article_proposal_node] = lambda: mock_node
-    app.dependency_overrides[dependencies.get_deep_research_node] = lambda: mock_node
-    app.dependency_overrides[dependencies.get_submit_draft_branch_node] = (
-        lambda: mock_node
-    )
+    mock_graph_builder = MagicMock(return_value=mock_graph)
 
-    return TestClient(app)
+    with patch("src.obs_glx.graphs.factory.get_graph_builder", mock_graph_builder):
+        yield TestClient(app)
 
 
 @pytest.fixture
