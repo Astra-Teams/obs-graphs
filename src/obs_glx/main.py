@@ -1,10 +1,12 @@
+from importlib import metadata
+
 from fastapi import FastAPI
 
 from src.obs_glx.api.router import router as workflows_router
 
 app = FastAPI(
     title="Obsidian Galaxy API",
-    version="0.1.0",
+    version=metadata.version("obs-glx"),
     description="Orchestration Graphs for Obsidian Vault.",
 )
 

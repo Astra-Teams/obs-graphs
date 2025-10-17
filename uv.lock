@@ -2732,8 +2732,8 @@ wheels = [
 
 [[package]]
 name = "starprobe"
-version = "0.0.1"
-source = { git = "https://github.com/asterismhq/starprobe.git#16793c73c9261e7247aae82b6ee43e5e4a9d7e3c" }
+version = "2.0.2"
+source = { git = "https://github.com/asterismhq/starprobe.git#c4d60ce5c4f2ae95e4b9de25da2326d23ba208b9" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "ddgs" },
