@@ -30,6 +30,7 @@ jobs:
       - name: Build and push worker image
         uses: docker/build-push-action@v5
         with:
-          context: ./worker/obs_glx_worker
+          context: .
+          file: ./worker/obs_glx_worker/Dockerfile
           push: true
           tags: ghcr.io/asterismhq/obs-glx-worker:latest
