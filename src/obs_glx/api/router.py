@@ -291,6 +291,8 @@ async def list_workflows(
             branch_name=w.branch_name,
             error_message=w.error_message,
             celery_task_id=w.celery_task_id,
+            progress_message=w.progress_message,
+            progress_percent=w.progress_percent,
             created_at=w.created_at.isoformat(),
         )
         for w in workflows
