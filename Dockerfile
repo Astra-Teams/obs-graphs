@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.cache \
   apt-get update && apt-get install -y git openssh-client && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency definition files  
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml ./
 
 
 # ==============================================================================
