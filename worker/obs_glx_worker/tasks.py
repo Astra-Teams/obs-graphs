@@ -44,6 +44,17 @@ def _prepare_workflow_directory(workflow_id: int) -> Path:
     return temp_dir
 
 
+def _set_workflow_progress(
+    db: Session, workflow: Workflow, message: str, percent: int
+) -> None:
+    """Persist progress updates for the workflow."""
+
+    clamped_percent = max(0, min(100, percent))
+    workflow.progress_message = message
+    workflow.progress_percent = clamped_percent
+    db.commit()
+
+
 @celery_app.task(bind=True, name="run_workflow_task")
 def run_workflow_task(self, workflow_id: int) -> None:
     """
@@ -81,8 +92,16 @@ def run_workflow_task(self, workflow_id: int) -> None:
         workflow.celery_task_id = self.request.id
         db.commit()
 
+        _set_workflow_progress(db, workflow, "Workflow started", 0)
+
         # 3. Prepare local workflow directory from vault submodule
         temp_vault_dir = _prepare_workflow_directory(workflow_id)
+        _set_workflow_progress(
+            db,
+            workflow,
+            "Preparing workflow workspace",
+            5,
+        )
 
         # 4. Create dependencies with the temporary vault path
         from src.obs_glx.api.schemas import WorkflowRunRequest
@@ -124,7 +143,15 @@ def run_workflow_task(self, workflow_id: int) -> None:
             strategy=strategy,
         )
 
-        result = asyncio.run(graph_builder.run_workflow(request))
+        def progress_callback(message: str, percent: int) -> None:
+            _set_workflow_progress(db, workflow, message, percent)
+
+        result = asyncio.run(
+            graph_builder.run_workflow(
+                request,
+                progress_callback=progress_callback,
+            )
+        )
 
         # Update workflow based on result
         if result.success:
@@ -142,8 +169,11 @@ def run_workflow_task(self, workflow_id: int) -> None:
             workflow.status = WorkflowStatus.FAILED
             workflow.error_message = result.summary
             workflow.workflow_metadata = workflow_metadata
+            _set_workflow_progress(db, workflow, result.summary, 100)
 
         workflow.completed_at = datetime.now(timezone.utc)
+        if result.success:
+            _set_workflow_progress(db, workflow, "Workflow completed successfully", 100)
         db.commit()
 
     except Exception as e:  # noqa: BLE001 - propagate to Celery for retry/backoff
@@ -153,6 +183,7 @@ def run_workflow_task(self, workflow_id: int) -> None:
             workflow.completed_at = datetime.now(timezone.utc)
             workflow.error_message = str(e)
             db.commit()
+            _set_workflow_progress(db, workflow, f"Workflow failed: {e}", 100)
 
         # Re-raise exception for Celery to handle
         raise

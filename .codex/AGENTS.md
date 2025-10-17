@@ -24,6 +24,7 @@
 
 ### 1. Application Core (`src/obs_glx/`)
 -   **API (`api/`)**: FastAPI endpoints with path-based workflow type routing (`/api/workflows/{workflow_type}/run`), Pydantic schemas for validation.
+-   **Progress tracking**: `/api/workflows/{workflow_id}` now exposes `progress_message` and `progress_percent` so clients can display fine-grained status updates while workflows execute.
 -   **Workflow Engine (`graphs/`)**:
     -   Factory pattern (`factory.py`) for extensible workflow graph creation with dependency injection
     -   Protocol interface (`protocol.py`) defining `WorkflowGraphProtocol` for type-safe graph implementations

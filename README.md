@@ -154,6 +154,21 @@ Validation rules:
 - Every entry is normalised with `str.strip()` and must remain non-empty after trimming.
 - Optional fields such as `strategy` continue to work as before.
 
+### Workflow status polling
+
+Clients can poll `GET /api/workflows/{workflow_id}` to observe detailed progress for
+long-running executions. In addition to the status flags, the response now
+includes:
+
+- `progress_message`: a human-readable description of the current stage (for example,
+  `Running Deep Research (2/3)` or `Workflow completed successfully`).
+- `progress_percent`: an integer between 0 and 100 that estimates overall completion.
+
+The progress metadata is updated throughout the workflow lifecycle, including
+updates from each LangGraph node as it begins and finishes. This allows mobile
+and web clients to present meaningful status updates instead of a long-lived
+`RUNNING` indicator.
+
 ## SDK
 
 This repository includes a Python SDK that mirrors the `starprobe` SDK layout and exposes the workflow run endpoint.
