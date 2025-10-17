@@ -58,8 +58,8 @@ class ArticleProposalNode(NodeProtocol):
             raise ValueError("required fields missing")
 
         strategy = state.get("strategy", "new_article")
-        # Backend parameter is ignored by nexus
-        llm_client = self._llm_provider(None)
+        backend = state.get("llm_backend")
+        llm_client = self._llm_provider(backend)
 
         if strategy == "research_proposal":
             return await self._execute_research_topic_proposal(state, llm_client)
@@ -89,8 +89,8 @@ class ArticleProposalNode(NodeProtocol):
         topic_prompt = render_prompt("research_topic_proposal", prompt=prompt)
 
         try:
-            # Get LLM response with topic title
-            # NexusClient.invoke() is async and returns LangChainResponse
+            # Get LLM response with topic title using the selected backend
+            # Nexus SDK clients return LangChainResponse when response_format="langchain"
             response = await llm_client.invoke(
                 [{"role": "user", "content": topic_prompt}]
             )
@@ -142,8 +142,8 @@ class ArticleProposalNode(NodeProtocol):
         )
 
         try:
-            # Get LLM response with JSON article proposals
-            # NexusClient.invoke() is async and returns LangChainResponse
+            # Get LLM response with JSON article proposals using the chosen backend
+            # Nexus SDK clients return LangChainResponse when response_format="langchain"
             response = await llm_client.invoke(
                 [{"role": "user", "content": proposal_prompt}]
             )

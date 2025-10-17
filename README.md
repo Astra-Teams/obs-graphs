@@ -72,6 +72,7 @@ All configuration is centralised in `.env`. Update it to reflect your environmen
 - `OBS_GLX_GITHUB_TOKEN` – Personal Access Token with rights to create branches and upload files.
 
 - `NEXUS_BASE_URL` – base URL for the nexus service providing LLM access.
+- `NEXUS_DEFAULT_BACKEND` – default backend (`ollama` or `mlx`) targeted by the nexus SDK clients.
 - `USE_MOCK_NEXUS` – when `true`, uses mock LLM responses for development and testing.
 
 ### 3. Run the application stack
@@ -110,6 +111,7 @@ E2E tests rely on PostgreSQL and will wait for `obs-api` to report healthy befor
 Workflows obtain their language model through the nexus SDK, which provides a unified interface to various LLM providers. Configuration is managed via environment variables:
 
 - Set `NEXUS_BASE_URL` to the URL of your nexus service instance.
+- Choose the default runtime by setting `NEXUS_DEFAULT_BACKEND` (`ollama` or `mlx`).
 - For development, enable `USE_MOCK_NEXUS=true` to use mock LLM responses instead of calling the real service.
 
 The nexus service abstracts away the complexities of different LLM backends, allowing workflows to focus on their logic without backend-specific code.
