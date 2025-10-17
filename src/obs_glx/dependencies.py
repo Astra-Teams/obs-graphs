@@ -8,8 +8,6 @@ import redis
 from fastapi import Depends
 from nexus_sdk.nexus_client import (
     MockNexusClient,
-    NexusMLXClient,
-    NexusOllamaClient,
     SimpleResponseStrategy,
 )
 from sqlalchemy.orm import Session
@@ -33,11 +31,6 @@ from src.obs_glx.services.github_draft_service import (
     GitHubDraftServiceProtocol,
     MockGitHubDraftService,
 )
-
-_REAL_NEXUS_CLIENTS: dict[str, type] = {
-    "ollama": NexusOllamaClient,
-    "mlx": NexusMLXClient,
-}
 
 # ============================================================================
 # Configuration Providers
@@ -113,9 +106,9 @@ def _create_llm_client(
         client.set_strategy(SimpleResponseStrategy(content="Test Research Topic"))
         return client
 
-    client_cls = _REAL_NEXUS_CLIENTS.get(backend)
+    client_cls = NexusSettings.REAL_NEXUS_CLIENTS.get(backend)
     if client_cls is None:
-        supported = ", ".join(sorted(_REAL_NEXUS_CLIENTS))
+        supported = ", ".join(NexusSettings.SUPPORTED_BACKENDS)
         raise ValueError(
             f"Unsupported Nexus backend '{backend}'. Supported backends: {supported}."
         )

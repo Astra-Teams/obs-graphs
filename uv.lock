@@ -1613,8 +1613,8 @@ wheels = [
 
 [[package]]
 name = "nexus"
-version = "3.0.1"
-source = { git = "https://github.com/asterismhq/nexus.git#3c39958bea93cfd08c42a2751c61580355fb6946" }
+version = "3.2.0"
+source = { git = "https://github.com/asterismhq/nexus.git#b83032beab0a927793982987ba7febd7d2290b4d" }
 dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
@@ -2732,8 +2732,8 @@ wheels = [
 
 [[package]]
 name = "starprobe"
-version = "2.0.2"
-source = { git = "https://github.com/asterismhq/starprobe.git#c4d60ce5c4f2ae95e4b9de25da2326d23ba208b9" }
+version = "2.0.3"
+source = { git = "https://github.com/asterismhq/starprobe.git#35ea9816cc9b5c9b260cc01dc990312a8a9ac7bb" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "ddgs" },

@@ -1,5 +1,6 @@
 """Unit tests for the dependency injection system."""
 
+import pytest
 from nexus_sdk.nexus_client import (
     MockNexusClient,
     NexusMLXClient,
@@ -60,31 +61,29 @@ class TestLLMClientFactory:
         assert isinstance(client, MockNexusClient)
         dependencies.get_nexus_settings.cache_clear()
 
-    def test_get_llm_client_real_default_backend(self, monkeypatch):
-        """get_llm_client should honour the default backend when mock is disabled."""
+    @pytest.mark.parametrize(
+        "backend_env, expected_client_type",
+        [
+            (None, NexusOllamaClient),  # Default backend
+            ("mlx", NexusMLXClient),
+        ],
+    )
+    def test_get_llm_client_real_backends(
+        self, monkeypatch, backend_env, expected_client_type
+    ):
+        """get_llm_client should create the correct client based on env."""
         monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "false")
-        monkeypatch.delenv("NEXUS_DEFAULT_BACKEND", raising=False)
+        if backend_env:
+            monkeypatch.setenv("NEXUS_DEFAULT_BACKEND", backend_env)
+        else:
+            monkeypatch.delenv("NEXUS_DEFAULT_BACKEND", raising=False)
 
-        # Clear cache to pick up new env vars
         dependencies.get_nexus_settings.cache_clear()
 
         client = dependencies.get_llm_client(
             nexus_settings=dependencies.get_nexus_settings(),
         )
-        assert isinstance(client, NexusOllamaClient)
-        dependencies.get_nexus_settings.cache_clear()
-
-    def test_get_llm_client_real_mlx_backend(self, monkeypatch):
-        """get_llm_client should create an MLX client when requested via env."""
-        monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "false")
-        monkeypatch.setenv("NEXUS_DEFAULT_BACKEND", "mlx")
-
-        dependencies.get_nexus_settings.cache_clear()
-
-        client = dependencies.get_llm_client(
-            nexus_settings=dependencies.get_nexus_settings(),
-        )
-        assert isinstance(client, NexusMLXClient)
+        assert isinstance(client, expected_client_type)
         dependencies.get_nexus_settings.cache_clear()
 
     def test_get_llm_client_provider(self):

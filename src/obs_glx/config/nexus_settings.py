@@ -2,6 +2,7 @@
 
 from typing import ClassVar
 
+from nexus_sdk.nexus_client import NexusMLXClient, NexusOllamaClient
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -9,7 +10,24 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class NexusSettings(BaseSettings):
     """Settings for Nexus API configuration."""
 
-    SUPPORTED_BACKENDS: ClassVar[tuple[str, ...]] = ("ollama", "mlx")
+    REAL_NEXUS_CLIENTS: ClassVar[dict[str, type]] = {
+        "ollama": NexusOllamaClient,
+        "mlx": NexusMLXClient,
+    }
+    SUPPORTED_BACKENDS: ClassVar[tuple[str, ...]] = tuple(
+        sorted(REAL_NEXUS_CLIENTS.keys())
+    )
+
+    @classmethod
+    def _normalize_and_validate_backend(cls, value: str) -> str:
+        """Shared utility to normalize and validate a backend identifier."""
+        normalized = str(value).strip().lower()
+        if normalized not in cls.SUPPORTED_BACKENDS:
+            supported = ", ".join(cls.SUPPORTED_BACKENDS)
+            raise ValueError(
+                f"Unsupported Nexus backend '{value}'. Supported backends: {supported}."
+            )
+        return normalized
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -48,23 +66,10 @@ class NexusSettings(BaseSettings):
     def _validate_backend(cls, value: str | None) -> str:
         if value is None:
             return "ollama"
-        normalized = str(value).strip().lower()
-        if normalized not in cls.SUPPORTED_BACKENDS:
-            supported = ", ".join(cls.SUPPORTED_BACKENDS)
-            raise ValueError(
-                f"Unsupported Nexus backend '{value}'. Supported backends: {supported}."
-            )
-        return normalized
+        return cls._normalize_and_validate_backend(value)
 
     def resolve_backend(self, backend: str | None = None) -> str:
         """Resolve the effective backend, validating overrides when provided."""
-
         if backend is None:
             return self.nexus_default_backend
-        normalized = str(backend).strip().lower()
-        if normalized not in self.SUPPORTED_BACKENDS:
-            supported = ", ".join(self.SUPPORTED_BACKENDS)
-            raise ValueError(
-                f"Unsupported Nexus backend '{backend}'. Supported backends: {supported}."
-            )
-        return normalized
+        return self._normalize_and_validate_backend(backend)
