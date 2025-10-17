@@ -6,7 +6,10 @@ from typing import Callable, Generator, Union
 
 import redis
 from fastapi import Depends
-from nexus_sdk.nexus_client import MockNexusClient, NexusClient
+from nexus_sdk.nexus_client import (
+    MockNexusClient,
+    SimpleResponseStrategy,
+)
 from sqlalchemy.orm import Session
 from starprobe_sdk import ResearchApiClient, ResearchClientProtocol
 
@@ -21,10 +24,7 @@ from src.obs_glx.config import (
     WorkflowSettings,
 )
 from src.obs_glx.db.database import create_db_session
-from src.obs_glx.protocols import (
-    NexusClientProtocol,
-    VaultServiceProtocol,
-)
+from src.obs_glx.protocols import NexusClientProtocol, VaultServiceProtocol
 from src.obs_glx.services import VaultService
 from src.obs_glx.services.github_draft_service import (
     GitHubDraftService,
@@ -84,24 +84,36 @@ def get_workflow_settings() -> WorkflowSettings:
 # ============================================================================
 
 
-def _create_llm_client(nexus_settings: NexusSettings) -> NexusClientProtocol:
+def _create_llm_client(
+    nexus_settings: NexusSettings,
+    backend_override: str | None = None,
+) -> NexusClientProtocol:
     """
     Create an LLM client using the Nexus SDK.
 
     Args:
         nexus_settings: Nexus configuration
+        backend_override: Optional backend override supplied by the caller
 
     Returns:
         An LLM client implementing NexusClientProtocol
     """
-    if nexus_settings.use_mock_nexus:
-        from nexus_sdk.nexus_client import SimpleResponseStrategy
+    backend = nexus_settings.resolve_backend(backend_override)
 
-        client = MockNexusClient(response_format="langchain")
+    if nexus_settings.use_mock_nexus:
+        client = MockNexusClient(response_format="langchain", backend=backend)
         # Set a default response strategy for testing
         client.set_strategy(SimpleResponseStrategy(content="Test Research Topic"))
         return client
-    return NexusClient(
+
+    client_cls = NexusSettings.REAL_NEXUS_CLIENTS.get(backend)
+    if client_cls is None:
+        supported = ", ".join(NexusSettings.SUPPORTED_BACKENDS)
+        raise ValueError(
+            f"Unsupported Nexus backend '{backend}'. Supported backends: {supported}."
+        )
+
+    return client_cls(
         base_url=nexus_settings.nexus_base_url,
         response_format="langchain",
         timeout=nexus_settings.nexus_timeout,
@@ -129,16 +141,15 @@ def get_llm_client_provider(
     """
     Get a provider function for LLM clients.
 
-    The backend parameter is kept for API compatibility but is ignored
-    since nexus handles backend selection internally.
+    The backend parameter allows callers to override the default backend on demand
+    while keeping existing call sites compatible.
 
     Returns:
         A callable that returns an LLM client via Nexus
     """
 
     def provider(backend: str | None = None) -> NexusClientProtocol:
-        # Backend parameter is ignored - nexus handles backend selection
-        return _create_llm_client(nexus_settings)
+        return _create_llm_client(nexus_settings, backend_override=backend)
 
     return provider
 

@@ -2,9 +2,9 @@
 	path = submodules/constellations
 	url = https://github.com/asterismhq/constellations.git
   branch = main
-[submodule "submodules/starprobe"] # v2.0.1
+[submodule "submodules/starprobe"] # v2.0.2
 	path = submodules/starprobe
 	url = https://github.com/asterismhq/starprobe
-[submodule "submodules/nexus"] # v2.0.1
+[submodule "submodules/nexus"] # v3.0.1
 	path = submodules/nexus
 	url = https://github.com/asterismhq/nexus

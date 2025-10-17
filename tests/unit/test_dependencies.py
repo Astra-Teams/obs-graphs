@@ -1,6 +1,11 @@
 """Unit tests for the dependency injection system."""
 
-from nexus_sdk.nexus_client import MockNexusClient, NexusClient
+import pytest
+from nexus_sdk.nexus_client import (
+    MockNexusClient,
+    NexusMLXClient,
+    NexusOllamaClient,
+)
 from pytest import MonkeyPatch
 
 from src.obs_glx import dependencies
@@ -54,18 +59,32 @@ class TestLLMClientFactory:
             nexus_settings=dependencies.get_nexus_settings(),
         )
         assert isinstance(client, MockNexusClient)
+        dependencies.get_nexus_settings.cache_clear()
 
-    def test_get_llm_client_real(self, monkeypatch):
-        """Test that get_llm_client returns NexusClient when mock is disabled."""
+    @pytest.mark.parametrize(
+        "backend_env, expected_client_type",
+        [
+            (None, NexusOllamaClient),  # Default backend
+            ("mlx", NexusMLXClient),
+        ],
+    )
+    def test_get_llm_client_real_backends(
+        self, monkeypatch, backend_env, expected_client_type
+    ):
+        """get_llm_client should create the correct client based on env."""
         monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "false")
+        if backend_env:
+            monkeypatch.setenv("NEXUS_DEFAULT_BACKEND", backend_env)
+        else:
+            monkeypatch.delenv("NEXUS_DEFAULT_BACKEND", raising=False)
 
-        # Clear cache to pick up new env vars
         dependencies.get_nexus_settings.cache_clear()
 
         client = dependencies.get_llm_client(
             nexus_settings=dependencies.get_nexus_settings(),
         )
-        assert isinstance(client, NexusClient)
+        assert isinstance(client, expected_client_type)
+        dependencies.get_nexus_settings.cache_clear()
 
     def test_get_llm_client_provider(self):
         """Test that get_llm_client_provider returns a callable."""
@@ -75,7 +94,7 @@ class TestLLMClientFactory:
         assert callable(provider)
 
     def test_llm_client_provider_returns_client(self, monkeypatch):
-        """Test that the provider function returns an LLM client."""
+        """Provider should return a mock client when mocks are enabled."""
         monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
 
         # Clear cache
@@ -86,9 +105,10 @@ class TestLLMClientFactory:
         )
         client = provider()
         assert isinstance(client, MockNexusClient)
+        dependencies.get_nexus_settings.cache_clear()
 
-    def test_llm_client_provider_ignores_backend_parameter(self, monkeypatch):
-        """Test that provider ignores backend parameter (for API compatibility)."""
+    def test_llm_client_provider_handles_backend_parameter_for_mock(self, monkeypatch):
+        """Provider should return mock clients for any backend when mocks are enabled."""
         monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "true")
 
         # Clear cache
@@ -106,6 +126,26 @@ class TestLLMClientFactory:
         assert isinstance(client1, MockNexusClient)
         assert isinstance(client2, MockNexusClient)
         assert isinstance(client3, MockNexusClient)
+        dependencies.get_nexus_settings.cache_clear()
+
+    def test_llm_client_provider_creates_backend_specific_clients(self, monkeypatch):
+        """Provider should return backend-specific clients when mocks are disabled."""
+
+        monkeypatch.setenv("OBS_GLX_USE_MOCK_NEXUS", "false")
+        monkeypatch.delenv("NEXUS_DEFAULT_BACKEND", raising=False)
+
+        dependencies.get_nexus_settings.cache_clear()
+
+        provider = dependencies.get_llm_client_provider(
+            nexus_settings=dependencies.get_nexus_settings(),
+        )
+
+        ollama_client = provider("ollama")
+        mlx_client = provider("mlx")
+
+        assert isinstance(ollama_client, NexusOllamaClient)
+        assert isinstance(mlx_client, NexusMLXClient)
+        dependencies.get_nexus_settings.cache_clear()
 
 
 class TestServiceProviders:

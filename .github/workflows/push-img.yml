@@ -25,7 +25,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/asterismhq/obs-glx-api:latest
+          tags: ghcr.io/asterismhq/obs-glx:latest
 
       - name: Build and push worker image
         uses: docker/build-push-action@v5

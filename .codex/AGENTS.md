@@ -33,7 +33,7 @@
     -   Currently supports: `article-proposal` workflow type
 -   **Services (`services/`)**: Business logic, including `Vault Service` for file operations.
 -   **Data Access (`db/`)**: SQLAlchemy models with `workflow_type` column and repository pattern for DB interactions.
--   **Clients (`clients/`)**: LLM integration via `nexus` SDK (`NexusClient`, `MockNexusClient`) implementing `NexusClientProtocol`; GitHub draft publishing handled in `services/github_draft_service.py`, research integration uses the shared `starprobe_sdk`.
+-   **Clients (`clients/`)**: LLM integration via `nexus` SDK clients (`NexusOllamaClient`, `NexusMLXClient`, `MockNexusClient`) implementing `NexusClientProtocol`; GitHub draft publishing handled in `services/github_draft_service.py`, research integration uses the shared `starprobe_sdk`.
 -   **SDK (`sdk/obs_graphs_sdk/`)**: First-party workflow client packaged as an optional dependency and aligned with the `starprobe` SDK conventions.
 -   **Async Tasks (`worker/obs_graphs_worker/`)**: Background task execution with Redis, uses factory pattern for workflow type resolution.
 -   **Configuration (`config/`)**: Environment-based settings for nexus, GitHub draft publishing, database, Redis, and the research API.
