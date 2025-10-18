@@ -1,6 +1,6 @@
 """Database-specific settings for the obs-graphs project."""
 
-from pydantic import Field, computed_field
+from pydantic import AliasChoices, Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,40 +13,40 @@ class DBSettings(BaseSettings):
         extra="ignore",
     )
 
-    db_user: str = Field(
+    user: str = Field(
         default="user",
+        validation_alias=AliasChoices("POSTGRES_USER", "user"),
         title="Database User",
         description="Username for the database connection.",
-        validation_alias="POSTGRES_USER",
     )
-    db_password: str = Field(
+    password: str = Field(
         default="password",
+        validation_alias=AliasChoices("POSTGRES_PASSWORD", "password"),
         title="Database Password",
         description="Password for the database connection.",
-        validation_alias="POSTGRES_PASSWORD",
     )
-    db_host: str = Field(
+    host: str = Field(
         default="db",
+        validation_alias=AliasChoices("POSTGRES_HOST", "host"),
         title="Database Host",
         description="Hostname for the database server.",
-        validation_alias="POSTGRES_HOST",
     )
-    db_port: int = Field(
+    port: int = Field(
         default=5432,
+        validation_alias=AliasChoices("POSTGRES_PORT", "port"),
         title="Database Port",
         description="Port number for the database server.",
-        validation_alias="POSTGRES_PORT",
     )
-    db_name: str = Field(
+    db: str = Field(
         default="obs-graph-prod",
+        validation_alias=AliasChoices("POSTGRES_DB", "db"),
         title="Database Name",
         description="Name of the database to connect to.",
-        validation_alias="POSTGRES_DB",
     )
 
     @computed_field
     @property
     def database_url(self) -> str:
         """Assemble the database URL from individual components."""
-        url = f"postgresql+psycopg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+        url = f"postgresql+psycopg://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
         return url
