@@ -13,7 +13,6 @@ from nexus_sdk.nexus_client import (
 from sqlalchemy.orm import Session
 from starprobe_sdk import ResearchApiClient, ResearchClientProtocol
 
-from dev.mocks.clients import MockRedisClient, MockResearchApiClient
 from src.obs_glx.config import (
     DBSettings,
     GitHubSettings,
@@ -228,6 +227,8 @@ def get_research_client(
         Research client (mock or real based on settings)
     """
     if settings.use_mock_starprobe:
+        from dev.mocks.clients import MockResearchApiClient
+
         return MockResearchApiClient()
 
     return ResearchApiClient(
@@ -251,6 +252,8 @@ def get_redis_client(
         Redis client (FakeRedis if mocking, otherwise real Redis)
     """
     if settings.use_mock_redis:
+        from dev.mocks.clients import MockRedisClient
+
         return MockRedisClient.get_client()
 
     return redis.Redis.from_url(redis_settings.celery_broker_url, decode_responses=True)
