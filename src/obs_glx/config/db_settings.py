@@ -1,6 +1,5 @@
 """Database-specific settings for the obs-graphs project."""
 
-
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
