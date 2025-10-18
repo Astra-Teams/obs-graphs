@@ -10,8 +10,11 @@ target_metadata = Base.metadata
 
 
 def run_migrations_online() -> None:
-    database_url = db_settings.database_url
+    from dotenv import load_dotenv
 
+    load_dotenv()
+
+    database_url = db_settings.database_url
     connectable = create_engine(
         database_url,
         poolclass=pool.NullPool,

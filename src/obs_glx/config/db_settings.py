@@ -1,5 +1,7 @@
 """Database-specific settings for the obs-graphs project."""
 
+import os
+
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -49,5 +51,6 @@ class DBSettings(BaseSettings):
     @property
     def database_url(self) -> str:
         """Assemble the database URL from individual components."""
-        url = f"postgresql+psycopg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+        db_name = os.getenv("POSTGRES_DB", self.db_name)
+        url = f"postgresql+psycopg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{db_name}"
         return url
