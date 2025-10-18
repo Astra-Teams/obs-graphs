@@ -1,0 +1,42 @@
+name: 'Setup Environment'
+description: 'Common setup steps for CI workflows'
+
+inputs:
+  dependency-command:
+    description: 'Command to install dependencies'
+    required: true
+    default: 'uv sync --frozen'
+  git-token:
+    description: 'GitHub token for accessing private repositories'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: '.python-version'
+
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Configure Git for private repositories
+      if: inputs.git-token != ''
+      env:
+        AUTH_TOKEN: ${{ inputs.git-token }}
+      run: git config --global url."https://oauth2:${AUTH_TOKEN}@github.com/".insteadOf "https://github.com/"
+      shell: bash
+
+    - name: Install dependencies
+      run: ${{ inputs.dependency-command }}
+      shell: bash
+
+    - name: Install just
+      uses: extractions/setup-just@v2
+
+    - name: Create .env file from example
+      run: cp .env.example .env
+      shell: bash

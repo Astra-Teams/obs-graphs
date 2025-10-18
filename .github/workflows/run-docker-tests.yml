@@ -28,32 +28,11 @@ jobs:
           submodules: true
           token: ${{ secrets.OBS_GLX_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Setup environment
+        uses: ./.github/actions/setup
         with:
-          python-version-file: .python-version
-
-      - name: Install uv
-        run: pipx install uv
-
-      - name: Configure Git for private repositories
-        env:
-          AUTH_TOKEN: ${{ secrets.OBS_GLX_TOKEN }}
-        run: |
-          if [ -z "$AUTH_TOKEN" ]; then
-            echo "OBS_GLX_TOKEN secret is required to access private repositories." >&2
-            exit 1
-          fi
-          git config --global url."https://oauth2:${AUTH_TOKEN}@github.com/".insteadOf "https://github.com/"
-
-      - name: Install dependencies
-        run: uv sync --frozen
-
-      - name: Install just
-        uses: extractions/setup-just@v2
-
-      - name: Create .env file for CI
-        run: cp .env.example .env
+          dependency-command: 'uv sync --frozen'
+          git-token: ${{ secrets.OBS_GLX_TOKEN }}
 
       - name: Run docker tests (USE_SQLITE=false)
         run: just ${{ matrix.test_target }}
